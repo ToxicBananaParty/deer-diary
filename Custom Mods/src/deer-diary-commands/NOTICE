@@ -11,9 +11,9 @@ Inspiration and Attribution
 
 The command set, configuration shape, and architectural patterns used in
 this project are inspired by FTB Essentials by FTB Team
-(https://github.com/FTBTeam/FTB-Essentials), distributed under the MIT
-License per its LICENSE file. Where this project's behavior mirrors FTB
-Essentials, that mirroring is intentional and acknowledged here.
+(https://github.com/FTBTeam/FTB-Essentials).
+Where this project's behavior mirrors FTB Essentials,
+that mirroring is intentional and acknowledged here.
 
 This project does not redistribute FTB Essentials' compiled artifacts,
 mod IDs, namespaces, or assets. Implementation code in this repository
