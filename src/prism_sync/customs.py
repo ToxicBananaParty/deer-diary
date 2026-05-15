@@ -29,9 +29,24 @@ _EXCLUDED_JAR_SUFFIXES = ("-sources.jar", "-javadoc.jar", "-dev.jar", "-all.jar"
 
 @dataclass
 class CustomModConfig:
-    name: str  # also acts as the filename prefix, e.g. "trmt" matches "trmt-*.jar"
+    """One locally-built mod or datapack to keep in sync with the instance.
+
+    `source_pattern` is the glob applied in both the source dir and the target
+    dir to find the artifact. When left empty, it defaults to `{name}-*.jar`,
+    which fits Gradle-emitted mod jars. Override with an explicit pattern
+    (e.g. `"key-to-necklace.zip"` or `"*.zip"`) for datapacks, resourcepacks,
+    or any artifact whose filename doesn't follow the `<name>-<version>.jar`
+    convention.
+    """
+
+    name: str
     source_dir: Path
     target_dir: str = "mods"  # relative to <instance>/minecraft/
+    source_pattern: str = ""
+
+    @property
+    def pattern(self) -> str:
+        return self.source_pattern or f"{self.name}-*.jar"
 
 
 @dataclass
@@ -81,10 +96,9 @@ def _version_tuple(name: str, filename: str) -> tuple[int, ...]:
 def _candidate_jars(mod: CustomModConfig, search_dir: Path) -> list[Path]:
     if not search_dir.is_dir():
         return []
-    pattern = f"{mod.name}-*.jar"
     return [
         p
-        for p in sorted(search_dir.glob(pattern))
+        for p in sorted(search_dir.glob(mod.pattern))
         if p.is_file()
         and not any(p.name.endswith(suf) for suf in _EXCLUDED_JAR_SUFFIXES)
     ]

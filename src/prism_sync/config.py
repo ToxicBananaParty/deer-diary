@@ -100,6 +100,7 @@ def load_config(config_dir: Path | None = None) -> Config:
                 name=name,
                 source_dir=Path(source_dir),
                 target_dir=entry.get("target_dir", "mods"),
+                source_pattern=entry.get("source_pattern", ""),
             )
         )
 

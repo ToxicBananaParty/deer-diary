@@ -58,4 +58,14 @@ optional_files = [
 # Locally-built mods. Refreshed in-place before each pack build.
 [[custom_mods]]
 name = "trmt"
-source_dir = "../Custom Mods/trmt-neoforge-1.21.1/build/libs"
+source_dir = "../Custom Mods/dist/trmt-neoforge-1.21.1"
+
+# Example datapack entry — uncomment and pick a target_dir once you decide
+# where it should live in the instance (mods/, moonlight-global-datapacks/, or
+# a per-world saves/<world>/datapacks/). Datapack zip has no version in its
+# filename, so the sync falls back to byte comparison automatically.
+# [[custom_mods]]
+# name = "key-to-necklace"
+# source_dir = "../Custom Mods/dist/key-to-necklace"
+# source_pattern = "key-to-necklace.zip"
+# target_dir = "moonlight-global-datapacks"

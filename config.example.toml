@@ -55,11 +55,22 @@ optional_files = [
     # "mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.disabled",
 ]
 
-# Mods you build yourself locally. Each entry: a `name` (also the filename
-# prefix), and a `source_dir` (where Gradle drops `<name>-*.jar`). Before each
-# build, the tool checks the source dir and, if a newer version is there,
-# replaces the jar in the instance's mods/ folder.
+# Mods you build yourself locally. Each entry needs:
+#   name        — display name; also the default filename prefix
+#   source_dir  — where the artifact lives (absolute or relative to this config)
+#   target_dir  — destination subdir under <instance>/minecraft/ (default "mods")
+#   source_pattern — glob for matching the artifact in source_dir AND target_dir.
+#                    Defaults to `<name>-*.jar`. Override for unversioned files
+#                    or non-jar artifacts (e.g. "key-to-necklace.zip", "*.zip").
+#
+# Before each build, the tool checks source_dir; if a newer version is there,
+# replaces the artifact in the instance in-place. Versionless filenames fall
+# back to byte-compare (replace iff source bytes differ from target bytes).
 # [[custom_mods]]
 # name = "trmt"
-# source_dir = "../Custom Mods/trmt-neoforge-1.21.1/build/libs"
-# target_dir = "mods"  # default; can override for non-standard locations
+# source_dir = "../Custom Mods/dist/trmt-neoforge-1.21.1"
+# [[custom_mods]]
+# name = "key-to-necklace"
+# source_dir = "../Custom Mods/dist/key-to-necklace"
+# source_pattern = "key-to-necklace.zip"
+# target_dir = "moonlight-global-datapacks"
