@@ -46,11 +46,15 @@ extra_ignore = [
     "shaderpacks/*/**",
     # FTB Essentials + FTB Library are on Modrinth's content-rules deny list
     # regardless of permission; we ship deer-diary-commands instead. Locally
-    # they still load fine — only the published pack omits them.
+    # they're deleted — these jar patterns are kept defensively in case the
+    # jars come back later (e.g. accidentally reinstalled).
     "mods/ftb-essentials-*.jar",
     "mods/ftb-library-*.jar",
-    "config/ftbessentials*",
-    "defaultconfigs/ftbessentials*",
+    # Broad config sweep: any FTB-prefixed config (ftbessentials, ftblibrary,
+    # etc.) — these are leftover from the deleted mods and ship as dead weight
+    # without their parent jar.
+    "config/ftb*",
+    "defaultconfigs/ftb*",
 ]
 
 # Allowlist: paths to include even if they match an ignore pattern. Use for
