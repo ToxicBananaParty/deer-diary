@@ -1,6 +1,7 @@
 package milkucha.ddc;
 
 import milkucha.ddc.command.DDCCommands;
+import milkucha.ddc.command.invsee.PlayerInventoryView;
 import milkucha.ddc.config.DDCConfig;
 import milkucha.ddc.state.MuteState;
 import net.minecraft.network.chat.Component;
@@ -9,6 +10,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.ServerChatEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import org.slf4j.Logger;
@@ -25,7 +28,21 @@ public class DeerDiaryCommands {
         NeoForge.EVENT_BUS.addListener(DeerDiaryCommands::onServerStarted);
         NeoForge.EVENT_BUS.addListener(DeerDiaryCommands::onServerStopped);
         NeoForge.EVENT_BUS.addListener(DeerDiaryCommands::onServerChat);
+        NeoForge.EVENT_BUS.addListener(DeerDiaryCommands::onPlayerLoggedOut);
+        NeoForge.EVENT_BUS.addListener(DeerDiaryCommands::onContainerClose);
         LOGGER.info("[DDC] Initialized.");
+    }
+
+    private static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) {
+            PlayerInventoryView.onTargetLoggedOut(p.getUUID());
+        }
+    }
+
+    private static void onContainerClose(PlayerContainerEvent.Close event) {
+        if (event.getEntity() instanceof ServerPlayer p) {
+            PlayerInventoryView.onViewerClosedAnyContainer(p);
+        }
     }
 
     private static void onServerStarted(ServerStartedEvent event) {
