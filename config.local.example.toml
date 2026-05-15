@@ -1,0 +1,6 @@
+# Copy to config.local.toml (gitignored). Values here override config.toml.
+# The PAT can also come from the MODRINTH_PAT environment variable, which takes
+# precedence over anything set here.
+
+# project_id = "your-modrinth-slug-or-id"
+# modrinth_pat = "mrp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"

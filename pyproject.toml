@@ -1,0 +1,18 @@
+[project]
+name = "prism-to-modrinth-sync"
+version = "0.1.0"
+description = "Publish a Prism Launcher Minecraft instance as a Modrinth modpack."
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+]
+
+[project.scripts]
+sync = "prism_sync.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
