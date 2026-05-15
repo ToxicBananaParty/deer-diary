@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import shlex
 import subprocess
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -8,15 +10,28 @@ from typing import Iterable, Sequence
 
 log = logging.getLogger(__name__)
 
+GIT_CMD_ENV_VAR = "PRISM_SYNC_GIT_CMD"
+
 
 class GitError(RuntimeError):
     pass
 
 
+def _git_cmd() -> list[str]:
+    """The base git invocation, overridable via `PRISM_SYNC_GIT_CMD`.
+
+    Set to e.g. `wsl git` on Windows to route through WSL's git, which is
+    handy when identity + SSH are configured there but not on Windows.
+    """
+    raw = os.environ.get(GIT_CMD_ENV_VAR, "git").strip()
+    return shlex.split(raw) if raw else ["git"]
+
+
 def _run(args: Sequence[str], cwd: Path, check: bool = True) -> subprocess.CompletedProcess:
-    log.debug("git %s", " ".join(args))
+    cmd = _git_cmd() + list(args)
+    log.debug("running: %s (cwd=%s)", " ".join(cmd), cwd)
     result = subprocess.run(
-        ["git", *args],
+        cmd,
         cwd=str(cwd),
         capture_output=True,
         text=True,
@@ -24,7 +39,7 @@ def _run(args: Sequence[str], cwd: Path, check: bool = True) -> subprocess.Compl
     )
     if check and result.returncode != 0:
         raise GitError(
-            f"git {' '.join(args)} failed (exit {result.returncode}):\n"
+            f"{' '.join(cmd)} failed (exit {result.returncode}):\n"
             f"{result.stderr.strip() or result.stdout.strip()}"
         )
     return result
