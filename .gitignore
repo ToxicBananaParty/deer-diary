@@ -55,6 +55,14 @@ Custom Mods/src/*/AGENTS.md
 Custom Mods/src/*/CLAUDE.md
 Custom Mods/src/*/LEARNINGS.md
 
+# --- External mod sources kept locally as reference, not redistributed ---
+# (FTB Essentials + Library, used only as architectural reference when
+# implementing deer-diary-commands. Their LICENSE files in our local copies
+# are GitHub's unfilled MIT template; upstream's intended LICENSE.md says
+# All Rights Reserved. Out of caution we don't republish them.)
+Custom Mods/src/FTB-Essentials-*/
+Custom Mods/src/FTB-Library-*/
+
 # --- OS noise ---
 .DS_Store
 Thumbs.db

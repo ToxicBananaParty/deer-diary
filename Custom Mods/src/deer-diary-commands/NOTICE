@@ -1,0 +1,23 @@
+Deer Diary Commands
+===================
+
+This project provides a subset of Minecraft server-command functionality
+(`/extinguish`, `/god`, `/invsee`, `/mute`, `/tp_offline`, `/kickme`,
+`/leaderboard`, `/near`, `/rec`, `/jump`, `/rtp`, `/tpl`, `/tpx`) for the
+Deer Diary modpack. It is a fresh implementation under the MIT License.
+
+Inspiration and Attribution
+---------------------------
+
+The command set, configuration shape, and architectural patterns used in
+this project are inspired by FTB Essentials by FTB Team
+(https://github.com/FTBTeam/FTB-Essentials), distributed under the MIT
+License per its LICENSE file. Where this project's behavior mirrors FTB
+Essentials, that mirroring is intentional and acknowledged here.
+
+This project does not redistribute FTB Essentials' compiled artifacts,
+mod IDs, namespaces, or assets. Implementation code in this repository
+was written for this project; FTB Essentials' source was consulted as a
+behavioral reference.
+
+No affiliation with FTB Team is implied.

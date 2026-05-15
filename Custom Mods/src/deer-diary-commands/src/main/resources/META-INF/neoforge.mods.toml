@@ -1,0 +1,25 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version}"
+license = "MIT"
+
+[[mods]]
+    modId = "${mod_id}"
+    version = "${version}"
+    displayName = "Deer Diary Commands"
+    description = "Server command toolkit for the Deer Diary modpack. Provides /extinguish, /god, /invsee, /mute, /tp_offline, /kickme, /leaderboard, /near, /rec, /jump, /rtp, /tpl, /tpx. Inspired by FTB Essentials (MIT)."
+    authors = "Ryan"
+    credits = "Architecture and command set inspired by FTB Essentials by FTB Team (MIT)."
+
+[[dependencies.${mod_id}]]
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[${neoforge_version},)"
+    ordering = "NONE"
+    side = "BOTH"
+
+[[dependencies.${mod_id}]]
+    modId = "minecraft"
+    type = "required"
+    versionRange = "[${minecraft_version},1.21.2)"
+    ordering = "NONE"
+    side = "BOTH"
