@@ -1,6 +1,7 @@
 package milkucha.ddc.util;
 
 import milkucha.ddc.DeerDiaryCommands;
+import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.FloatTag;
@@ -14,6 +15,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,7 +83,17 @@ public final class PlayerDataIO {
 
             tag.putString("Dimension", snap.dimension().location().toString());
 
-            NbtIo.writeCompressed(tag, path);
+            // Atomic-ish write: stage as a sibling temp file, then move-with-backup.
+            // Crash mid-write leaves the original .dat untouched.
+            Path playerDir = path.getParent();
+            Path tempFile = File.createTempFile(id + "-", ".dat", playerDir.toFile()).toPath();
+            try {
+                NbtIo.writeCompressed(tag, tempFile);
+                Path backupFile = playerDir.resolve(id + ".dat_old");
+                Util.safeReplaceFile(path, tempFile, backupFile);
+            } finally {
+                Files.deleteIfExists(tempFile);
+            }
             return true;
         } catch (IOException e) {
             DeerDiaryCommands.LOGGER.error("[DDC] Failed to write offline player data {}", path, e);

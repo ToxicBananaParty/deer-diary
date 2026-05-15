@@ -5,56 +5,68 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
- * /rec start | stop — announce that the caller has started or stopped
- * recording/streaming. Per-session in-memory state; intentionally not persisted
- * across server restarts.
+ * `/recording` and `/streaming` — toggle a player's broadcast indicator that
+ * they are currently recording or streaming. Admins can toggle other players
+ * by passing a player argument. Per-session in-memory state; intentionally
+ * not persisted across restarts (matches FTB's "transient status" intent).
  */
 public final class RecCommand {
     private RecCommand() {}
 
-    private static final Set<UUID> RECORDING = new HashSet<>();
+    public enum Mode { RECORDING, STREAMING }
+
+    private static final Map<UUID, Mode> STATUS = new HashMap<>();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("rec")
-            .executes(ctx -> toggle(ctx.getSource()))
-            .then(Commands.literal("start").executes(ctx -> set(ctx.getSource(), true)))
-            .then(Commands.literal("stop").executes(ctx -> set(ctx.getSource(), false))));
+        dispatcher.register(Commands.literal("recording")
+            .executes(ctx -> toggle(ctx.getSource(), ctx.getSource().getPlayerOrException(), Mode.RECORDING))
+            .then(Commands.argument("player", EntityArgument.player())
+                .requires(src -> src.hasPermission(2))
+                .executes(ctx -> toggle(ctx.getSource(),
+                    EntityArgument.getPlayer(ctx, "player"), Mode.RECORDING))));
+
+        dispatcher.register(Commands.literal("streaming")
+            .executes(ctx -> toggle(ctx.getSource(), ctx.getSource().getPlayerOrException(), Mode.STREAMING))
+            .then(Commands.argument("player", EntityArgument.player())
+                .requires(src -> src.hasPermission(2))
+                .executes(ctx -> toggle(ctx.getSource(),
+                    EntityArgument.getPlayer(ctx, "player"), Mode.STREAMING))));
     }
 
-    private static int toggle(CommandSourceStack src) throws CommandSyntaxException {
-        ServerPlayer player = src.getPlayerOrException();
-        return set(src, !RECORDING.contains(player.getUUID()));
-    }
-
-    private static int set(CommandSourceStack src, boolean recording) throws CommandSyntaxException {
-        ServerPlayer player = src.getPlayerOrException();
+    private static int toggle(CommandSourceStack src, ServerPlayer player, Mode mode) throws CommandSyntaxException {
         UUID id = player.getUUID();
-        boolean wasRecording = RECORDING.contains(id);
-        if (recording == wasRecording) {
-            src.sendSuccess(() -> Component.literal(
-                "You are already " + (recording ? "recording" : "not recording") + ".")
-                .withStyle(ChatFormatting.GRAY), false);
-            return 0;
+        Mode current = STATUS.get(id);
+        boolean nowOn = current != mode;
+
+        if (nowOn) {
+            STATUS.put(id, mode);
+        } else {
+            STATUS.remove(id);
         }
 
-        if (recording) {
-            RECORDING.add(id);
-        } else {
-            RECORDING.remove(id);
-        }
         String name = player.getGameProfile().getName();
-        Component announce = Component.literal(
-                name + " is " + (recording ? "now recording / streaming." : "no longer recording / streaming."))
-            .withStyle(recording ? ChatFormatting.AQUA : ChatFormatting.GRAY);
+        String verb = switch (mode) {
+            case RECORDING -> nowOn ? "is now recording." : "stopped recording.";
+            case STREAMING -> nowOn ? "is now streaming." : "stopped streaming.";
+        };
+        Component announce = Component.literal(name + " " + verb)
+            .withStyle(nowOn ? ChatFormatting.AQUA : ChatFormatting.GRAY);
         src.getServer().getPlayerList().broadcastSystemMessage(announce, false);
         return 1;
+    }
+
+    /** Useful for external display-name decorators. */
+    public static Mode statusFor(UUID id) {
+        return STATUS.get(id);
     }
 }

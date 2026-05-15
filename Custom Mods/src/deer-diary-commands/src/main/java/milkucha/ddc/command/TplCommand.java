@@ -24,7 +24,7 @@ public final class TplCommand {
     private TplCommand() {}
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("tpl")
+        var node = dispatcher.register(Commands.literal("teleport_last")
             .requires(src -> src.hasPermission(2))
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests((ctx, builder) -> {
@@ -32,6 +32,10 @@ public final class TplCommand {
                     return builder.buildFuture();
                 })
                 .executes(ctx -> run(ctx.getSource(), StringArgumentType.getString(ctx, "player")))));
+        // Short alias.
+        dispatcher.register(Commands.literal("tpl")
+            .requires(src -> src.hasPermission(2))
+            .redirect(node));
     }
 
     private static int run(CommandSourceStack src, String targetName) throws CommandSyntaxException {

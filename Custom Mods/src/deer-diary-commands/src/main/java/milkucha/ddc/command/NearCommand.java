@@ -6,8 +6,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Comparator;
@@ -16,39 +16,51 @@ import java.util.List;
 public final class NearCommand {
     private NearCommand() {}
 
-    private static final int DEFAULT_RADIUS = 100;
-    private static final int MAX_RADIUS = 5000;
+    private static final int DEFAULT_RADIUS = 200;
+    private static final int MAX_RADIUS = 30_000;
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("near")
-            .executes(ctx -> run(ctx.getSource(), DEFAULT_RADIUS))
+            .requires(src -> src.hasPermission(2))
+            .executes(ctx -> run(ctx.getSource(), ctx.getSource().getPlayerOrException(), DEFAULT_RADIUS))
             .then(Commands.argument("radius", IntegerArgumentType.integer(1, MAX_RADIUS))
-                .executes(ctx -> run(ctx.getSource(), IntegerArgumentType.getInteger(ctx, "radius")))));
+                .executes(ctx -> run(ctx.getSource(),
+                    ctx.getSource().getPlayerOrException(),
+                    IntegerArgumentType.getInteger(ctx, "radius"))))
+            .then(Commands.argument("player", EntityArgument.player())
+                .executes(ctx -> run(ctx.getSource(),
+                    EntityArgument.getPlayer(ctx, "player"), DEFAULT_RADIUS))
+                .then(Commands.argument("radius", IntegerArgumentType.integer(1, MAX_RADIUS))
+                    .executes(ctx -> run(ctx.getSource(),
+                        EntityArgument.getPlayer(ctx, "player"),
+                        IntegerArgumentType.getInteger(ctx, "radius"))))));
     }
 
-    private static int run(CommandSourceStack src, int radius) throws CommandSyntaxException {
-        ServerPlayer caller = src.getPlayerOrException();
+    private static int run(CommandSourceStack src, ServerPlayer pivot, int radius) {
         double r2 = (double) radius * radius;
 
-        List<ServerPlayer> nearby = caller.serverLevel().players().stream()
-            .filter(p -> p != caller)
-            .filter(p -> p.distanceToSqr(caller) <= r2)
-            .sorted(Comparator.comparingDouble(p -> p.distanceToSqr(caller)))
+        List<ServerPlayer> nearby = pivot.serverLevel().players().stream()
+            .filter(p -> p != pivot)
+            .filter(p -> p.distanceToSqr(pivot) <= r2)
+            .sorted(Comparator.comparingDouble(p -> p.distanceToSqr(pivot)))
             .toList();
 
+        String pivotName = pivot.getGameProfile().getName();
         if (nearby.isEmpty()) {
-            src.sendSuccess(() -> Component.literal("No other players within " + radius + " blocks.")
+            src.sendSuccess(() -> Component.literal(
+                "No other players within " + radius + " blocks of " + pivotName + ".")
                 .withStyle(ChatFormatting.GRAY), false);
             return 0;
         }
 
-        MutableComponent header = Component.literal("Players within " + radius + " blocks:")
-            .withStyle(ChatFormatting.YELLOW);
-        src.sendSuccess(() -> header, false);
+        src.sendSuccess(() -> Component.literal(
+            nearby.size() + " player(s) within " + radius + " blocks of " + pivotName + ":")
+            .withStyle(ChatFormatting.YELLOW), false);
         for (ServerPlayer p : nearby) {
-            int dist = (int) Math.round(Math.sqrt(p.distanceToSqr(caller)));
             String name = p.getGameProfile().getName();
-            src.sendSuccess(() -> Component.literal("  " + name + " — " + dist + " blocks")
+            double dist = Math.sqrt(p.distanceToSqr(pivot));
+            src.sendSuccess(() -> Component.literal(
+                    String.format("  %s — %.2fm", name, dist))
                 .withStyle(ChatFormatting.GRAY), false);
         }
         return nearby.size();

@@ -36,21 +36,28 @@ public final class JumpCommand {
             return 0;
         }
 
-        // Land on top of the hit block, biased one block above the face the ray hit.
-        Vec3 dest = hit.getLocation();
-        if (hit.getDirection().getStepY() == 0) {
-            // Side-face hit: stand on top of the block we ran into.
-            dest = Vec3.atBottomCenterOf(hit.getBlockPos().above());
-        } else if (hit.getDirection().getStepY() < 0) {
-            // Ceiling hit: stand on top of the block below the ray endpoint.
-            dest = Vec3.atBottomCenterOf(hit.getBlockPos());
+        // Start one block above the hit block, then scan up until we find two
+        // empty blocks stacked (room for the player). Prevents jumping into a
+        // wall when the ray hits a vertical face of a tall structure.
+        var level = player.serverLevel();
+        var mPos = hit.getBlockPos().above().mutable();
+        int maxY = level.getMaxBuildHeight();
+        while (mPos.getY() < maxY) {
+            boolean feet = isEmpty(level, mPos);
+            boolean head = isEmpty(level, mPos.above());
+            if (feet && head) break;
+            mPos.move(net.minecraft.core.Direction.UP);
         }
 
+        Vec3 dest = Vec3.atBottomCenterOf(mPos);
         player.teleportTo(dest.x, dest.y, dest.z);
         player.connection.resetPosition();
-        final Vec3 finalDest = dest;
         src.sendSuccess(() -> Component.literal(String.format(
-            "Jumped to %.1f, %.1f, %.1f.", finalDest.x, finalDest.y, finalDest.z)), false);
+            "Jumped to %.1f, %.1f, %.1f.", dest.x, dest.y, dest.z)), false);
         return 1;
+    }
+
+    private static boolean isEmpty(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos pos) {
+        return level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
     }
 }
