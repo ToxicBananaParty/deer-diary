@@ -1,0 +1,94 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '0.1.96'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+    withSourcesJar()
+}
+
+neoForge {
+    version = project.neoforge_version
+
+    parchment {
+        minecraftVersion = project.parchment_minecraft_version
+        mappingsVersion = project.parchment_mappings_version
+    }
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+    }
+
+    mods {
+        trmt {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+repositories {
+    // Modrinth maven — used for the Jade soft-compat dep below.
+    // Format docs: https://docs.modrinth.com/api/operations/getversion/
+    maven {
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
+    }
+}
+
+dependencies {
+    // Jade tooltip integration — compileOnly so the mod loads fine without Jade at runtime.
+    // If gradle can't resolve this, check the latest version string at:
+    //   https://modrinth.com/mod/jade/versions
+    // and replace 15.10.5+neoforge with whatever matches the file you have.
+    compileOnly "maven.modrinth:jade:15.10.5+neoforge"
+}
+
+processResources {
+    var replaceProperties = [
+        version          : version,
+        neoforge_version : project.neoforge_version,
+        loader_version   : project.hasProperty('loader_version') ? project.loader_version : '[4,)',
+        minecraft_version: project.minecraft_version,
+        mod_id           : project.mod_id,
+    ]
+    inputs.properties(replaceProperties)
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+jar {
+    inputs.property "projectName", project.name
+    from("LICENSE") {
+        rename { "${it}_${project.name}" }
+    }
+}
+
+// Mirror just the main jar (not the sources jar) into the sibling dist folder
+// so the user can grab it from one stable place across builds.
+tasks.register('copyJarToDist', Copy) {
+    dependsOn jar
+    from jar.archiveFile
+    into rootProject.file('../dist/trmt-neoforge-1.21.1')
+}
+build.finalizedBy(copyJarToDist)
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+    }
+}

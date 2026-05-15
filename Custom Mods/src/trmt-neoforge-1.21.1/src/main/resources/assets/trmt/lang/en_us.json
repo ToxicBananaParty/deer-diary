@@ -1,0 +1,17 @@
+{
+  "fmlModId.trmt": "The Roads More Travelled",
+  "modmenu.nameTranslation.trmt": "The Roads More Travelled",
+  "effect.trmt.lightness": "Lightness",
+  "block.trmt.eroded_dirt": "Eroded Dirt",
+  "block.trmt.eroded_coarse_dirt": "Eroded Coarse Dirt",
+  "block.trmt.eroded_grass_block": "Eroded Grass Block",
+  "block.trmt.eroded_sand": "Eroded Sand",
+  "block.trmt.eroded_dirt_path": "Dirt Path",
+  "item.minecraft.potion.effect.trmt.lightness": "Potion of Lightness",
+  "item.minecraft.splash_potion.effect.trmt.lightness": "Splash Potion of Lightness",
+  "item.minecraft.lingering_potion.effect.trmt.lightness": "Lingering Potion of Lightness",
+  "item.minecraft.potion.effect.trmt.long_lightness": "Long Potion of Lightness",
+  "item.minecraft.splash_potion.effect.trmt.long_lightness": "Splash Long Potion of Lightness",
+  "item.minecraft.lingering_potion.effect.trmt.long_lightness": "Lingering Long Potion of Lightness",
+  "item.minecraft.tipped_arrow.effect.trmt.long_lightness": "Arrow of Lightness"
+}

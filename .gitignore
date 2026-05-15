@@ -1,20 +1,60 @@
+# =============================================================================
+# Workspace root .gitignore — MC Stuff
+# Per-subproject .gitignores (e.g. prism-to-modrinth-sync/.gitignore,
+# Custom Mods/src/trmt-neoforge-1.21.1/.gitignore) layer on top of this.
+# =============================================================================
+
+# --- Prism instance symlink (huge, lives outside the workspace) ---
+/Deer Diary
+
+# --- Python: prism-to-modrinth-sync tool ---
 __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
 venv/
-dist/
-build/
 
-# Secrets — never commit
-config.local.toml
+# --- prism-to-modrinth-sync transient outputs ---
+prism-to-modrinth-sync/dist/
+prism-to-modrinth-sync/build/
+prism-to-modrinth-sync/.cache/
+prism-to-modrinth-sync/*.mrpack
 
-# Modrinth PAT and any other env-style secrets
+# --- Secrets — never commit ---
+prism-to-modrinth-sync/config.local.toml
 .env
 
-# Built mrpacks — rebuilt from the instance, hosted on Modrinth
-*.mrpack
+# --- prism-to-modrinth-sync one-off diagnostics ---
+prism-to-modrinth-sync/diagnose.py
+prism-to-modrinth-sync/promote.py
 
-# One-off diagnostic scripts that may contain experimental code
-diagnose.py
-promote.py
+# --- Gradle / Java build cruft inside Custom Mods/src/* ---
+Custom Mods/src/*/build/
+Custom Mods/src/*/.gradle/
+Custom Mods/src/*/bin/
+Custom Mods/src/*/out/
+Custom Mods/src/*/classes/
+Custom Mods/src/*/run/
+Custom Mods/src/*/.idea/
+Custom Mods/src/*/.vscode/
+Custom Mods/src/*/.settings/
+Custom Mods/src/*/*.iml
+Custom Mods/src/*/*.ipr
+Custom Mods/src/*/*.iws
+Custom Mods/src/*/.classpath
+Custom Mods/src/*/.project
+Custom Mods/src/*/hs_err_*.log
+Custom Mods/src/*/replay_*.log
+Custom Mods/src/*/*.hprof
+Custom Mods/src/*/*.jfr
+
+# --- Dev/agent files inside Custom Mods/src/* ---
+Custom Mods/src/*/.claude/
+Custom Mods/src/*/.cursor/
+Custom Mods/src/*/AGENTS.md
+Custom Mods/src/*/CLAUDE.md
+Custom Mods/src/*/LEARNINGS.md
+
+# --- OS noise ---
+.DS_Store
+Thumbs.db

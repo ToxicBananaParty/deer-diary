@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# Secrets — never commit
+config.local.toml
+
+# Modrinth PAT and any other env-style secrets
+.env
+
+# Built mrpacks — rebuilt from the instance, hosted on Modrinth
+*.mrpack
+
+# One-off diagnostic scripts that may contain experimental code
+diagnose.py
+promote.py
