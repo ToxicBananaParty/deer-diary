@@ -19,6 +19,7 @@ public final class DDCCommands {
         MuteCommand.register(d);
         NearCommand.register(d);
         RecCommand.register(d);
+        RepairCommand.register(d);
         RtpCommand.register(d);
         TpOfflineCommand.register(d);
         TplCommand.register(d);

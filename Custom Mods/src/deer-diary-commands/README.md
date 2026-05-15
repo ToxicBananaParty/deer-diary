@@ -6,9 +6,11 @@ FTB Essentials.
 
 ## Commands
 
-Admin: `/extinguish`, `/god`, `/invsee`, `/mute`, `/tp_offline`
-Misc: `/kickme`, `/leaderboard`, `/near`, `/rec`
-Teleport: `/jump`, `/rtp`, `/tpl`, `/tpx`
+Admin: `/extinguish`, `/god`, `/invsee`, `/mute` (+ `/unmute`, `/muted`),
+`/repair`, `/tp_offline` (+ `/tpo`)
+Misc: `/kickme`, `/leaderboard <stat>`, `/near [player] [radius]`,
+`/recording`, `/streaming`
+Teleport: `/jump`, `/rtp`, `/teleport_last` (+ `/tpl`), `/tpx`
 
 ## Build
 
