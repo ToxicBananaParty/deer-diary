@@ -6,7 +6,7 @@ license = "MIT"
     modId = "${mod_id}"
     version = "${version}"
     displayName = "Deer Diary Commands"
-    description = "Server command toolkit for the Deer Diary modpack. Provides /extinguish, /god, /invsee, /mute, /tp_offline, /kickme, /leaderboard, /near, /rec, /jump, /rtp, /tpl, /tpx. Inspired by FTB Essentials (MIT)."
+    description = "Server command toolkit for the Deer Diary modpack. Provides /extinguish, /god, /invsee, /mute (+/unmute /muted), /repair, /tp_offline (+/tpo), /kickme, /leaderboard, /near, /recording, /streaming, /jump, /rtp, /teleport_last (+/tpl), /tpx. Inspired by FTB Essentials (MIT)."
     authors = "Ryan"
     credits = "Architecture and command set inspired by FTB Essentials by FTB Team (MIT)."
 
