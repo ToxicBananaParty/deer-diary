@@ -14,10 +14,11 @@ from .changelog import (
     render_file_entry,
 )
 from .config import Config, ConfigError, load_config
+from .customs import print_summary as print_custom_summary, sync_custom_mods
 from .diff import PackDiff, diff_fingerprints
 from . import gitutil
 from .gitutil import GitError
-from .instance import InstanceError
+from .instance import InstanceError, read_instance
 from .mrpack import BuildResult, build_mrpack, fingerprint_from_mrpack
 from .publish import format_dry_run, make_payload, next_available_version_number, post_version
 from .remote import download_mrpack, latest_version
@@ -41,6 +42,17 @@ def _setup_logging(verbose: bool) -> None:
 def _default_output_path(config_dir: Path, name: str, version: str) -> Path:
     safe = name.replace("/", "_").replace("\\", "_").strip() or "modpack"
     return config_dir / "dist" / f"{safe}-{version}.mrpack"
+
+
+def _run_custom_mod_sync(config: Config) -> None:
+    """Refresh any [[custom_mods]] in the instance before building."""
+    if not config.custom_mods:
+        return
+    instance = read_instance(config.instance_path)
+    result = sync_custom_mods(config.custom_mods, instance, config.config_dir)
+    print_custom_summary(result)
+    if result.warnings:
+        print()
 
 
 def _print_build_summary(result: BuildResult) -> None:
@@ -79,6 +91,7 @@ def _print_build_summary(result: BuildResult) -> None:
 
 def cmd_build(args: argparse.Namespace) -> int:
     config = load_config(args.config_dir)
+    _run_custom_mod_sync(config)
     version = args.version or _today_version()
     out = (
         Path(args.out).resolve()
@@ -140,6 +153,7 @@ def _print_diff(diff, previous_version: str | None) -> None:
 
 def cmd_check(args: argparse.Namespace) -> int:
     config = load_config(args.config_dir)
+    _run_custom_mod_sync(config)
     version = args.version or _today_version()
     out = (
         Path(args.out).resolve()
@@ -173,6 +187,7 @@ def cmd_check(args: argparse.Namespace) -> int:
 
 def cmd_publish(args: argparse.Namespace) -> int:
     config = load_config(args.config_dir)
+    _run_custom_mod_sync(config)
     project_id = config.require_project_id()
 
     state = load_state(config.state_file)

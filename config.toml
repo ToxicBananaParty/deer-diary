@@ -54,3 +54,8 @@ optional_files = [
     # Alt-renderer for consumers without a beefy enough GPU for Iris+Colorwheel.
     "mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.disabled",
 ]
+
+# Locally-built mods. Refreshed in-place before each pack build.
+[[custom_mods]]
+name = "trmt"
+source_dir = "../Custom Mods/trmt-neoforge-1.21.1/build/libs"

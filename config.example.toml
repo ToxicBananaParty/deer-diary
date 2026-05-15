@@ -54,3 +54,12 @@ optional_files = [
     # Example: ship a disabled alt-renderer mod for consumers on weaker GPUs.
     # "mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.disabled",
 ]
+
+# Mods you build yourself locally. Each entry: a `name` (also the filename
+# prefix), and a `source_dir` (where Gradle drops `<name>-*.jar`). Before each
+# build, the tool checks the source dir and, if a newer version is there,
+# replaces the jar in the instance's mods/ folder.
+# [[custom_mods]]
+# name = "trmt"
+# source_dir = "../Custom Mods/trmt-neoforge-1.21.1/build/libs"
+# target_dir = "mods"  # default; can override for non-standard locations

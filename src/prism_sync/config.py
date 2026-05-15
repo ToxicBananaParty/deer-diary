@@ -5,6 +5,8 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .customs import CustomModConfig
+
 
 PAT_ENV_VAR = "MODRINTH_PAT"
 
@@ -20,6 +22,7 @@ class Config:
     include_paths: list[str]
     extra_ignore: list[str]
     optional_files: list[str]
+    custom_mods: list[CustomModConfig]
     modrinth_pat: str | None
 
     @property
@@ -80,6 +83,26 @@ def load_config(config_dir: Path | None = None) -> Config:
 
     pat = os.environ.get(PAT_ENV_VAR) or merged.get("modrinth_pat") or None
 
+    custom_mods: list[CustomModConfig] = []
+    for entry in merged.get("custom_mods", []) or []:
+        if not isinstance(entry, dict):
+            raise ConfigError(
+                f"[[custom_mods]] entries must be tables; got: {entry!r}"
+            )
+        name = entry.get("name")
+        source_dir = entry.get("source_dir")
+        if not name or not source_dir:
+            raise ConfigError(
+                "Each [[custom_mods]] entry needs `name` and `source_dir`."
+            )
+        custom_mods.append(
+            CustomModConfig(
+                name=name,
+                source_dir=Path(source_dir),
+                target_dir=entry.get("target_dir", "mods"),
+            )
+        )
+
     return Config(
         config_dir=config_dir,
         instance_path=instance_path,
@@ -90,5 +113,6 @@ def load_config(config_dir: Path | None = None) -> Config:
         include_paths=list(merged.get("include_paths", [])),
         extra_ignore=list(merged.get("extra_ignore", [])),
         optional_files=list(merged.get("optional_files", [])),
+        custom_mods=custom_mods,
         modrinth_pat=pat,
     )
