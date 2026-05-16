@@ -163,7 +163,11 @@ def build_mrpack(
     optional = IgnoreMatcher(config.optional_files) if config.optional_files else None
 
     files = walk_pack_files(
-        instance.minecraft_dir, config.include_paths, ignore, optional=optional
+        instance.minecraft_dir,
+        config.include_paths,
+        ignore,
+        optional=optional,
+        include_files=config.include_files,
     )
     pw_index = _read_pw_toml_indexes(instance.minecraft_dir, config.include_paths)
 

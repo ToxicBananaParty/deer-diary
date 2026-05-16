@@ -235,9 +235,16 @@ def build_packwiz(
     ignore = IgnoreMatcher(ignore_patterns)
     optional = IgnoreMatcher(config.optional_files) if config.optional_files else None
     self_host = _SelfHostMatcher(packwiz.self_host_allowed_globs)
+    preserve = (
+        IgnoreMatcher(packwiz.preserve_globs) if packwiz.preserve_globs else None
+    )
 
     files = walk_pack_files(
-        instance.minecraft_dir, config.include_paths, ignore, optional=optional
+        instance.minecraft_dir,
+        config.include_paths,
+        ignore,
+        optional=optional,
+        include_files=config.include_files,
     )
     pw_index = read_pw_toml_indexes(instance.minecraft_dir, config.include_paths)
 
@@ -311,10 +318,20 @@ def build_packwiz(
             errors.append(rel)
             continue
 
-        # 5. Non-mod direct file (config, resourcepack, shader zip, datapack).
+        # 5. Non-mod direct file (config, resourcepack, shader zip, datapack,
+        #    or a top-level user-data file like servers.dat). preserve=true
+        #    leaves player-local edits intact across updates; we only set it
+        #    here, not in the mod-jar / metafile branches, because mods must
+        #    stay in lockstep with the pack.
         _copy_direct(entry.absolute_path, tmp_dir / rel)
         hashes = hash_file(tmp_dir / rel)
-        direct_entries.append(IndexFile(file=rel, hash=hashes.sha256))
+        direct_entries.append(
+            IndexFile(
+                file=rel,
+                hash=hashes.sha256,
+                preserve=preserve is not None and preserve.matches(rel),
+            )
+        )
         fingerprint[rel] = hashes.sha512
 
     if errors:

@@ -204,6 +204,7 @@ def walk_pack_files(
     include_paths: Iterable[str],
     ignore: IgnoreMatcher,
     optional: IgnoreMatcher | None = None,
+    include_files: Iterable[str] = (),
 ) -> list[FileEntry]:
     """Walk include_paths under minecraft_dir, applying ignore patterns.
 
@@ -215,6 +216,10 @@ def walk_pack_files(
     `ignore` would otherwise reject them, and the returned `FileEntry.optional`
     flag is set so the builder can ship them in `overrides/` for user toggling.
     The hardcoded `_is_skipped_by_default` paths are never overrideable.
+
+    `include_files` is a list of individual minecraft-rooted file paths to
+    include alongside the directory walks (e.g. ``"servers.dat"``,
+    ``"options.txt"``). They share the same ignore/optional treatment.
     """
     results: list[FileEntry] = []
     for sub in include_paths:
@@ -238,4 +243,24 @@ def walk_pack_files(
                     optional=is_optional,
                 )
             )
+
+    for file_rel in include_files:
+        rel_to_mc = file_rel.replace("\\", "/").lstrip("/")
+        path = minecraft_dir / rel_to_mc
+        if not path.is_file():
+            continue
+        if _is_skipped_by_default(rel_to_mc):
+            continue
+        ignored = ignore.matches(rel_to_mc)
+        is_optional = optional is not None and optional.matches(rel_to_mc)
+        if ignored and not is_optional:
+            continue
+        results.append(
+            FileEntry(
+                absolute_path=path,
+                relative_to_minecraft=rel_to_mc,
+                optional=is_optional,
+            )
+        )
+
     return results
