@@ -2,6 +2,18 @@
 
 ## 2026.05.16 — 2026-05-16
 
+Changes since `2026.05.16`:
+
+### Removed
+**Config**
+- `config/fabric/indigo-renderer.properties`
+- `config/jei/world/server/Deer_Diary_63e3237b/bookmarks.json`
+- `config/jei/world/server/Deer_Diary_63e3237b/lookupHistory.json`
+- `config/jei/world/server/Minecraft_Server_63e3237b/lookupHistory.json`
+- `config/packetfixer.properties`
+
+## 2026.05.16 — 2026-05-16
+
 Changes since `2026.05.15`:
 
 ### Added

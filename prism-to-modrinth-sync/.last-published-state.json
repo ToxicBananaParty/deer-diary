@@ -56,7 +56,6 @@
     "config/euphoria_patcher/data.json": "b1e400b20b17b74fc19a8f4ed959cc2f6e668772f885ed9c49ee01e436aa7bf46f71c67b73d98375fda28efad2ba6ca924130c85e2bd10c1c8a0a66fe7a691be",
     "config/euphoria_patcher/settings.toml": "815e19e2ebb5ad9ca5c5775d29f59c649d989fc61ca8d783c443bd4c9996b7b6ba053e2e4c449937970befadd4dd223a1ac18f71fd868ec263860708b8631c2b",
     "config/expandeddelight-common.toml": "c4be88507bed73f98ae735a042d4c7877f382949095db2e82465924c22e7b4b91b1f84525e7f3c637c64f91ad08490fdab2495c8ef69a517954bce744763b06b",
-    "config/fabric/indigo-renderer.properties": "1623174e554b5e3a3c3f8c8def5c8d120135598baefaabb16054e3e700d3355b79c947bea2348e46250ad319aaac60d9d6c5babea1fd0d10e30c5ae535ecf444",
     "config/farmersdelight-client-1.toml.bak": "0ed16c548bc978e9da8c655f0580dbfc97fd92a218e448fef0391c9d639f330fec01eca2ab98bd15ee4fcf313b25cd2c72df518b58ad8b7d223e61549a2556ea",
     "config/farmersdelight-client-2.toml.bak": "f6e45fc16fcf3a5262ab56f098dff651f81ada02b876efd0d6466a320b12be2b5f0a24141a6a04086730bfc7523bb4c628f7f55e39644b50d05f4bad86f9f79c",
     "config/farmersdelight-client.toml": "f6e45fc16fcf3a5262ab56f098dff651f81ada02b876efd0d6466a320b12be2b5f0a24141a6a04086730bfc7523bb4c628f7f55e39644b50d05f4bad86f9f79c",
@@ -82,9 +81,6 @@
     "config/jei/jei-debug.ini": "f00bfbf8f8eba6c95070e4261cb984e2f2b81754eccf61c64b496a55d4b05fbaa1543fe08cd1c73b89179e2ad9417759e1b964dbe93a1094c9a0bd35c0cd22f2",
     "config/jei/jei-mod-id-format.ini": "1e9d298c45f25818aabe8b4d77931e51604e078e1b7e5d6224850e2dd4aba3b772b5df0eb16fa1c999a135abcc50d96e81af90a49cb263513b5c1afe38385593",
     "config/jei/recipe-category-sort-order.ini": "cf01bbf95dbc0b9f62f9bc79c99efc72e4b57683c3ef16ecbff22e5a2c27b36d4d70dae3b2abbd15abec0ffb3597eb7f5f1bed00dfa9072daaa3c8e03831042a",
-    "config/jei/world/server/Deer_Diary_63e3237b/bookmarks.json": "a302e30cb3c4d2391f981056582496fa41638a773caa3b24ed73ca005fdaa4276757b3a6a3cad981306c2845d528eb35ba02c726f5c152d98eb9e1a91297bb05",
-    "config/jei/world/server/Deer_Diary_63e3237b/lookupHistory.json": "1235a6893cd4ea8d3415559da44eeb88da812f4b723a98d1a48fed138dbaa29bf001fbc88c140251c6262df1513498f98bf6df1967a15a24840deaf26a94c5e4",
-    "config/jei/world/server/Minecraft_Server_63e3237b/lookupHistory.json": "3cd0ad3b9bcfa3288c5352fa72dcaef3179c9a3c54c0081f54fe54ae2563d94f21228d183429b93bfa49d41cd5648201bcb1ebe1d0958ebfc0e1e14fa91517f8",
     "config/jeresources-common.toml": "304813ae97b694d960d41cbab5c69cb825e4755d1dea427c23ad26161eb86e96e86516fa96a1a8af92c68e6d213fefaf2fb652216ca5c7e7ba324b6adad3b6bf",
     "config/krypton_fnp.yaml": "bbaa47cc67b9fbbdaa0b1751489757d93ec22b49f2213082eed8b468a0d4849971c0c1bc6c695d21bbd9bb69f16fa837d50fa0749d04fc94bee5ae2bee81757a",
     "config/lithium.properties": "7cc1ad34b644be80c01adecf595809874a1d0a86e9b954e4ba39226bb96ec39c8433ce787c7e11280c598a2cf103c00949ea37406abc3e573fb7d28cca1a0573",
@@ -102,7 +98,6 @@
     "config/neoforge-client.toml": "3b2cddc1c8a2b7b8dd29a716d58b998dbd028ddcad35275eeac0a7100540dab4170975d0b420af2e3152cff5b509977fee15eca1decdff2e899c287963efff51",
     "config/neoforge-common.toml": "2f20bd2e5c2aaabe29d9d0d0ada162f91138faaa2a3f5da75023aff16a4fda63af8bc2f7a093cfd6bdc31873a6de8f33a9534f9f8fa31d8c05dc67a89541c7d3",
     "config/notenoughanimations.json": "7b3fff2e3b58d07b0faf6437d2635d87f26d3457943037c6db056699512ca81192e4f61b007084197e6150306b3c3b585ac4e54ff3ad5f9d68d08e8e11f719bb",
-    "config/packetfixer.properties": "bfcb519fd2d8cc7d59d77eecdc23e9003c15a5f108252bfba6c735a0f7f5c694283d8a25e3c3d1b9a3449c5768feff86d04b70bd96b4c14169241dfc9fef253f",
     "config/ponder-client.toml": "b4ddb4e184d57860197d94e3747f79e4d1569f86fc4c149d578f6281bf62732f062d247385f234efd719f9f3b89e53837800eb53ddb8bc2b25ce173f18ab0292",
     "config/realisticbees.json5": "92d1053b64b2320887f25f415d86249ae2f28c87e8fa8f6b4d3d028e9ffb298c4086855a70872fbf555c1356e495c17fa2b31087111e7cbcecc00516d24e3aa3",
     "config/rightclickharvest.json5": "27272cf94fbdf2f805201c2767868805a8770e0db0c1bc626ceda09dafa5dc2b7eb4bcbe794e7309bdb9a84307772a256e06743d549c7155cd65bd947a77d036",
@@ -291,9 +286,9 @@
     "resourcepacks/SPBR-GrassParallax.zip": "2af39c920741b3065d5bde5b9c955f6a9c875592e43a5b15983fe8870060a5e8381cef866201056f58d3699ddeb06c26d3cf1ac5ab6d36e7720e9cddec560ddb",
     "shaderpacks/ComplementaryReimagined_r5.7.1.zip": "840149dd8aff5d5d06d0d5a4ea83d4ea7f72eab3cb2b02de513c1f3eaa6e4627f68d9c0915b86fa37edad73cafd4648f156f373da52810cd34c67d797e0f6aef"
   },
-  "published_at": "2026-05-16T12:21:04Z",
+  "published_at": "2026-05-16T12:23:55Z",
   "notes": {
-    "modrinth_version_id": "ZBn8L8Wn",
+    "modrinth_version_id": "n1tuJIXL",
     "modrinth_status": "listed"
   }
 }
