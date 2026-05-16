@@ -17,7 +17,13 @@ MC Stuff/                          # git repo root
 ├── .gitignore                     # workspace-level — see "Gitignore rules" below
 ├── .gitattributes                 # LF in repo, CRLF on Windows checkout
 ├── CLAUDE.md                      # this file
-├── publish.bat                    # double-click to run `prism_sync publish --push`
+├── publish-all.bat                # double-click: publishes BOTH channels (recommended)
+├── publish-packwiz.bat            # double-click: Packwiz / GH Pages only
+├── publish.bat                    # double-click: Modrinth (.mrpack) only
+│
+├── docs/packwiz/                  # generated Packwiz tree (tracked) served by GH Pages at
+│                                  # https://toxicbananaparty.github.io/deer-diary/packwiz/pack.toml
+├── bootstrap/                     # bootstrap Prism instance + zip (player-facing distribution)
 │
 ├── Deer Diary  (symlink, gitignored)
 │       → C:\Users\Ryan-PC\AppData\Roaming\PrismLauncher\instances\Deer Diary
@@ -48,20 +54,33 @@ MC Stuff/                          # git repo root
 
 ## The one-command release loop
 
-**Easiest:** double-click `publish.bat` in the workspace root. It cd's
-into `prism-to-modrinth-sync/`, runs `prism_sync publish --push`, and
-pauses at the end so the console window stays open whether the run
-succeeds or fails.
+**Easiest:** double-click `publish-all.bat` in the workspace root. It
+publishes both channels in one shot — first **Packwiz/GitHub Pages**
+(reaches bootstrap-instance players within ~1-2 min), then **Modrinth**
+(queued for 3-4 day review). Bails after step 1 with a friendly message
+if the live instance hasn't changed.
 
-From a shell:
+The two single-channel bats are still there if you want them:
+
+- `publish-packwiz.bat` — Packwiz / GH Pages only. Fast.
+- `publish.bat` — Modrinth only. Use rarely (re-listing on Modrinth);
+  most updates flow through Packwiz now.
+
+Both channels share `.last-published-state.json` and `CHANGELOG.md`,
+so the second pipeline in `publish-all.bat` always passes
+`--allow-no-changes` (the state was just updated by the first).
+
+From a shell, the long forms are:
 
 ```
 cd "C:\Users\Ryan-PC\Desktop\MC Stuff\prism-to-modrinth-sync"
 
 # PowerShell:
-.\prism_sync publish --push
+.\prism_sync packwiz-publish --push       # Packwiz only
+.\prism_sync publish --push               # Modrinth only
 
 # CMD:
+prism_sync packwiz-publish --push
 prism_sync publish --push
 ```
 
@@ -69,26 +88,33 @@ prism_sync publish --push
 prism_sync` — no venv activation needed. The old long form still works if
 you'd rather type it.)
 
-What it does, in order:
+What both pipelines do, in order:
 
 1. **Custom-mod sync** — for each `[[custom_mods]]` entry in `config.toml`,
    checks `Custom Mods/dist/{name}/` for a newer build of the mod and copies
    it into the Prism instance's `mods/` folder (or wherever `target_dir` says).
    Falls back to byte-compare for versionless filenames (like the datapack zip).
-2. **Build mrpack** — reads `mmc-pack.json` for MC/loader versions, walks the
-   include paths in `config.toml`, resolves jars to Modrinth CDN URLs via
-   Prism's `.pw.toml` metadata (with hash-lookup fallback), and bundles
-   unresolvable files (configs, custom mods, CurseForge-only jars) into
-   `overrides/`. Output lands in `dist/Deer Diary-<version>.mrpack`.
-3. **Diff** against `.last-published-state.json` and render a markdown changelog
-   grouped by Mods / Config / Shaders / etc.
-4. **Publish to Modrinth** — auto-picks today's date as version (`YYYY.MM.DD`),
-   auto-bumps to `.1`, `.2`, etc. on same-day reissues. Default status is
-   `listed`; add `--draft` to keep it private. The slug-to-canonical-id resolve
-   uses the PAT so unlisted projects work.
-5. **Append changelog** to `CHANGELOG.md`.
-6. **Git commit + push** via WSL (`Release X.Y.Z: +N ~M -K`) and push to
-   `origin main`. Only runs if `--push` is passed.
+2. **Walk + classify the instance** — reads `mmc-pack.json` for MC/loader
+   versions, walks the `include_paths` in `config.toml`, applies `.packignore`
+   and `extra_ignore` (with `optional_files` allowlist), and classifies each
+   file based on whether it has Prism `.pw.toml` metadata.
+3. **Build the artifact** — diverges here:
+   - Modrinth: bundles unresolvable files (configs, custom mods, CurseForge-only
+     jars) into `overrides/`; CDN-references everything that resolved via
+     Prism's `.pw.toml` or a Modrinth hash lookup. Output: `dist/Deer Diary-<version>.mrpack`.
+   - Packwiz: emits `docs/packwiz/{pack.toml, index.toml, mods/, config/, ...}`.
+     Modrinth-backed mods get their `.pw.toml` copied through verbatim (with
+     a `side=''` normalization fix); jars matching `[packwiz.self_host].allowed_globs`
+     ship as direct files; everything else is a direct file too.
+4. **Diff** against `.last-published-state.json` and render a markdown changelog
+   grouped by Mods / Config / Shaders / etc. Both pipelines key the fingerprint
+   by the deliverable's path (e.g. `mods/foo.jar`) so the state is interchangeable.
+5. **Publish** — Modrinth: auto-picks today's date as version (`YYYY.MM.DD`),
+   auto-bumps to `.1`, `.2`, etc. on same-day reissues; POSTs to Modrinth API.
+   Packwiz: just commits the generated tree.
+6. **Append changelog** to `CHANGELOG.md` (with a `(packwiz)` suffix on Packwiz
+   commits so both release tracks remain readable in one file).
+7. **Git commit + push** via WSL. Only runs if `--push` is passed.
 
 Other useful invocations (substitute `.\prism_sync` in PowerShell or
 `prism_sync` in CMD for the shim; long form is `.\.venv\Scripts\python.exe -m
@@ -96,9 +122,11 @@ prism_sync`):
 
 | Goal | Command |
 |---|---|
-| Preview without publishing | `prism_sync check --changelog` |
-| See the API payload, don't POST | `prism_sync publish --dry-run` |
+| Preview a Modrinth publish | `prism_sync check --changelog` |
+| Preview a Packwiz publish | `prism_sync packwiz-check --changelog` |
+| See the Modrinth API payload, don't POST | `prism_sync publish --dry-run` |
 | Build the .mrpack only | `prism_sync build` |
+| Build the Packwiz tree only | `prism_sync packwiz-build` |
 | Override version | `prism_sync publish --version 2026.06.01 --push` |
 | Bootstrap state from live Modrinth | `prism_sync check --from-remote` |
 
