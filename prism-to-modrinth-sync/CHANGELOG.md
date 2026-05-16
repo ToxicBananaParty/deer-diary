@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026.05.16 — 2026-05-16
+
+Changes since `2026.05.15`:
+
+### Added
+**Mods**
+- `mods/functionalstorage-1.21.1-1.5.5.jar`
+- `mods/titanium-1.21-4.0.43.jar`
+
+### Updated
+**Config**
+- `config/fabric/indigo-renderer.properties`
+- `config/packetfixer.properties`
+
 ## 2026.05.15 — 2026-05-15
 
 Changes since `2026.05.15`:
