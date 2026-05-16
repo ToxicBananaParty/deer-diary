@@ -31,8 +31,8 @@ public final class EntityStepHandler {
     /**
      * Records a step on {@code groundPos} and runs the erosion transform if the
      * walked-on count is over threshold. Skips if a protected plant sits above
-     * (sapling/crop/sweet berry/bamboo/sugar cane/cactus), or if the block isn't
-     * a tracked type per the current config.
+     * (sapling/crop/flower/sweet berry/bamboo/sugar cane/cactus), or if the block
+     * isn't a tracked type per the current config.
      */
     public static void handleGroundStep(ServerLevel level, BlockPos groundPos, float mult, long gameTime) {
         BlockState state = level.getBlockState(groundPos);
@@ -57,6 +57,7 @@ public final class EntityStepHandler {
         BlockState above = level.getBlockState(groundPos.above());
         if (above.is(BlockTags.SAPLINGS)) return true;
         if (above.is(BlockTags.CROPS)) return true;
+        if (above.is(BlockTags.FLOWERS)) return true;
         Block block = above.getBlock();
         return block == Blocks.SWEET_BERRY_BUSH
             || block == Blocks.BAMBOO

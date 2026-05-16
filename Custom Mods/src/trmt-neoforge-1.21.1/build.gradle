@@ -79,7 +79,7 @@ jar {
 tasks.register('copyJarToDist', Copy) {
     dependsOn jar
     from jar.archiveFile
-    into rootProject.file('../dist/trmt-neoforge-1.21.1')
+    into rootProject.file('../../dist/trmt-neoforge-1.21.1')
 }
 build.finalizedBy(copyJarToDist)
 
