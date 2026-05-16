@@ -26,6 +26,15 @@ include_paths = [
     "moonlight-global-datapacks",
 ]
 
+# Individual top-level files (relative to <instance>/minecraft/) to include
+# alongside include_paths. Use for user-data files that live at the .minecraft
+# root - in our case, the server list, so players don't have to add the
+# Deer Diary server manually. Pair with [packwiz].preserve_globs so player
+# edits (e.g. adding their own servers) survive pack updates.
+include_files = [
+    "servers.dat",
+]
+
 # Glob patterns (relative to <instance>/minecraft/) to always ignore.
 # The instance's own .packignore is also applied automatically.
 # (mods/.index/ and mods/.connector/ are always skipped — no need to list them.)
@@ -122,6 +131,18 @@ pack_format = "packwiz:1.1.0"
 # Pin the bootstrap jar version we expect players to use, so the bootstrap
 # instance zip ships a known-good build. Bump deliberately, not implicitly.
 bootstrap_installer_url = "https://github.com/packwiz/packwiz-installer-bootstrap/releases/download/v0.0.3/packwiz-installer-bootstrap.jar"
+
+# Files whose local copy should NOT be overwritten on update once the player
+# has them. Match glob style: "config/**" preserves everything under config/.
+# This is where "player customization survives across updates" comes from.
+# Caveat: if you (the maintainer) intentionally fix a preserved file, players
+# who already have it stuck on the old version need to delete it locally
+# (or you can rename it - Packwiz treats the rename as a new file).
+preserve_globs = [
+    "servers.dat",
+    "config/**",
+    "defaultconfigs/**",
+]
 
 [packwiz.self_host]
 # Allowlist for mod jars we'll copy into the published tree as direct files

@@ -26,6 +26,16 @@ include_paths = [
     "moonlight-global-datapacks",
 ]
 
+# Individual top-level files (relative to <instance>/minecraft/) to include
+# alongside include_paths. Useful for user-data files that live at the
+# .minecraft root - e.g. "servers.dat" to ship a pre-populated server list,
+# or "options.txt" to ship default video / GUI settings. Pair with
+# [packwiz].preserve_globs so player edits to these files survive pack updates.
+include_files = [
+    # "servers.dat",
+    # "options.txt",
+]
+
 # Glob patterns (relative to <instance>/minecraft/) to always ignore.
 # The instance's own .packignore is also applied automatically.
 # (mods/.index/ and mods/.connector/ are always skipped — no need to list them.)
@@ -93,6 +103,18 @@ optional_files = [
 # author = "Your Name"
 # pack_format = "packwiz:1.1.0"
 # bootstrap_installer_url = "https://github.com/packwiz/packwiz-installer-bootstrap/releases/download/v0.0.3/packwiz-installer-bootstrap.jar"
+#
+# # Files whose local copy should NOT be overwritten on update once the player
+# # has them. Matches glob style: "config/**" preserves everything under config/.
+# # This is what makes "player customization survives across updates" work.
+# # Caveat: if you intentionally fix a preserved file maintainer-side, players
+# # already on the old version need to delete it locally to pick up the fix
+# # (or you can rename it - Packwiz treats the rename as a new file).
+# preserve_globs = [
+#     "servers.dat",
+#     "config/**",
+#     "defaultconfigs/**",
+# ]
 #
 # [packwiz.self_host]
 # # Allowlist for mod jars we copy as direct files (no Modrinth/CF metafile).

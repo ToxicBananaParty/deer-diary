@@ -21,6 +21,7 @@ class Config:
     project_id: str
     user_agent: str
     include_paths: list[str]
+    include_files: list[str]
     extra_ignore: list[str]
     optional_files: list[str]
     custom_mods: list[CustomModConfig]
@@ -114,6 +115,7 @@ def load_config(config_dir: Path | None = None) -> Config:
         project_id=merged.get("project_id", ""),
         user_agent=merged.get("user_agent", ""),
         include_paths=list(merged.get("include_paths", [])),
+        include_files=list(merged.get("include_files", [])),
         extra_ignore=list(merged.get("extra_ignore", [])),
         optional_files=list(merged.get("optional_files", [])),
         custom_mods=custom_mods,

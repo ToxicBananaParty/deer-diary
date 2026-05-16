@@ -28,6 +28,7 @@ class PackwizSettings:
     author: str = ""
     pack_format: str = "packwiz:1.1.0"
     self_host_allowed_globs: list[str] = field(default_factory=list)
+    preserve_globs: list[str] = field(default_factory=list)
     bootstrap_installer_url: str = (
         "https://github.com/packwiz/packwiz-installer-bootstrap/releases/"
         "download/v0.0.3/packwiz-installer-bootstrap.jar"
@@ -48,6 +49,7 @@ class PackwizSettings:
             author=str(raw.get("author", "")),
             pack_format=str(raw.get("pack_format", "packwiz:1.1.0")),
             self_host_allowed_globs=list(self_host.get("allowed_globs", []) or []),
+            preserve_globs=list(raw.get("preserve_globs", []) or []),
             bootstrap_installer_url=str(
                 raw.get(
                     "bootstrap_installer_url",
