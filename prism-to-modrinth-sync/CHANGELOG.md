@@ -4,6 +4,15 @@
 
 Changes since `2026.05.16`:
 
+### Removed
+**Mods**
+- `mods/EuphoriaPatcher-1.8.6-r5.7.1-neoforge.jar`
+- `mods/supplemental_patches-0.8.0-beta.jar`
+
+## 2026.05.16 (packwiz) — 2026-05-16
+
+Changes since `2026.05.16`:
+
 ### Added
 **Other**
 - `servers.dat`
