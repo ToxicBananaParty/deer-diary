@@ -17,7 +17,7 @@ MC Stuff/                          # git repo root
 ├── .gitignore                     # workspace-level — see "Gitignore rules" below
 ├── .gitattributes                 # LF in repo, CRLF on Windows checkout
 ├── CLAUDE.md                      # this file
-├── prism-to-modrinth-sync-plan.md # original project brief; kept as historical context
+├── publish.bat                    # double-click to run `prism_sync publish --push`
 │
 ├── Deer Diary  (symlink, gitignored)
 │       → C:\Users\Ryan-PC\AppData\Roaming\PrismLauncher\instances\Deer Diary
@@ -48,7 +48,12 @@ MC Stuff/                          # git repo root
 
 ## The one-command release loop
 
-From a fresh shell:
+**Easiest:** double-click `publish.bat` in the workspace root. It cd's
+into `prism-to-modrinth-sync/`, runs `prism_sync publish --push`, and
+pauses at the end so the console window stays open whether the run
+succeeds or fails.
+
+From a shell:
 
 ```
 cd "C:\Users\Ryan-PC\Desktop\MC Stuff\prism-to-modrinth-sync"
