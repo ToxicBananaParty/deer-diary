@@ -413,10 +413,29 @@ def _emit_metafile(
     pack_rel = f"{sub}/{pw_entry.source.name}"
     dest = output_root / pack_rel
     dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(pw_entry.source, dest)
+    # Read-modify-write rather than a plain copy: Prism sometimes writes
+    # `side = ''` when Modrinth doesn't expose a side for the project.
+    # packwiz-installer rejects that as "Invalid side name", even though
+    # the Packwiz spec treats `side` as optional and defaulting to "both".
+    # Normalize the value so the published metafile parses cleanly.
+    src_bytes = pw_entry.source.read_bytes()
+    fixed_bytes = _normalize_metafile_bytes(src_bytes)
+    dest.write_bytes(fixed_bytes)
 
     meta_hashes = hash_file(dest)
     return pack_rel, meta_hashes, on_disk_hashes
+
+
+def _normalize_metafile_bytes(data: bytes) -> bytes:
+    """Fix Prism quirks that trip up packwiz-installer's stricter parser.
+
+    Currently: rewrites empty ``side = ''`` (and ``side = ""``) to
+    ``side = 'both'``. Anything else passes through unchanged.
+    """
+    text = data.decode("utf-8")
+    text = text.replace("side = ''", "side = 'both'")
+    text = text.replace('side = ""', 'side = "both"')
+    return text.encode("utf-8")
 
 
 def _format_error_message(errors: list[str], packwiz: PackwizSettings) -> str:
