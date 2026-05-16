@@ -1,0 +1,41 @@
+filename = 'colorwheel-neoforge-1.2.4+mc1.21.1.jar'
+name = 'Colorwheel'
+side = 'client'
+x-prismlauncher-loaders = [ 'neoforge' ]
+x-prismlauncher-mc-versions = [ '1.21.1' ]
+x-prismlauncher-release-type = 'release'
+x-prismlauncher-version-number = '1.2.4+mc1.21.1'
+
+[download]
+hash = 'c977d08a8a7f3512e7709d6ab57e627c56cfb904426fecfed5917cc94ef060030f3a3dbc7616ebece97ee83924fa5b8c155483bc4db1be4d1b9346b030a29d18'
+hash-format = 'sha512'
+mode = 'url'
+url = 'https://cdn.modrinth.com/data/BzHgFoGz/versions/OuwQlVxo/colorwheel-neoforge-1.2.4%2Bmc1.21.1.jar'
+
+[update.modrinth]
+mod-id = 'BzHgFoGz'
+version = 'OuwQlVxo'
+
+[[x-prismlauncher-dependencies]]
+addonId = 'YL57xq9U'
+type = 'REQUIRED'
+
+[[x-prismlauncher-dependencies]]
+addonId = 'ndHYMY2K'
+type = 'INCOMPATIBLE'
+
+[[x-prismlauncher-dependencies]]
+addonId = 'LNytGWDc'
+type = 'OPTIONAL'
+
+[[x-prismlauncher-dependencies]]
+addonId = 'T9PomCSv'
+type = 'OPTIONAL'
+
+[[x-prismlauncher-dependencies]]
+addonId = '6qTrsXCy'
+type = 'OPTIONAL'
+
+[[x-prismlauncher-dependencies]]
+addonId = 'KPsw5jDu'
+type = 'OPTIONAL'

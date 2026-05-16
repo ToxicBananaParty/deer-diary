@@ -1,0 +1,25 @@
+filename = 'MobLassos-v21.1.1-1.21.1-NeoForge.jar'
+name = 'Mob Lassos'
+side = 'both'
+x-prismlauncher-loaders = [ 'neoforge' ]
+x-prismlauncher-mc-versions = [ '1.21.1' ]
+x-prismlauncher-release-type = 'release'
+x-prismlauncher-version-number = 'v21.1.1-1.21.1-NeoForge'
+
+[download]
+hash = '83a4392b2dc1f3a9f5ac970a15ccf509c69a2e6005fcc7afc2d2dd10daa69b2988671d254e1dac5709b04d3fb7c29a949fb9bcaf6f014e46ff4545ae092696e5'
+hash-format = 'sha512'
+mode = 'url'
+url = 'https://cdn.modrinth.com/data/ftOBbnu8/versions/Qsj3YEUS/MobLassos-v21.1.1-1.21.1-NeoForge.jar'
+
+[update.modrinth]
+mod-id = 'ftOBbnu8'
+version = 'Qsj3YEUS'
+
+[[x-prismlauncher-dependencies]]
+addonId = '5WeWGLoJ'
+type = 'OPTIONAL'
+
+[[x-prismlauncher-dependencies]]
+addonId = 'QAGBst4M'
+type = 'REQUIRED'

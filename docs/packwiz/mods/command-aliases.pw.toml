@@ -1,0 +1,16 @@
+filename = 'commandalias-4.0.jar'
+name = 'Command Aliases'
+side = 'server'
+x-prismlauncher-loaders = [ 'neoforge' ]
+x-prismlauncher-mc-versions = [ '1.21.1' ]
+x-prismlauncher-release-type = 'release'
+
+[download]
+hash = '75ba7b4e9592eb883ee1341867bf7350d2d477f0e0e5167947f78716b6d3a55dd418a3fff1e8cca1d3b5575b32f77daa941dc0b40c21495c39dff49becfbc911'
+hash-format = 'sha512'
+mode = 'url'
+url = 'https://cdn.modrinth.com/data/iOHavWUQ/versions/FdRGIzjG/commandalias-4.0.jar'
+
+[update.modrinth]
+mod-id = 'iOHavWUQ'
+version = 'FdRGIzjG'

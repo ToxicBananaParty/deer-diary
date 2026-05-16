@@ -1,0 +1,8 @@
+{
+	// If the trader llamas should be despawned alongside the wandering trader when pressing the button.
+	"despawnTraderLlamasToo": true,
+	// Whether the trader llamas should only be despawned if they are leashed to the wandering trader.
+	"onlyDespawnLlamasWhenLeashed": true,
+	// If particles should be shown when despawning the wandering trader and/or trader llamas.
+	"showDespawnParticles": true
+}

@@ -1,0 +1,22 @@
+#ZoomLens Client Configuration
+[general]
+	#Default zoom level when activating zoom
+	# Default: 1.0
+	# Range: 1.0 ~ 50.0
+	defaultZoomLevel = 1.0
+	#Minimum zoom level
+	# Default: 1.0
+	# Range: 1.0 ~ 10.0
+	minZoomLevel = 1.0
+	#Maximum zoom level
+	# Default: 50.0
+	# Range: 5.0 ~ 100.0
+	maxZoomLevel = 50.0
+	#Speed of zoom transition (higher = faster)
+	# Default: 0.2
+	# Range: 0.05 ~ 1.0
+	zoomTransitionSpeed = 0.2
+	#Enable smooth zoom transition
+	smoothZoom = true
+	#Enable debug logging
+	debugLogging = false

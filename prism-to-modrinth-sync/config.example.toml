@@ -74,3 +74,31 @@ optional_files = [
 # source_dir = "../Custom Mods/dist/key-to-necklace"
 # source_pattern = "key-to-necklace.zip"
 # target_dir = "moonlight-global-datapacks"
+
+
+# =========================================================================
+# Packwiz publishing pipeline (optional, independent of Modrinth)
+# =========================================================================
+# Enables a `packwiz-build` / `packwiz-check` / `packwiz-publish` workflow
+# that generates a static Packwiz tree from the Prism instance. Players
+# install a small bootstrap Prism instance whose pre-launch hook runs
+# packwiz-installer-bootstrap.jar against `base_url/pack.toml`, updating
+# files in place before each launch. Shares state and changelog with the
+# Modrinth pipeline above.
+
+# [packwiz]
+# enabled = false
+# output_dir = "../docs/packwiz"
+# base_url = "https://<user>.github.io/<repo>/packwiz"
+# author = "Your Name"
+# pack_format = "packwiz:1.1.0"
+# bootstrap_installer_url = "https://github.com/packwiz/packwiz-installer-bootstrap/releases/download/v0.0.3/packwiz-installer-bootstrap.jar"
+#
+# [packwiz.self_host]
+# # Allowlist for mod jars we copy as direct files (no Modrinth/CF metafile).
+# # Mods that already have a `.pw.toml` in `mods/.index/` skip this list
+# # entirely — they're emitted as native metafiles. Everything else needs
+# # to be either Modrinth-backed or explicitly allowlisted here.
+# allowed_globs = [
+#     "mods/your-custom-mod-*.jar",
+# ]

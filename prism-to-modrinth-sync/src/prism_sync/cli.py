@@ -20,6 +20,12 @@ from . import gitutil
 from .gitutil import GitError
 from .instance import InstanceError, read_instance
 from .mrpack import BuildResult, build_mrpack, fingerprint_from_mrpack
+from .packwiz import (
+    PackwizBuildResult,
+    PackwizError,
+    build_packwiz,
+    print_build_summary as print_packwiz_summary,
+)
 from .publish import format_dry_run, make_payload, next_available_version_number, post_version
 from .remote import download_mrpack, latest_version
 from .state import PublishedState, load_state, save_state, utc_now_iso
@@ -298,6 +304,226 @@ def cmd_publish(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# Packwiz subcommands
+# ---------------------------------------------------------------------------
+
+
+def _require_packwiz_enabled(config: Config) -> None:
+    if not config.packwiz.enabled:
+        raise PackwizError(
+            "Packwiz is not enabled. Add a [packwiz] section to config.toml "
+            "with `enabled = true` (see config.example.toml)."
+        )
+
+
+def _print_packwiz_diff(diff: PackDiff, previous_version: str | None) -> None:
+    if diff.is_empty:
+        print(
+            f"No changes since {previous_version or 'last published state'}."
+        )
+        return
+    print(
+        f"Changes since {previous_version or 'last published state'}: "
+        f"+{len(diff.added)} ~{len(diff.updated)} -{len(diff.removed)}"
+    )
+    for kind, items in (("+", diff.added), ("~", diff.updated), ("-", diff.removed)):
+        for path in items:
+            print(f"  {kind} {path}")
+
+
+def cmd_packwiz_build(args: argparse.Namespace) -> int:
+    config = load_config(args.config_dir)
+    _require_packwiz_enabled(config)
+    version = args.version or _today_version()
+    result = build_packwiz(config, config.packwiz, version_id=version)
+    print_packwiz_summary(result)
+    if config.packwiz.base_url:
+        print(f"\nServed at: {config.packwiz.base_url}/pack.toml")
+    return 0
+
+
+def cmd_packwiz_check(args: argparse.Namespace) -> int:
+    """Dry-run the Packwiz build and diff it against the shared state file."""
+    config = load_config(args.config_dir)
+    _require_packwiz_enabled(config)
+    version = args.version or _today_version()
+
+    state = load_state(config.state_file)
+    if state is None:
+        print(
+            f"No state file at {config.state_file}; treating every file as new.",
+            file=sys.stderr,
+        )
+        state = PublishedState(version_id="", fingerprint={})
+
+    result = build_packwiz(config, config.packwiz, version_id=version)
+    print_packwiz_summary(result)
+    diff = diff_fingerprints(state.fingerprint, result.fingerprint)
+    print()
+    _print_packwiz_diff(diff, state.version_id)
+    if args.changelog and not diff.is_empty:
+        print()
+        print("--- Changelog ---")
+        print(render_changelog(diff, state.version_id, version))
+    return 0 if diff.is_empty else 1
+
+
+def cmd_packwiz_publish(args: argparse.Namespace) -> int:
+    """Build the Packwiz tree, update state, optionally commit and push."""
+    config = load_config(args.config_dir)
+    _require_packwiz_enabled(config)
+    version = args.version or _today_version()
+
+    state = load_state(config.state_file)
+    previous_version = state.version_id if state else None
+    result = build_packwiz(config, config.packwiz, version_id=version)
+    print_packwiz_summary(result)
+    print()
+
+    if state is not None:
+        diff = diff_fingerprints(state.fingerprint, result.fingerprint)
+        _print_packwiz_diff(diff, previous_version)
+        if diff.is_empty and not args.allow_no_changes:
+            print(
+                "\nNo changes since last publish. Pass --allow-no-changes to "
+                "publish anyway.",
+                file=sys.stderr,
+            )
+            return 1
+    else:
+        diff = None
+
+    new_state = PublishedState(
+        version_id=version,
+        fingerprint=result.fingerprint,
+        published_at=utc_now_iso(),
+        notes={"published_via": "packwiz"},
+    )
+    save_state(config.state_file, new_state)
+    print(f"Updated state file: {config.state_file}")
+
+    if args.push:
+        _post_publish_packwiz_git(
+            config_dir=config.config_dir,
+            state_file=config.state_file,
+            packwiz_output_dir=result.output_dir,
+            diff=diff,
+            previous_version=previous_version,
+            new_version=version,
+            commit_message_override=args.message,
+        )
+
+    if config.packwiz.base_url:
+        print(f"\nServed at: {config.packwiz.base_url}/pack.toml")
+    return 0
+
+
+def _post_publish_packwiz_git(
+    *,
+    config_dir: Path,
+    state_file: Path,
+    packwiz_output_dir: Path,
+    diff: PackDiff | None,
+    previous_version: str | None,
+    new_version: str,
+    commit_message_override: str | None,
+) -> None:
+    """After a successful Packwiz publish, commit the generated tree and push.
+
+    The Packwiz publish path shares the same state file and CHANGELOG.md as
+    the Modrinth path, but stages both the state file *and* the generated
+    ``docs/packwiz/`` tree under the workspace root (not the
+    ``prism-to-modrinth-sync/`` dir).
+    """
+    # The state file and changelog live in config_dir (the tool's own dir);
+    # the Packwiz output lives at the repo root. Find the repo root by
+    # walking up until we hit a .git directory.
+    repo_root = _find_git_root(config_dir)
+    if repo_root is None:
+        print(
+            f"warning: no .git directory found above {config_dir}; skipping --push.",
+            file=sys.stderr,
+        )
+        return
+
+    changelog_path = config_dir / "CHANGELOG.md"
+    fallback = "Initial release." if diff is None else None
+    entry = render_file_entry(
+        diff or PackDiff(),
+        previous_version=previous_version,
+        new_version=f"{new_version} (packwiz)",
+        fallback_summary=fallback,
+    )
+    prepend_to_changelog_file(changelog_path, entry)
+    print(f"Updated changelog: {changelog_path}")
+
+    # Stage everything that needs to land in the commit:
+    # - the generated Packwiz tree (under docs/packwiz)
+    # - the shared state file (in prism-to-modrinth-sync/)
+    # - the CHANGELOG.md
+    tracked_paths = [
+        _repo_relative(repo_root, packwiz_output_dir),
+        _repo_relative(repo_root, state_file),
+        _repo_relative(repo_root, changelog_path),
+    ]
+    gitutil.stage(repo_root, tracked_paths)
+
+    if not gitutil.has_staged_or_unstaged_changes_for(repo_root, tracked_paths):
+        print("Nothing to commit (no tracked files changed).")
+        return
+
+    if commit_message_override:
+        message = commit_message_override
+    elif diff is None or diff.is_empty:
+        message = f"Packwiz release {new_version}"
+    else:
+        message = (
+            f"Packwiz release {new_version}: "
+            f"+{len(diff.added)} ~{len(diff.updated)} -{len(diff.removed)}"
+        )
+    gitutil.commit(repo_root, message)
+    print(f"Committed: {message}")
+
+    if not gitutil.has_remote(repo_root):
+        print(
+            "No `origin` remote configured; skipping push.",
+            file=sys.stderr,
+        )
+        return
+    try:
+        gitutil.push(repo_root)
+        print(f"Pushed to {gitutil.current_branch(repo_root)}.")
+    except GitError as exc:
+        print(f"warning: push failed: {exc}", file=sys.stderr)
+
+
+def _find_git_root(start: Path) -> Path | None:
+    """Walk up from ``start`` until a directory containing ``.git`` is found."""
+    current = start.resolve()
+    for candidate in (current, *current.parents):
+        if (candidate / ".git").exists():
+            return candidate
+    return None
+
+
+def _repo_relative(repo_root: Path, target: Path) -> str:
+    """Return ``target`` as a POSIX path relative to ``repo_root``.
+
+    Falls back to the absolute path if ``target`` isn't under ``repo_root``
+    (shouldn't happen in normal use; the fallback exists so that misconfigured
+    output paths surface as a noisy git error rather than a silent skip).
+    """
+    target = target.resolve()
+    try:
+        return target.relative_to(repo_root).as_posix()
+    except ValueError:
+        return str(target)
+
+
+# ---------------------------------------------------------------------------
+
+
 def _post_publish_git(
     *,
     config_dir: Path,
@@ -461,6 +687,52 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_publish.set_defaults(func=cmd_publish)
 
+    # --- Packwiz subcommands ---
+
+    p_pw_build = sub.add_parser(
+        "packwiz-build",
+        help="Generate the Packwiz tree under [packwiz].output_dir.",
+    )
+    p_pw_build.add_argument("--version", type=str, default=None)
+    p_pw_build.set_defaults(func=cmd_packwiz_build)
+
+    p_pw_check = sub.add_parser(
+        "packwiz-check",
+        help="Build the Packwiz tree and diff against the shared state file.",
+    )
+    p_pw_check.add_argument("--version", type=str, default=None)
+    p_pw_check.add_argument(
+        "--changelog",
+        action="store_true",
+        help="Also print the generated markdown changelog if there are changes.",
+    )
+    p_pw_check.set_defaults(func=cmd_packwiz_check)
+
+    p_pw_publish = sub.add_parser(
+        "packwiz-publish",
+        help="Build, update state, optionally commit+push the Packwiz tree.",
+    )
+    p_pw_publish.add_argument("--version", type=str, default=None)
+    p_pw_publish.add_argument(
+        "--allow-no-changes",
+        action="store_true",
+        help="Publish even when the diff vs last state is empty.",
+    )
+    p_pw_publish.add_argument(
+        "--push",
+        action="store_true",
+        help="After build, append to CHANGELOG.md, stage state + docs/packwiz "
+        "+ changelog at the repo root, commit, and push.",
+    )
+    p_pw_publish.add_argument(
+        "--message",
+        "-m",
+        type=str,
+        default=None,
+        help="Override the auto-generated git commit message (only used with --push).",
+    )
+    p_pw_publish.set_defaults(func=cmd_packwiz_publish)
+
     return parser
 
 
@@ -470,7 +742,7 @@ def main(argv: list[str] | None = None) -> int:
     _setup_logging(args.verbose)
     try:
         return args.func(args)
-    except (ConfigError, InstanceError, GitError, RuntimeError) as exc:
+    except (ConfigError, InstanceError, GitError, PackwizError, RuntimeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     except requests.HTTPError as exc:
