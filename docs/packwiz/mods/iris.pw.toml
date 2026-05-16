@@ -14,3 +14,8 @@ url = 'https://cdn.modrinth.com/data/YL57xq9U/versions/t3ruzodq/iris-neoforge-1.
 [update.modrinth]
 mod-id = 'YL57xq9U'
 version = 't3ruzodq'
+
+[option]
+optional = true
+default = true
+description = "Iris shader support. Disable to gain FPS on weaker GPUs (and consider enabling Sodium Dynamic Lights for dynamic torchlight in that case)."

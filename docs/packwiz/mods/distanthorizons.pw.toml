@@ -16,3 +16,8 @@ url = 'https://cdn.modrinth.com/data/uCdwusMi/versions/KkaaQtTD/DistantHorizons-
 [update.modrinth]
 mod-id = 'uCdwusMi'
 version = 'KkaaQtTD'
+
+[option]
+optional = true
+default = true
+description = "Distant Horizons - extreme render distance via LODs. Disable if you have <8GB RAM allocated."

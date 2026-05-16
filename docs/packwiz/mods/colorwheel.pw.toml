@@ -39,3 +39,8 @@ type = 'OPTIONAL'
 [[x-prismlauncher-dependencies]]
 addonId = 'KPsw5jDu'
 type = 'OPTIONAL'
+
+[option]
+optional = true
+default = true
+description = "Colorwheel shader, tuned for Deer Diary. Requires Iris."
