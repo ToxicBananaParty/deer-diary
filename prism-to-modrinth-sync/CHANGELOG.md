@@ -2,6 +2,26 @@
 
 ## 2026.05.15 — 2026-05-15
 
+Changes since `2026.05.15`:
+
+### Added
+**Mods**
+- `mods/deer-diary-commands-0.3.0-1.21+1.21.1.jar`
+- `mods/trmt-0.5.1-1.21+1.21.1.jar`
+
+### Updated
+**Config**
+- `config/fabric/indigo-renderer.properties`
+- `config/jei/world/server/Deer_Diary_63e3237b/lookupHistory.json`
+- `config/packetfixer.properties`
+
+### Removed
+**Mods**
+- `mods/deer-diary-commands-0.2.0-1.21+1.21.1.jar`
+- `mods/trmt-0.5.0-1.21+1.21.1.jar`
+
+## 2026.05.15 — 2026-05-15
+
 Changes since `2026.05.14`:
 
 ### Added
