@@ -55,6 +55,13 @@ extra_ignore = [
     # without their parent jar.
     "config/ftb*",
     "defaultconfigs/ftb*",
+    # Runtime-mutated configs that get rewritten on game start / world load
+    # and produce diff noise without representing intentional pack changes.
+    "config/fabric/indigo-renderer.properties",
+    "config/packetfixer.properties",
+    # Everything under config/jei/world/ is per-world/per-server state
+    # (lookup history, bookmarks, etc.) keyed by world hash — never ship.
+    "config/jei/world/**",
 ]
 
 # Allowlist: paths to include even if they match an ignore pattern. Use for
