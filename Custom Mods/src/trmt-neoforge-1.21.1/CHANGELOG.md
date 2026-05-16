@@ -10,6 +10,61 @@ matching migrator step.
 
 ---
 
+## [1.1.0] — in-game config GUI
+
+Switched the config layer from Gson JSON to NeoForge's `ModConfigSpec` so
+the entire ModConfigSpec-based GUI ecosystem (Configured, Cloth Config,
+etc.) works out of the box without any custom screen code.
+
+### Added
+
+- **In-game config screen** via standard `ModConfigSpec` registration.
+  Install [Configured](https://modrinth.com/mod/configured) or
+  [Cloth Config API](https://modrinth.com/mod/cloth-config) to get a
+  "Config" button on TRMT's entry in the Mods menu.
+- **JSON → TOML migrator** (`milkucha.trmt.JsonConfigMigrator`). On first
+  1.1 boot, reads any pre-existing `config/trmt.json`, copies the values
+  into the new spec, and renames the JSON to `trmt.json.migrated.bak`.
+  Idempotent — re-running is a no-op once the JSON is gone.
+
+### Changed
+
+- **Config file location:** `config/trmt.json` → `config/trmt-common.toml`.
+- **`erosionMultipliers.tramples`** is now a TOML-friendly list of
+  `"entity_id=multiplier"` strings instead of a JSON map (ModConfigSpec
+  doesn't have a clean Map type). The migrator handles converting the
+  old map format into the new list format. Example:
+  ```toml
+  tramples = ["minecraft:horse=0.5", "naturalist:deer=0.7"]
+  ```
+- **Call sites unchanged:** internal code still uses
+  `TRMTConfig.get().erosion.grassEnabled` etc. A cached "view" object is
+  refreshed from the spec on every `ModConfigEvent`, so the public-facing
+  pattern hasn't shifted.
+
+### Removed
+
+- **`erosionMultipliers.villager`** and **`erosionMultipliers.horse`** —
+  deprecated in 1.0, removed in 1.1 per that release's notice. The
+  migrator copies them into the `tramples` list as
+  `"minecraft:villager=N"` / `"minecraft:horse=N"` so customizations are
+  preserved.
+
+### Migration notes for upgraders from 1.0.0
+
+- Existing `trmt.json` is migrated automatically on first boot. After
+  confirming `trmt-common.toml` looks right, delete the
+  `trmt.json.migrated.bak` backup file.
+- Save format is unchanged (still SaveMigrator v1). World data carries over.
+- All public API events (CanErodeEvent, ErodedEvent, CanDeErodeEvent,
+  DeErodedEvent) are unchanged. Tag names are unchanged. Subscribers
+  built against 1.0 work in 1.1 without recompilation.
+- Network protocol unchanged — login handshake still kicks pre-1.1
+  clients, but any 1.x client works on any 1.x server (as long as the
+  versions match).
+
+---
+
 ## [1.0.0] — feature-complete release
 
 The polish-and-extensibility release. Mechanics are unchanged from 0.6.0;

@@ -52,7 +52,9 @@ public static void onTrmtCanErode(CanErodeEvent event) {
 
 ## Configuration
 
-JSON config at `<game-dir>/config/trmt.json`, loaded on `ServerStartedEvent`. Reload in-game with `/trmt reloadconfig` (op level 2+). New fields auto-migrate on first save after upgrade.
+NeoForge `ModConfigSpec` (TOML) at `<game-dir>/config/trmt-common.toml`. Edit the file directly or use an in-game GUI — TRMT registers a standard spec, so [Configured](https://modrinth.com/mod/configured) and [Cloth Config API](https://modrinth.com/mod/cloth-config) auto-detect it and surface a "Config" button on TRMT's entry in the Mods menu. Reload after a manual edit with `/trmt reloadconfig` (op level 2+).
+
+**Upgrading from 1.0.x:** the old `config/trmt.json` is migrated automatically on first boot — values copy over to `trmt-common.toml` and the JSON file is renamed to `trmt.json.migrated.bak`. Confirm the TOML looks right and delete the backup at your leisure.
 
 Key sections:
 
@@ -89,10 +91,9 @@ TRMT auto-detects and integrates with these mods if they're installed. None are 
 - **API version** is the mod version. 1.x guarantees that tags, event class signatures, and config field names remain compatible; new tags/events/fields may be added.
 - **Network version** is part of a login-time handshake. Client must match server's TRMT version (no mixed-version play within a major).
 
-## Known limitations / 1.0 follow-ups
+## Known limitations / follow-ups
 
-- No automated test suite. Manual smoke-test verification only. Adding GameTest infrastructure is planned for 1.1.
-- No in-game config GUI. Edit JSON + `/trmt reloadconfig`.
+- No automated test suite. Manual smoke-test verification only. Adding GameTest infrastructure is planned.
 - No datagen. New tags are hand-authored JSON; if the tag list grows, this may be worth setting up.
 - Single-MC-version build (1.21.1 only). Backports to 1.21.4 etc. would be separate branches.
 - Localization is English-only. Mod-display strings are all translation-keyed; community translations welcome.

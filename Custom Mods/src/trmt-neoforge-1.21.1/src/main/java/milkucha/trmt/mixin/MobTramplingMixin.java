@@ -12,8 +12,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraft.world.entity.npc.Villager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -70,8 +68,8 @@ public class MobTramplingMixin {
     /**
      * Resolves the trampling multiplier for {@code entity} from
      * {@link TRMTConfig.Multipliers#tramples} (keyed by entity-type id),
-     * falling back to the deprecated {@code villager}/{@code horse} fields
-     * for vanilla parity, and finally to {@code defaultTrample}.
+     * falling back to {@code defaultTrample} for entries that aren't
+     * explicitly configured.
      */
     @Unique
     private static float trmt$multiplierFor(LivingEntity entity) {
@@ -83,11 +81,6 @@ public class MobTramplingMixin {
             Float explicit = mults.tramples.get(id.toString());
             if (explicit != null) return explicit;
         }
-
-        // Backwards-compat fallback for upgraders whose pre-1.0 config sets
-        // villager/horse but doesn't yet have entries in the new `tramples` map.
-        if (entity instanceof Villager) return mults.villager;
-        if (entity instanceof AbstractHorse) return mults.horse;
 
         return mults.defaultTrample;
     }

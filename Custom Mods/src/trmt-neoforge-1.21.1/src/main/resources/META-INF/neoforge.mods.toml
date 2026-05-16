@@ -56,3 +56,17 @@ license = "CC BY-NC 4.0"
     versionRange = "[10.0.0,)"
     ordering = "NONE"
     side = "BOTH"
+
+[[dependencies.trmt]]
+    modId = "cloth_config"
+    type = "optional"
+    versionRange = "[15.0.0,)"
+    ordering = "NONE"
+    side = "CLIENT"
+
+[[dependencies.trmt]]
+    modId = "configured"
+    type = "optional"
+    versionRange = "[2.0.0,)"
+    ordering = "NONE"
+    side = "CLIENT"
