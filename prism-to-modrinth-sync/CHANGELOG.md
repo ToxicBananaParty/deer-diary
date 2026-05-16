@@ -4,6 +4,18 @@
 
 Changes since `2026.05.16`:
 
+### Added
+**Mods**
+- `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar`
+
+### Removed
+**Mods**
+- `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.disabled`
+
+## 2026.05.16 (packwiz) — 2026-05-16
+
+Changes since `2026.05.16`:
+
 ### Removed
 **Mods**
 - `mods/EuphoriaPatcher-1.8.6-r5.7.1-neoforge.jar`
