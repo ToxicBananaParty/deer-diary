@@ -60,6 +60,10 @@ public class ErodedGrassBlock extends Block {
             }
         }
 
+        // Gate de-erosion (but NOT the grass-spread above) when the server is empty —
+        // chunk-loaded paths shouldn't quietly disappear overnight on dedicated servers.
+        if (BlockThresholds.isDeErosionPausedForEmptyServer(level)) return;
+
         ErosionMapManager manager = ErosionMapManager.getInstance();
         ChunkErosionMap chunkMap = manager.getChunkMap(level, new ChunkPos(pos));
         ErosionEntry entry = chunkMap != null ? chunkMap.getEntry(pos) : null;

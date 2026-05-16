@@ -48,6 +48,8 @@ public class ErodedSandBlock extends Block {
 
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (BlockThresholds.isDeErosionPausedForEmptyServer(level)) return;
+
         ErosionMapManager manager = ErosionMapManager.getInstance();
         ChunkErosionMap chunkMap = manager.getChunkMap(level, new ChunkPos(pos));
         ErosionEntry entry = chunkMap != null ? chunkMap.getEntry(pos) : null;
