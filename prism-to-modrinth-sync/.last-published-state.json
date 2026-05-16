@@ -285,9 +285,10 @@
     "resourcepacks/SPBR-BlockEmission.zip": "852f36ca6c2c3b70c068b11a5ff3d549d0d1b12d5f3f452382bc085b49945d575bd27118e82636b69d49a9b6270b31a4defcf3a1f1ad31595cc9cd03e37c0216",
     "resourcepacks/SPBR-Farmer's Delight_1.1.zip": "385ee4d5ecfb345513fc32186e10056fb99109cb412b631e0ae6ee3fd1b88f7ea432bd5353f704be8108b1aab1018ec4a267218457255b197fde0b9d70c2facf",
     "resourcepacks/SPBR-GrassParallax.zip": "2af39c920741b3065d5bde5b9c955f6a9c875592e43a5b15983fe8870060a5e8381cef866201056f58d3699ddeb06c26d3cf1ac5ab6d36e7720e9cddec560ddb",
+    "servers.dat": "8252a44c3626465cf181f75bbb3fc8be73939286cb68c32d4f2dc4d88d8aa0822b959f2b562ae7f3a714e805f350de85650a243a00da47928fcdeff153c5843b",
     "shaderpacks/ComplementaryReimagined_r5.7.1.zip": "840149dd8aff5d5d06d0d5a4ea83d4ea7f72eab3cb2b02de513c1f3eaa6e4627f68d9c0915b86fa37edad73cafd4648f156f373da52810cd34c67d797e0f6aef"
   },
-  "published_at": "2026-05-16T17:34:37Z",
+  "published_at": "2026-05-16T19:30:11Z",
   "notes": {
     "published_via": "packwiz"
   }
