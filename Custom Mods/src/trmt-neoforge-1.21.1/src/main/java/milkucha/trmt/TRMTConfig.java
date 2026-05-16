@@ -47,6 +47,13 @@ public final class TRMTConfig {
         // (a custom block that looks identical to vanilla dirt path). When false, it
         // falls through to the legacy eroded_dirt → eroded_coarse_dirt chain.
         public boolean dirtPathEndpoint    = true;
+        // When true, de-erosion (eroded block reverting toward its vanilla source)
+        // is paused while no players are online. Prevents chunk-loaded paths from
+        // disappearing overnight on dedicated servers. Erosion (vanilla → eroded)
+        // is unaffected — it only fires from player/mob steps, which can't happen
+        // with no players online anyway. Grass-spreading from low-stage eroded
+        // grass also still fires so the world keeps ticking normally.
+        public boolean pauseDeErosionWhenEmpty = true;
     }
 
     public static class VegetationThreshold extends MinMax {

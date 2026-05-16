@@ -134,4 +134,20 @@ public final class BlockThresholds {
         if (block == TRMTBlocks.ERODED_DIRT.get()) return (long)(d.erodedDirt * TICKS_PER_DAY);
         return (long)(d.erodedCoarseDirt * TICKS_PER_DAY);
     }
+
+    /**
+     * Returns {@code true} if de-erosion should be skipped right now because
+     * the {@code pauseDeErosionWhenEmpty} config flag is enabled and no
+     * players are online. Prevents chunk-loaded paths from quietly reverting
+     * overnight on dedicated servers when nobody is around to see (or
+     * re-walk) them.
+     *
+     * <p>Erosion (vanilla → eroded) isn't gated separately because it only
+     * fires from player/mob steps, which inherently require a live player.
+     */
+    public static boolean isDeErosionPausedForEmptyServer(ServerLevel level) {
+        if (!TRMTConfig.get().erosion.pauseDeErosionWhenEmpty) return false;
+        return level.getServer() != null
+            && level.getServer().getPlayerList().getPlayerCount() == 0;
+    }
 }

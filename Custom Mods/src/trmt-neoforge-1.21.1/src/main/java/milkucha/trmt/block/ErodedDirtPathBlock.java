@@ -39,6 +39,7 @@ public class ErodedDirtPathBlock extends DirtPathBlock {
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         // Vanilla DirtPathBlock doesn't override randomTick, so no super call needed.
+        if (BlockThresholds.isDeErosionPausedForEmptyServer(level)) return;
 
         ErosionMapManager manager = ErosionMapManager.getInstance();
         ChunkErosionMap chunkMap = manager.getChunkMap(level, new ChunkPos(pos));
