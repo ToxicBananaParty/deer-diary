@@ -1013,11 +1013,6 @@ hash = "8310851b9460c3869eec1228960e0cd8c24ee34f92e2edd8b782aaf592773883"
 metafile = true
 
 [[files]]
-file = "mods/euphoria-patches.pw.toml"
-hash = "31075a2eb0a03e35505a6ea24275d7fc6341336f5d57a2d21a8f9462f7987e2e"
-metafile = true
-
-[[files]]
 file = "mods/expanded-delight.pw.toml"
 hash = "5475dc6a2edddb607d261ca1c212115f3ec65e51e0185cdf416e4807d6d4bf4b"
 metafile = true
@@ -1307,11 +1302,6 @@ metafile = true
 [[files]]
 file = "mods/supermartijn642s-core-lib.pw.toml"
 hash = "671eb7124d30647f9375e899e1d712d1a81c0988518309aa9e4efaf841ab4573"
-metafile = true
-
-[[files]]
-file = "mods/supplemental-patches.pw.toml"
-hash = "fab33b8d491921bb1f2cab5a8558a00c02c579d56e5f6f057b1821ffcf497970"
 metafile = true
 
 [[files]]
