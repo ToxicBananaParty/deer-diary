@@ -18,4 +18,4 @@ version = 't3ruzodq'
 [option]
 optional = true
 default = true
-description = "Iris shader support. Disable to gain FPS on weaker GPUs (and consider enabling Sodium Dynamic Lights for dynamic torchlight in that case)."
+description = "Iris shader support. PAIR THIS CHECKBOX WITH COLORWHEEL: if you uncheck Iris, also uncheck Colorwheel - Colorwheel has Iris as a hard dependency, so NeoForge will refuse to launch with one but not the other. Disable both for vanilla rendering / FPS gains on weaker GPUs (then consider enabling Sodium Dynamic Lights below for torchlight)."

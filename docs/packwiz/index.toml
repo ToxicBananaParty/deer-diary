@@ -881,7 +881,7 @@ metafile = true
 
 [[files]]
 file = "mods/colorwheel.pw.toml"
-hash = "ea7348877d7d594fc1299b683fbaf9e3afb864d68348eb50fa80bb3e22d4e420"
+hash = "1dbe0e128db0c8be95e68ee7b2890ef8bb2f79ab7be4773366aae38b85996cdc"
 metafile = true
 
 [[files]]
@@ -1073,7 +1073,7 @@ metafile = true
 
 [[files]]
 file = "mods/iris.pw.toml"
-hash = "853ca8c8522cfbc8b4887e07c4a622f486068b5cbbb7383682c1072eea872399"
+hash = "c1a01fd5fa4ade76216d067bcd9a6e894ec97582fb9da4fd7a803fa781b35c00"
 metafile = true
 
 [[files]]
