@@ -43,4 +43,4 @@ type = 'OPTIONAL'
 [option]
 optional = true
 default = true
-description = "Colorwheel shader, tuned for Deer Diary. Requires Iris."
+description = "Flywheel/Iris compatibility - makes Create contraptions render correctly under Iris shaders. REQUIRES IRIS (above). Keep this checkbox in sync with Iris: both on or both off. Useless without Iris, mandatory with it."
