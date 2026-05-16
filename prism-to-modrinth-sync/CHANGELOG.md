@@ -5,6 +5,14 @@
 Changes since `2026.05.16`:
 
 ### Added
+**Other**
+- `servers.dat`
+
+## 2026.05.16 (packwiz) — 2026-05-16
+
+Changes since `2026.05.16`:
+
+### Added
 **Mods**
 - `mods/trmt-1.1.1-1.21+1.21.1.jar`
 
