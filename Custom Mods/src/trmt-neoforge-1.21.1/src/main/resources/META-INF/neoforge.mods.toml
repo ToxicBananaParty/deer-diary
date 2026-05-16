@@ -6,7 +6,7 @@ license = "CC BY-NC 4.0"
     modId = "${mod_id}"
     version = "${version}"
     displayName = "TRMT - The Roads More Travelled"
-    description = "Foot-traffic erosion for Minecraft blocks."
+    description = '''Adds foot-traffic erosion to Minecraft blocks. Walking on grass, dirt, sand, or leaves accumulates per-block trampling progress; once thresholds are crossed the block visibly erodes through stages and eventually becomes a dirt path. Paths slowly heal over time when nobody walks them. Data-driven via block / entity-type tags so modpack authors can plug in modded blocks and mobs. Optional soft-compat with Open Parties and Claims, LuckPerms, SereneSeasons, Jade, and Naturalist.'''
     logoFile = "assets/trmt/icon.png"
 
 [[mixins]]
@@ -35,3 +35,24 @@ license = "CC BY-NC 4.0"
     versionRange = "[15.0.0,)"
     ordering = "NONE"
     side = "CLIENT"
+
+[[dependencies.trmt]]
+    modId = "openpartiesandclaims"
+    type = "optional"
+    versionRange = "[0.26.0,)"
+    ordering = "NONE"
+    side = "BOTH"
+
+[[dependencies.trmt]]
+    modId = "luckperms"
+    type = "optional"
+    versionRange = "[5.0.0,)"
+    ordering = "NONE"
+    side = "BOTH"
+
+[[dependencies.trmt]]
+    modId = "sereneseasons"
+    type = "optional"
+    versionRange = "[10.0.0,)"
+    ordering = "NONE"
+    side = "BOTH"

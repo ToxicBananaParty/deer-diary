@@ -77,23 +77,20 @@ public class ServerPlayerEntityMixin {
         BlockPos vegPos = groundPos.above();
         BlockState vegState = level.getBlockState(vegPos);
         if (erosion.vegetationEnabled && BlockThresholds.isVegetation(vegState.getBlock())) {
-            manager.onStep(level, vegPos, vegState.getBlock(), 1.0f * mult, gameTime);
+            float effectiveVegMult = EntityStepHandler.applyStepMultiplierModifiers(1.0f * mult, level);
+            manager.onStep(level, vegPos, vegState.getBlock(), effectiveVegMult, gameTime);
             trmt$tryBreakVegetation(level, manager, vegPos, vegState);
             manager.broadcastEntryUpdate(level, vegPos, vegState.getBlock());
         }
 
-        boolean tracked = (erosion.grassEnabled && (state.is(Blocks.GRASS_BLOCK) || state.is(TRMTBlocks.ERODED_GRASS_BLOCK.get())))
-                || (erosion.dirtEnabled && (state.is(Blocks.DIRT) || state.is(TRMTBlocks.ERODED_DIRT.get())))
-                || (erosion.sandEnabled && (state.is(Blocks.SAND) || state.is(TRMTBlocks.ERODED_SAND.get())))
-                || (erosion.leavesEnabled && BlockThresholds.isLeaves(block));
-
-        if (!tracked) {
+        if (!EntityStepHandler.isTrackedForErosion(state)) {
             return;
         }
 
         if (!EntityStepHandler.hasProtectedPlantAbove(level,groundPos)) {
-            manager.onStep(level, groundPos, block, 1.0f * mult, gameTime);
-            EntityStepHandler.tryTransform(level, manager,groundPos);
+            float effectiveMult = EntityStepHandler.applyStepMultiplierModifiers(1.0f * mult, level);
+            manager.onStep(level, groundPos, block, effectiveMult, gameTime);
+            EntityStepHandler.tryTransform(level, manager, groundPos, player);
             manager.broadcastEntryUpdate(level, groundPos, block);
         }
 
@@ -101,23 +98,20 @@ public class ServerPlayerEntityMixin {
         Direction left = facing.getCounterClockWise();
         Direction right = facing.getClockWise();
 
-        trmt$stepAdjacent(level, manager, groundPos.relative(facing), 0.2f * mult, gameTime);
-        trmt$stepAdjacent(level, manager, groundPos.relative(left), 0.5f * mult, gameTime);
-        trmt$stepAdjacent(level, manager, groundPos.relative(right), 0.5f * mult, gameTime);
+        trmt$stepAdjacent(level, manager, groundPos.relative(facing), 0.2f * mult, gameTime, player);
+        trmt$stepAdjacent(level, manager, groundPos.relative(left), 0.5f * mult, gameTime, player);
+        trmt$stepAdjacent(level, manager, groundPos.relative(right), 0.5f * mult, gameTime, player);
     }
 
     @Unique
     private static void trmt$stepAdjacent(ServerLevel level, ErosionMapManager manager,
-                                           BlockPos pos, float amount, long gameTime) {
+                                           BlockPos pos, float amount, long gameTime, ServerPlayer player) {
         if (EntityStepHandler.hasProtectedPlantAbove(level,pos)) return;
         BlockState adjState = level.getBlockState(pos);
-        TRMTConfig.ErosionToggles erosion = TRMTConfig.get().erosion;
-        if ((erosion.grassEnabled && (adjState.is(Blocks.GRASS_BLOCK) || adjState.is(TRMTBlocks.ERODED_GRASS_BLOCK.get())))
-                || (erosion.dirtEnabled && (adjState.is(Blocks.DIRT) || adjState.is(TRMTBlocks.ERODED_DIRT.get())))
-                || (erosion.sandEnabled && (adjState.is(Blocks.SAND) || adjState.is(TRMTBlocks.ERODED_SAND.get())))
-                || (erosion.leavesEnabled && BlockThresholds.isLeaves(adjState.getBlock()))) {
-            manager.onStep(level, pos, adjState.getBlock(), amount, gameTime);
-            EntityStepHandler.tryTransform(level, manager,pos);
+        if (EntityStepHandler.isTrackedForErosion(adjState)) {
+            float effectiveAmount = EntityStepHandler.applyStepMultiplierModifiers(amount, level);
+            manager.onStep(level, pos, adjState.getBlock(), effectiveAmount, gameTime);
+            EntityStepHandler.tryTransform(level, manager, pos, player);
         }
     }
 

@@ -1,5 +1,6 @@
 package milkucha.trmt.erosion;
 
+import milkucha.trmt.migration.SaveMigrator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -47,6 +48,7 @@ public class ErosionPersistentState extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registries) {
+        nbt.putInt(SaveMigrator.VERSION_KEY, SaveMigrator.CURRENT_VERSION);
         ListTag chunkList = new ListTag();
         for (Map.Entry<ChunkPos, ChunkErosionMap> chunkEntry : chunkMaps.entrySet()) {
             ChunkPos chunkPos = chunkEntry.getKey();
@@ -80,6 +82,7 @@ public class ErosionPersistentState extends SavedData {
     }
 
     private static ErosionPersistentState load(CompoundTag nbt, HolderLookup.Provider registries) {
+        SaveMigrator.migrateToCurrent(nbt);
         Map<ChunkPos, ChunkErosionMap> chunkMaps = new HashMap<>();
         ListTag chunkList = nbt.getList("chunks", Tag.TAG_COMPOUND);
         for (int i = 0; i < chunkList.size(); i++) {

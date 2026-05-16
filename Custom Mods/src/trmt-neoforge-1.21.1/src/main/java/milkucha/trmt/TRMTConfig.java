@@ -9,6 +9,10 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Mod configuration loaded from {@code config/trmt.json}.
@@ -27,8 +31,28 @@ public final class TRMTConfig {
     public static class Multipliers {
         public float player   = 0.5f;
         public float mounted  = 1.5f;
-        public float villager = 0.5f;
-        public float horse    = 0.5f;
+
+        /** @deprecated Since 1.0.0. Use {@link #tramples} keyed by {@code "minecraft:villager"}. Removed in 1.1. */
+        @Deprecated public float villager = 0.5f;
+        /** @deprecated Since 1.0.0. Use {@link #tramples} keyed by {@code "minecraft:horse"}. Removed in 1.1. */
+        @Deprecated public float horse    = 0.5f;
+
+        /**
+         * Fallback step multiplier applied to any entity in the
+         * {@code #trmt:tramples} tag that doesn't have a per-entity entry in
+         * {@link #tramples}.
+         */
+        public float defaultTrample = 0.5f;
+
+        /**
+         * Per-entity step multipliers, keyed by entity-type id (e.g.
+         * {@code "minecraft:horse"}, {@code "naturalist:deer"}). Looked up
+         * by {@link milkucha.trmt.mixin.MobTramplingMixin} for any entity in
+         * the {@code #trmt:tramples} tag.
+         * <p>Empty by default; modpack authors fill it in as needed. Missing
+         * entries fall back to {@link #defaultTrample}.
+         */
+        public Map<String, Float> tramples = new HashMap<>();
     }
 
     public static class MinMax {
@@ -54,6 +78,12 @@ public final class TRMTConfig {
         // with no players online anyway. Grass-spreading from low-stage eroded
         // grass also still fires so the world keeps ticking normally.
         public boolean pauseDeErosionWhenEmpty = true;
+        // When false, force-loaded chunks (e.g. via Chunky pre-gen, chunkloaders
+        // mod blocks, or /forceload) are excluded from BOTH erosion and de-erosion.
+        // Default true preserves existing behavior. Useful for builders who keep
+        // their farms force-loaded and don't want quiet ground erosion under
+        // automation infrastructure.
+        public boolean allowInForcedChunks = true;
     }
 
     public static class VegetationThreshold extends MinMax {
@@ -104,12 +134,43 @@ public final class TRMTConfig {
         public float dirtPath = 21f;
     }
 
+    /**
+     * Per-dimension allow/block list for erosion. Default: blocklist with no
+     * entries (i.e. erosion happens everywhere). Set {@code mode} to
+     * {@code "allowlist"} and populate {@code list} to restrict erosion to
+     * specific dimensions (e.g. {@code ["minecraft:overworld"]}).
+     */
+    public static class Dimensions {
+        public enum Mode { ALLOWLIST, BLOCKLIST }
+        public Mode mode = Mode.BLOCKLIST;
+        public List<String> list = new ArrayList<>();
+
+        public boolean isEnabled(String dimensionId) {
+            return switch (mode) {
+                case BLOCKLIST -> !list.contains(dimensionId);
+                case ALLOWLIST -> list.contains(dimensionId);
+            };
+        }
+    }
+
+    public static class SeasonsMultipliers {
+        /** Master switch for SereneSeasons-driven step-multiplier modulation. */
+        public boolean enabled = true;
+        /** Per-season step multiplier. Lower = slower erosion in that season. */
+        public float winter = 0.5f;
+        public float spring = 1.0f;
+        public float summer = 1.0f;
+        public float autumn = 1.2f;
+    }
+
     // ── top-level fields ───────────────────────────────────────────────────
 
     public ErosionToggles       erosion              = new ErosionToggles();
     public Multipliers          erosionMultipliers   = new Multipliers();
     public ErosionThresholds    erosionThresholds    = new ErosionThresholds();
     public DeErosionTimeoutDays deErosionTimeoutDays = new DeErosionTimeoutDays();
+    public SeasonsMultipliers   seasonsMultipliers   = new SeasonsMultipliers();
+    public Dimensions           dimensions           = new Dimensions();
 
     // ── singleton ──────────────────────────────────────────────────────────
     private static TRMTConfig instance = new TRMTConfig();

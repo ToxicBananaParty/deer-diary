@@ -2,7 +2,8 @@ package milkucha.trmt.block;
 
 import milkucha.trmt.TRMTBlocks;
 import milkucha.trmt.TRMTConfig;
-import milkucha.trmt.api.CanErodeEvent;
+import milkucha.trmt.api.CanDeErodeEvent;
+import milkucha.trmt.api.DeErodedEvent;
 import milkucha.trmt.erosion.BlockThresholds;
 import milkucha.trmt.erosion.ChunkErosionMap;
 import milkucha.trmt.erosion.EntityStepHandler;
@@ -39,6 +40,7 @@ public class ErodedDirtPathBlock extends DirtPathBlock {
     @Override
     public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         // Vanilla DirtPathBlock doesn't override randomTick, so no super call needed.
+        if (!BlockThresholds.isLocationAllowed(level, pos)) return;
         if (BlockThresholds.isDeErosionPausedForEmptyServer(level)) return;
 
         ErosionMapManager manager = ErosionMapManager.getInstance();
@@ -50,7 +52,7 @@ public class ErodedDirtPathBlock extends DirtPathBlock {
         if (BlockThresholds.isIsolated(level, pos, manager)) timeout /= 2;
         if (entry != null && currentTime - entry.getLastTouchedGameTime() <= timeout) return;
 
-        CanErodeEvent event = new CanErodeEvent(level, pos, state);
+        CanDeErodeEvent event = new CanDeErodeEvent(level, pos, state);
         NeoForge.EVENT_BUS.post(event);
         if (event.isCanceled()) return;
 
@@ -60,6 +62,7 @@ public class ErodedDirtPathBlock extends DirtPathBlock {
             .setValue(ErodedGrassBlock.STAGE, 4);
         ErosionFx.crumbleParticles(level, pos, next);
         level.setBlock(pos, next, Block.UPDATE_ALL);
+        NeoForge.EVENT_BUS.post(new DeErodedEvent(level, pos, state, next));
         manager.removeEntry(level, pos);
         manager.writeCooldownEntry(level, pos, TRMTBlocks.ERODED_GRASS_BLOCK.get(), currentTime);
     }

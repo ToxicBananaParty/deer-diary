@@ -66,7 +66,27 @@ public class TRMT {
         NeoForge.EVENT_BUS.addListener(this::registerCommands);
         NeoForge.EVENT_BUS.addListener(this::registerBrewingRecipes);
 
+        registerOptionalCompatModules();
+
         LOGGER.info("[TRMT] Initialized.");
+    }
+
+    /**
+     * Conditionally enables soft-compat integrations for mods that are present
+     * at runtime. Each compat module is referenced from a method local to its
+     * isLoaded() branch, so the JVM never attempts to load its classes (and
+     * the API classes it imports) unless the target mod is on the classpath.
+     */
+    private void registerOptionalCompatModules() {
+        if (ModList.get().isLoaded("openpartiesandclaims")) {
+            milkucha.trmt.compat.openpartiesandclaims.OPaCCompat.register();
+        }
+        if (ModList.get().isLoaded("luckperms")) {
+            milkucha.trmt.compat.luckperms.LuckPermsCompat.register();
+        }
+        if (ModList.get().isLoaded("sereneseasons")) {
+            milkucha.trmt.compat.sereneseasons.SeasonsCompat.register();
+        }
     }
 
     private void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
