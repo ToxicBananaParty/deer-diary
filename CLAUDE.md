@@ -48,12 +48,21 @@ MC Stuff/                          # git repo root
 
 ## The one-command release loop
 
-From a fresh Windows PowerShell:
+From a fresh shell:
 
 ```
 cd "C:\Users\Ryan-PC\Desktop\MC Stuff\prism-to-modrinth-sync"
-.\.venv\Scripts\python.exe -m prism_sync publish --push
+
+# PowerShell:
+.\prism_sync publish --push
+
+# CMD:
+prism_sync publish --push
 ```
+
+(`prism_sync.cmd` is a thin shim that invokes `.\.venv\Scripts\python.exe -m
+prism_sync` — no venv activation needed. The old long form still works if
+you'd rather type it.)
 
 What it does, in order:
 
@@ -76,15 +85,17 @@ What it does, in order:
 6. **Git commit + push** via WSL (`Release X.Y.Z: +N ~M -K`) and push to
    `origin main`. Only runs if `--push` is passed.
 
-Other useful invocations:
+Other useful invocations (substitute `.\prism_sync` in PowerShell or
+`prism_sync` in CMD for the shim; long form is `.\.venv\Scripts\python.exe -m
+prism_sync`):
 
 | Goal | Command |
 |---|---|
-| Preview without publishing | `python -m prism_sync check --changelog` |
-| See the API payload, don't POST | `python -m prism_sync publish --dry-run` |
-| Build the .mrpack only | `python -m prism_sync build` |
-| Override version | `... publish --version 2026.06.01 --push` |
-| Bootstrap state from live Modrinth | `python -m prism_sync check --from-remote` |
+| Preview without publishing | `prism_sync check --changelog` |
+| See the API payload, don't POST | `prism_sync publish --dry-run` |
+| Build the .mrpack only | `prism_sync build` |
+| Override version | `prism_sync publish --version 2026.06.01 --push` |
+| Bootstrap state from live Modrinth | `prism_sync check --from-remote` |
 
 ## Env vars
 
