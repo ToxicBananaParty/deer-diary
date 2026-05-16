@@ -1186,8 +1186,8 @@ hash = "fb7a70bd43d6976e2f426723da50b45d73d5200cc7f241a4e3ded48d83f30014"
 metafile = true
 
 [[files]]
-file = "mods/trmt-1.1.0-1.21+1.21.1.jar"
-hash = "90c234ab328e339a70d878741f1bfe94f272f1c82d59764c0cc7e70107a5fd3a"
+file = "mods/trmt-1.1.1-1.21+1.21.1.jar"
+hash = "6c1848326d1418c08cd004ae7eec34ce8509c2a7f0cfb7b6a59a313f9a4642d9"
 
 [[files]]
 file = "mods/visual-workbench.pw.toml"

@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026.05.16 (packwiz) — 2026-05-16
+
+Changes since `2026.05.16`:
+
+### Added
+**Mods**
+- `mods/trmt-1.1.1-1.21+1.21.1.jar`
+
+**Datapacks**
+- `moonlight-global-datapacks/key-to-necklace.zip`
+
+### Removed
+**Mods**
+- `mods/trmt-1.1.0-1.21+1.21.1.jar`
+
 ## 2026.05.16 — 2026-05-16
 
 Changes since `2026.05.16`:

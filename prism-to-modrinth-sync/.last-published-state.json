@@ -273,12 +273,13 @@
     "mods/titanium-1.21-4.0.43.jar": "2ea83a004b1037410a40899bb17e22832a5adb129495b68bdf13fbdff75a6d9599860876dc2f8fb00446351de3e6be866c93b962f8e4c23b88e3434b3cefd7da",
     "mods/toms_storage-1.21-2.3.2.jar": "2760e5a25416b949a3396cfe61f4d18a323e692118c7a5e9117388f5b050841962fe5b9a09071d2ffdb0e0baa3014c1082f2ae843020b95f3a02ac47e495c6bd",
     "mods/trinketsandbaubles-1.2.3.jar": "03da3894be2997c5578c11061e65d7d32b890f8e0d23154fd10f1a55bf0fbdb2d41ef6214344806666d7547080df786391b79f7e825c38773bdfa51ec75df802",
-    "mods/trmt-1.1.0-1.21+1.21.1.jar": "616ed65c1c676c9574e26cf31402d100a97006751ff421adb5412f2df442128824ab713d2f21c104650cc7c53c00602368e42ab8c693dac5dd01deae5d099e38",
+    "mods/trmt-1.1.1-1.21+1.21.1.jar": "71b3c0f8951b6974fe1143d24bb35513ef3c45dced793df1bbf46fcce8393ab4eed59e289f01cef7d4abd6f4fda527a6fc0d8df66068bb8b8849eb0a32eb2f13",
     "mods/wanderingtradermayleave-1.21.1-1.1.jar": "5dba090f408a02ec0d5d0fffd1360a759dc7908d345c0bf6bd5d0b220c4c55f5291a50eafc1151fe07632c60b2034344b312b4e7507eebde246c448ab4c31025",
     "mods/waystones-neoforge-1.21.1-21.1.30.jar": "d3a4f8e1fac5521dd445e1cc9891ef428d7efa61aabdc1fbe5ea6390ecdee012b96219daea94a8f4f8329894d239d42ceb3d7b705477a47babcb45b5cf49f0e7",
     "mods/xaerominimap-neoforge-1.21.1-25.3.10.jar": "97dbc7ddc8b86edead71f60e3257175abe9e05e94387447aad2467cfcf0a5211ed848ee3df9bb3c308183405f997f8acd508ac01f8ee374f08d9af00729fc1d8",
     "mods/xaeroworldmap-neoforge-1.21.1-1.40.11.jar": "a4bb890dbac27937411f570432ebc5a4cc5df9562c22e7c3d6a6516ff303bfcb7f35fb39d2ce42a51591a4b2a5b5debfc933fda3f5a552560442fe69f8828b0b",
     "mods/yet_another_config_lib_v3-3.8.2+1.21.1-neoforge.jar": "583de19b927ce8050c2b7d5e60b75accc69e325e5aac85c27994c82a9dec2e4e078343fa1d4c3a10d4bd7e0e524e0b3b246a18cf03db01e363a1e6f865adcf48",
+    "moonlight-global-datapacks/key-to-necklace.zip": "a06beceb53ac1ee767a677e5e772d40c2af04b1e2c3c7165c31aa36520bd2fb94f1f0035013868e11747ea7622e69dce8af151f5068e877674ddb519f8a887a6",
     "resourcepacks/Create-LabPBR-v12.zip": "ad690590ba7b517ac1ef4467bf93fcd0d766c127e2773ee80eaae4bf91c174f87ca0595b6188800365922aab490b138a8c27a7c37bc4a21b57ed32c3afe2c3ca",
     "resourcepacks/SPBR-16_2.zip": "c96d7026679ac6843b460267bf3e7300d7e0e48bdff438979579fab323fc9cff40f9912cbea6091d713c3bdc756db500665d9d8cfe892215c304933dd89ae44b",
     "resourcepacks/SPBR-BlockEmission.zip": "852f36ca6c2c3b70c068b11a5ff3d549d0d1b12d5f3f452382bc085b49945d575bd27118e82636b69d49a9b6270b31a4defcf3a1f1ad31595cc9cd03e37c0216",
@@ -286,9 +287,8 @@
     "resourcepacks/SPBR-GrassParallax.zip": "2af39c920741b3065d5bde5b9c955f6a9c875592e43a5b15983fe8870060a5e8381cef866201056f58d3699ddeb06c26d3cf1ac5ab6d36e7720e9cddec560ddb",
     "shaderpacks/ComplementaryReimagined_r5.7.1.zip": "840149dd8aff5d5d06d0d5a4ea83d4ea7f72eab3cb2b02de513c1f3eaa6e4627f68d9c0915b86fa37edad73cafd4648f156f373da52810cd34c67d797e0f6aef"
   },
-  "published_at": "2026-05-16T14:47:34Z",
+  "published_at": "2026-05-16T17:34:37Z",
   "notes": {
-    "modrinth_version_id": "oVArAkAc",
-    "modrinth_status": "listed"
+    "published_via": "packwiz"
   }
 }
