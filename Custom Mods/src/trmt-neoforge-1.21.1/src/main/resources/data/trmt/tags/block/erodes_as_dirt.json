@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:dirt",
+    "trmt:eroded_dirt",
+    "trmt:eroded_dirt_path",
+    { "id": "farmersdelight:rich_soil", "required": false }
+  ]
+}

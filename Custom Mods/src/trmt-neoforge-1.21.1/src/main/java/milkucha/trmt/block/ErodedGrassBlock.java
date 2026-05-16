@@ -1,6 +1,8 @@
 package milkucha.trmt.block;
 
 import milkucha.trmt.TRMTBlocks;
+import milkucha.trmt.api.CanDeErodeEvent;
+import milkucha.trmt.api.DeErodedEvent;
 import milkucha.trmt.erosion.BlockThresholds;
 import milkucha.trmt.erosion.ChunkErosionMap;
 import milkucha.trmt.erosion.ErosionEntry;
@@ -15,6 +17,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
@@ -60,8 +63,11 @@ public class ErodedGrassBlock extends Block {
             }
         }
 
-        // Gate de-erosion (but NOT the grass-spread above) when the server is empty —
-        // chunk-loaded paths shouldn't quietly disappear overnight on dedicated servers.
+        // Gate de-erosion (but NOT the grass-spread above) when the location is
+        // excluded (disabled dimension, force-loaded chunk in allowInForcedChunks=false
+        // mode) or when the server is empty — chunk-loaded paths shouldn't quietly
+        // disappear in disabled dimensions or overnight on dedicated servers.
+        if (!BlockThresholds.isLocationAllowed(level, pos)) return;
         if (BlockThresholds.isDeErosionPausedForEmptyServer(level)) return;
 
         ErosionMapManager manager = ErosionMapManager.getInstance();
@@ -72,17 +78,25 @@ public class ErodedGrassBlock extends Block {
         if (BlockThresholds.isIsolated(level, pos, manager)) timeout /= 2;
         if (entry != null && currentTime - entry.getLastTouchedGameTime() <= timeout) return;
 
+        CanDeErodeEvent canEvent = new CanDeErodeEvent(level, pos, state);
+        NeoForge.EVENT_BUS.post(canEvent);
+        if (canEvent.isCanceled()) return;
+
         if (blockStage > 0) {
             BlockState next = state.setValue(STAGE, blockStage - 1);
-            ErosionFx.crumbleParticles(level, pos, next);
-            level.setBlock(pos, next, Block.UPDATE_ALL);
+            applyDeErosion(level, pos, state, next);
             manager.removeEntry(level, pos);
             manager.writeCooldownEntry(level, pos, TRMTBlocks.ERODED_GRASS_BLOCK.get(), currentTime);
         } else {
             BlockState next = Blocks.GRASS_BLOCK.defaultBlockState();
-            ErosionFx.crumbleParticles(level, pos, next);
-            level.setBlock(pos, next, Block.UPDATE_ALL);
+            applyDeErosion(level, pos, state, next);
             manager.removeEntry(level, pos);
         }
+    }
+
+    private static void applyDeErosion(ServerLevel level, BlockPos pos, BlockState fromState, BlockState toState) {
+        ErosionFx.crumbleParticles(level, pos, toState);
+        level.setBlock(pos, toState, Block.UPDATE_ALL);
+        NeoForge.EVENT_BUS.post(new DeErodedEvent(level, pos, fromState, toState));
     }
 }

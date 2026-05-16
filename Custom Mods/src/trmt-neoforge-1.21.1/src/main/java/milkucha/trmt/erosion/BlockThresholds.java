@@ -2,6 +2,7 @@ package milkucha.trmt.erosion;
 
 import milkucha.trmt.TRMTBlocks;
 import milkucha.trmt.TRMTConfig;
+import milkucha.trmt.TRMTTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -41,30 +42,28 @@ public final class BlockThresholds {
     }
 
     public static float randomThreshold(Block block) {
-        if (block == TRMTBlocks.ERODED_GRASS_BLOCK.get()) {
-            block = Blocks.GRASS_BLOCK;
-        } else if (block == TRMTBlocks.ERODED_DIRT.get()) {
-            block = Blocks.DIRT;
-        } else if (block == TRMTBlocks.ERODED_COARSE_DIRT.get()) {
-            block = Blocks.COARSE_DIRT;
-        } else if (block == TRMTBlocks.ERODED_SAND.get()) {
-            block = Blocks.SAND;
-        }
-
+        BlockState state = block.defaultBlockState();
         TRMTConfig cfg = TRMTConfig.get();
         TRMTConfig.MinMax range;
 
-        if (block == Blocks.GRASS_BLOCK) {
-            range = cfg.erosionThresholds.grass;
-        } else if (block == Blocks.DIRT) {
-            range = cfg.erosionThresholds.dirt;
-        } else if (block == Blocks.COARSE_DIRT) {
+        // Special-case the two terminal eroded variants whose threshold differs
+        // from the "fresh" source.
+        if (block == TRMTBlocks.ERODED_COARSE_DIRT.get()) {
             range = cfg.erosionThresholds.coarseDirt;
-        } else if (block == Blocks.SAND) {
-            range = cfg.erosionThresholds.sand;
         } else if (VEGETATION.contains(block)) {
             range = cfg.erosionThresholds.vegetation;
-        } else if (block instanceof LeavesBlock) {
+        }
+        // Tag-based dispatch: a block can appear in multiple tags, but the order
+        // (grass → dirt → sand → leaves) matches the tryTransform dispatch
+        // order, so the threshold matches the chain the block would actually
+        // erode through.
+        else if (state.is(TRMTTags.ERODES_AS_GRASS)) {
+            range = cfg.erosionThresholds.grass;
+        } else if (state.is(TRMTTags.ERODES_AS_DIRT)) {
+            range = cfg.erosionThresholds.dirt;
+        } else if (state.is(TRMTTags.ERODES_AS_SAND)) {
+            range = cfg.erosionThresholds.sand;
+        } else if (state.is(TRMTTags.ERODES_AS_LEAVES) || block instanceof LeavesBlock) {
             range = cfg.erosionThresholds.leaves;
         } else {
             range = cfg.erosionThresholds.grass;
@@ -149,5 +148,28 @@ public final class BlockThresholds {
         if (!TRMTConfig.get().erosion.pauseDeErosionWhenEmpty) return false;
         return level.getServer() != null
             && level.getServer().getPlayerList().getPlayerCount() == 0;
+    }
+
+    /**
+     * Returns {@code true} if this dimension is permitted by the
+     * {@code dimensions} allow/block list in {@code trmt.json}. Default
+     * config returns {@code true} for every dimension.
+     */
+    public static boolean isDimensionAllowed(ServerLevel level) {
+        return TRMTConfig.get().dimensions.isEnabled(level.dimension().location().toString());
+    }
+
+    /**
+     * Returns {@code true} if erosion is allowed at this position. Combines
+     * the dimension allow/block list with the {@code allowInForcedChunks}
+     * toggle. Both apply to both erosion and de-erosion.
+     */
+    public static boolean isLocationAllowed(ServerLevel level, BlockPos pos) {
+        if (!isDimensionAllowed(level)) return false;
+        if (!TRMTConfig.get().erosion.allowInForcedChunks) {
+            long chunkKey = new ChunkPos(pos).toLong();
+            if (level.getForcedChunks().contains(chunkKey)) return false;
+        }
+        return true;
     }
 }
