@@ -31,11 +31,16 @@ public final class TRMTBlocks {
         () -> new ErodedSandBlock(BlockBehaviour.Properties.of()
             .mapColor(MapColor.TERRACOTTA_YELLOW).strength(0.5F).sound(SoundType.SAND).noOcclusion().randomTicks()));
 
-    // Erosion-derived dirt path. ofFullCopy is correct here (unlike the other eroded blocks):
-    // we want vanilla's loot table key copied so this drops dirt on break, exactly like vanilla.
+    // Erosion-derived dirt path. ofFullCopy gives us vanilla's hardness/sound/etc, but the loot
+    // table is NOT actually inherited: vanilla DIRT_PATH leaves lootTableSupplier null and relies
+    // on the default registry-id lookup, so without lootFrom() our block looks up
+    // trmt:blocks/eroded_dirt_path (which doesn't exist) and drops nothing. lootFrom() pins the
+    // supplier to vanilla DIRT_PATH's loot table so this drops dirt on break, exactly like vanilla.
     // randomTicks() is required because vanilla DirtPathBlock isn't natively random-ticked.
     public static final DeferredBlock<Block> ERODED_DIRT_PATH = BLOCKS.register("eroded_dirt_path",
-        () -> new ErodedDirtPathBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.DIRT_PATH).randomTicks()));
+        () -> new ErodedDirtPathBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.DIRT_PATH)
+            .lootFrom(() -> Blocks.DIRT_PATH)
+            .randomTicks()));
 
     private TRMTBlocks() {}
 }
