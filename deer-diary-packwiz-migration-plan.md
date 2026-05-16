@@ -234,8 +234,12 @@ For NeoForge on Windows the working invocation is:
 ```
 
 - Forward slashes work cross-platform in Prism's command string.
-- Omit `-g` for now (it forces the GUI updater; default behavior already
-  shows a progress window). Add `-g` later if Ryan wants the GUI dialog.
+- **Do NOT add `-g`.** The `-g` flag *disables* the GUI (it's for headless
+  server installs — `java -jar ... -g -s server <url>`). Adding it on a
+  client install means the Swing option-select dialog never appears, and
+  packwiz-installer falls back to "enable all optional mods" regardless
+  of each metafile's `default = false`. javaw.exe + no flag = GUI shows
+  correctly.
 - Quote everything that contains substitutions — Prism's quote handling
   has known historical issues
   ([PrismLauncher#1134](https://github.com/PrismLauncher/PrismLauncher/issues/1134)),
