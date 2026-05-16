@@ -18,8 +18,11 @@ import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
@@ -45,8 +48,13 @@ public class TRMT {
     public static final String MOD_ID = "trmt";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public TRMT(IEventBus modBus) {
-        TRMTConfig.load();
+    public TRMT(IEventBus modBus, ModContainer modContainer) {
+        // Register the ModConfigSpec — NeoForge writes the file at config/trmt-common.toml
+        // and fires ModConfigEvent.Loading once it's ready (which TRMTConfig listens to
+        // for cache refresh). The JSON migrator runs after the first load fires.
+        modContainer.registerConfig(ModConfig.Type.COMMON, TRMTConfig.SPEC);
+        modBus.addListener(TRMTConfig::onModConfigEvent);
+        modBus.addListener((FMLCommonSetupEvent e) -> JsonConfigMigrator.migrateIfPresent());
 
         TRMTBlocks.BLOCKS.register(modBus);
         TRMTItems.ITEMS.register(modBus);
