@@ -4,7 +4,6 @@ import hashlib
 import io
 import json
 import logging
-import tomllib
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -23,12 +22,17 @@ from .instance import (
     read_packignore,
     walk_pack_files,
 )
+from .pwtoml import (
+    ALLOWED_DOWNLOAD_HOSTS,
+    is_curseforge_only as _pw_toml_is_curseforge_only,
+    modrinth_cdn_entry as _pw_toml_modrinth_entry,
+    read_pw_toml_indexes as _read_pw_toml_indexes,
+)
 
 
 log = logging.getLogger(__name__)
 
 MODRINTH_API_BASE = "https://api.modrinth.com/v2"
-ALLOWED_DOWNLOAD_HOSTS = ("cdn.modrinth.com",)
 HASH_LOOKUP_BATCH_SIZE = 100
 
 
@@ -95,60 +99,6 @@ def _normalize_cdn_url(url: str) -> str:
     return urlunsplit(
         (parts.scheme, parts.netloc, normalized_path, parts.query, parts.fragment)
     )
-
-
-def _read_pw_toml_indexes(
-    minecraft_dir: Path, include_paths: Iterable[str]
-) -> dict[str, dict]:
-    """Read `.index/*.pw.toml` from every include path that has one.
-
-    Returns {minecraft-rooted-path: parsed_toml}, e.g.
-    {"mods/Foo.jar": {...}, "resourcepacks/Bar.zip": {...}}.
-    """
-    out: dict[str, dict] = {}
-    for sub in include_paths:
-        index_dir = minecraft_dir / sub / ".index"
-        if not index_dir.is_dir():
-            continue
-        for toml_path in index_dir.glob("*.pw.toml"):
-            try:
-                with toml_path.open("rb") as fh:
-                    data = tomllib.load(fh)
-            except Exception as exc:
-                log.warning("Failed to parse %s: %s", toml_path, exc)
-                continue
-            filename = data.get("filename")
-            if not filename:
-                continue
-            out[f"{sub}/{filename}"] = data
-    return out
-
-
-def _pw_toml_is_curseforge_only(data: dict) -> bool:
-    """True if the .pw.toml indicates a CurseForge-only mod (no Modrinth URL)."""
-    download = data.get("download") or {}
-    mode = download.get("mode") or ""
-    return mode.startswith("metadata:curseforge")
-
-
-def _pw_toml_modrinth_entry(
-    data: dict,
-) -> tuple[str, str] | None:
-    """Return (cdn_url, sha512) from a parsed .pw.toml, or None if not eligible.
-
-    Only Modrinth CDN URLs with a sha512 hash are returned; CurseForge or
-    metadata:curseforge entries become overrides instead.
-    """
-    download = data.get("download") or {}
-    mode = download.get("mode")
-    url = download.get("url")
-    hash_value = download.get("hash")
-    hash_format = download.get("hash-format")
-    if mode != "url" or not url or not hash_value or hash_format != "sha512":
-        return None
-    if not any(host in url for host in ALLOWED_DOWNLOAD_HOSTS):
-        return None
-    return url, hash_value
 
 
 def _modrinth_hash_lookup(
@@ -250,7 +200,8 @@ def build_mrpack(
             _add_override(entry, hashes)
             continue
 
-        pw_data = pw_index.get(entry.relative_to_minecraft)
+        pw_entry = pw_index.get(entry.relative_to_minecraft)
+        pw_data = pw_entry.data if pw_entry else None
 
         if pw_data:
             if _pw_toml_is_curseforge_only(pw_data):

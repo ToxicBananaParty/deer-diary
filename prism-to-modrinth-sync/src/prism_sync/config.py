@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .customs import CustomModConfig
+from .packwiz_settings import PackwizSettings
 
 
 PAT_ENV_VAR = "MODRINTH_PAT"
@@ -24,6 +25,7 @@ class Config:
     optional_files: list[str]
     custom_mods: list[CustomModConfig]
     modrinth_pat: str | None
+    packwiz: PackwizSettings
 
     @property
     def minecraft_dir(self) -> Path:
@@ -116,4 +118,5 @@ def load_config(config_dir: Path | None = None) -> Config:
         optional_files=list(merged.get("optional_files", [])),
         custom_mods=custom_mods,
         modrinth_pat=pat,
+        packwiz=PackwizSettings.from_dict(merged.get("packwiz"), config_dir),
     )

@@ -82,12 +82,64 @@ source_dir = "../Custom Mods/dist/trmt-neoforge-1.21.1"
 name = "deer-diary-commands"
 source_dir = "../Custom Mods/dist/deer-diary-commands"
 
-# Example datapack entry — uncomment and pick a target_dir once you decide
-# where it should live in the instance (mods/, moonlight-global-datapacks/, or
-# a per-world saves/<world>/datapacks/). Datapack zip has no version in its
-# filename, so the sync falls back to byte comparison automatically.
-# [[custom_mods]]
-# name = "key-to-necklace"
-# source_dir = "../Custom Mods/dist/key-to-necklace"
-# source_pattern = "key-to-necklace.zip"
-# target_dir = "moonlight-global-datapacks"
+# Datapack ships through the Packwiz pipeline as a self-hosted direct file.
+# Versionless filename → the custom-mod sync falls back to byte compare.
+[[custom_mods]]
+name = "key-to-necklace"
+source_dir = "../Custom Mods/dist/key-to-necklace"
+source_pattern = "key-to-necklace.zip"
+target_dir = "moonlight-global-datapacks"
+
+
+# =========================================================================
+# Packwiz publishing pipeline
+# =========================================================================
+# Generates a static Packwiz tree (pack.toml + index.toml + metafiles +
+# self-hosted direct files) under `output_dir`. Players install a small
+# bootstrap Prism instance that runs packwiz-installer-bootstrap.jar before
+# Minecraft launches; that resolves changes against `base_url` and updates
+# the local pack in place. Independent of the Modrinth pipeline above —
+# both can run, sharing `.last-published-state.json` and `CHANGELOG.md`.
+
+[packwiz]
+enabled = true
+
+# Generated web root. Relative paths resolve against this file's directory,
+# so `../docs/packwiz` puts the tree at the repo root under docs/ (where
+# GitHub Pages can serve it from main).
+output_dir = "../docs/packwiz"
+
+# Public URL the bootstrap installer hits. The pack.toml lives at
+# `${base_url}/pack.toml`; relative paths inside index.toml resolve against
+# the same base. Update once GitHub Pages is enabled and the canonical URL
+# is known.
+base_url = "https://toxicbananaparty.github.io/deer-diary/packwiz"
+
+# Pack metadata. Author shows up in packwiz-installer dialogs and pack.toml.
+author = "ToxicBananaParty"
+pack_format = "packwiz:1.1.0"
+
+# Pin the bootstrap jar version we expect players to use, so the bootstrap
+# instance zip ships a known-good build. Bump deliberately, not implicitly.
+bootstrap_installer_url = "https://github.com/packwiz/packwiz-installer-bootstrap/releases/download/v0.0.3/packwiz-installer-bootstrap.jar"
+
+[packwiz.self_host]
+# Allowlist for mod jars we'll copy into the published tree as direct files
+# (no Modrinth/CurseForge metafile). Two situations match:
+#   - Our own builds (custom mods, custom datapacks): no upstream metafile.
+#   - CurseForge-only mods whose author granted us redistribution permission:
+#     we'd rather ship the jar than make every player configure a CF API
+#     key in packwiz-installer. These entries override their .pw.toml.
+# Modrinth-backed mods don't need to appear here — they pass through as
+# native metafiles and players fetch them from Modrinth's CDN.
+allowed_globs = [
+    # Own builds:
+    "mods/trmt-*.jar",
+    "mods/deer-diary-commands-*.jar",
+    "moonlight-global-datapacks/key-to-necklace.zip",
+    # CurseForge-only mods, redistribution permitted by upstream authors:
+    "mods/alltheleaks-*.jar",
+    "mods/configured-neoforge-*.jar",
+    "mods/extendedbeaconrange-*.jar",
+    "mods/ironchest-*-neoforge-*.jar",
+]

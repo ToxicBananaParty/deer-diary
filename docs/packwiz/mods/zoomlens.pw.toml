@@ -1,0 +1,16 @@
+filename = 'ZoomLens-neoforge-1.21.1-v1.1.jar'
+name = 'ZoomLens | formerly Zoomify!'
+side = 'client'
+x-prismlauncher-loaders = [ 'neoforge' ]
+x-prismlauncher-mc-versions = [ '1.21', '1.21.1' ]
+x-prismlauncher-release-type = 'release'
+
+[download]
+hash = 'f56c04a6eaeae66c1de2a55890336e983d580662ded008f359259a32a3c8a6ce7828b59fc1abcda2f2f397d30dd0d1230591a7857b96a7ae4dd5216038303d51'
+hash-format = 'sha512'
+mode = 'url'
+url = 'https://cdn.modrinth.com/data/NBdy9i0b/versions/duVLzDee/ZoomLens-neoforge-1.21.1-v1.1.jar'
+
+[update.modrinth]
+mod-id = 'NBdy9i0b'
+version = 'duVLzDee'
