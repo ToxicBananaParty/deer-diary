@@ -156,8 +156,8 @@ preserve_globs = [
 # (e.g. kept as .jar.disabled by the pack maintainer) get force-emitted by
 # reading directly from mods/.index/<slug>.pw.toml.
 [packwiz.optional_mods]
-iris = { default = true, description = "Iris shader support. Disable to gain FPS on weaker GPUs (and consider enabling Sodium Dynamic Lights for dynamic torchlight in that case)." }
-colorwheel = { default = true, description = "Colorwheel shader, tuned for Deer Diary. Requires Iris." }
+iris = { default = true, description = "Iris shader support. PAIR THIS CHECKBOX WITH COLORWHEEL: if you uncheck Iris, also uncheck Colorwheel - Colorwheel has Iris as a hard dependency, so NeoForge will refuse to launch with one but not the other. Disable both for vanilla rendering / FPS gains on weaker GPUs (then consider enabling Sodium Dynamic Lights below for torchlight)." }
+colorwheel = { default = true, description = "Flywheel/Iris compatibility - makes Create contraptions render correctly under Iris shaders. REQUIRES IRIS (above). Keep this checkbox in sync with Iris: both on or both off. Useless without Iris, mandatory with it." }
 distanthorizons = { default = true, description = "Distant Horizons - extreme render distance via LODs. Disable if you have <8GB RAM allocated." }
 sodium-dynamic-lights = { default = false, description = "Dynamic torchlight from held / dropped torches. Recommended for players NOT using Iris+Colorwheel (the shaders already do this)." }
 
