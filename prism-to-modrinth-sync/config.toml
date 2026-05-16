@@ -77,10 +77,11 @@ extra_ignore = [
 # default-off alternatives — e.g. a `.disabled` mod jar you want consumers to be
 # able to toggle on. These ship verbatim as overrides; the consumer enables them
 # by removing the `.disabled` suffix.
-optional_files = [
-    # Alt-renderer for consumers without a beefy enough GPU for Iris+Colorwheel.
-    "mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.disabled",
-]
+#
+# (Sodium Dynamic Lights moved out of here and into [packwiz.optional_mods]
+# below — it's now a proper Packwiz [option] so players can opt in via the
+# installer GUI instead of the awkward `.disabled` rename dance.)
+optional_files = []
 
 # Locally-built mods. Refreshed in-place before each pack build.
 [[custom_mods]]
@@ -143,6 +144,22 @@ preserve_globs = [
     "config/**",
     "defaultconfigs/**",
 ]
+
+# Mods players can toggle at install time via packwiz-installer's GUI.
+# The key is the Prism .pw.toml slug (basename minus .pw.toml). The pipeline
+# injects an [option] block into the emitted metafile; packwiz-installer
+# shows it as a checkbox in the dialog and persists the player's choice in
+# <minecraft>/packwiz.json. To change a choice later, the player edits that
+# file or deletes it to get re-prompted on next launch.
+#
+# Mods listed here whose active jar isn't on disk in the live instance
+# (e.g. kept as .jar.disabled by the pack maintainer) get force-emitted by
+# reading directly from mods/.index/<slug>.pw.toml.
+[packwiz.optional_mods]
+iris = { default = true, description = "Iris shader support. Disable to gain FPS on weaker GPUs (and consider enabling Sodium Dynamic Lights for dynamic torchlight in that case)." }
+colorwheel = { default = true, description = "Colorwheel shader, tuned for Deer Diary. Requires Iris." }
+distanthorizons = { default = true, description = "Distant Horizons - extreme render distance via LODs. Disable if you have <8GB RAM allocated." }
+sodium-dynamic-lights = { default = false, description = "Dynamic torchlight from held / dropped torches. Recommended for players NOT using Iris+Colorwheel (the shaders already do this)." }
 
 [packwiz.self_host]
 # Allowlist for mod jars we'll copy into the published tree as direct files

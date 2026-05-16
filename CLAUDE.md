@@ -194,9 +194,25 @@ Key fields, in addition to `instance_path` / `project_id` / `user_agent`:
   `shaderpacks/*/**` (unpacked-by-EuphoriaPatcher dirs), `config/ftb*` and
   `defaultconfigs/ftb*` and `mods/ftb-*-*.jar` (Modrinth AutoMod rejects FTB).
 - **`optional_files`** — allowlist that overrides `extra_ignore`. Used for
-  `.disabled` files we explicitly want to ship (currently:
-  `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.disabled` — low-GPU
-  alternative renderer; consumer enables by stripping `.disabled`).
+  `.disabled` files we explicitly want to ship as direct overrides
+  (currently empty — Sodium Dynamic Lights moved to `[packwiz.optional_mods]`).
+- **`include_files`** — individual top-level files (relative to
+  `<instance>/minecraft/`) to ship alongside `include_paths`. Currently
+  `["servers.dat"]` so the Deer Diary server entry pre-populates for
+  bootstrap players. Pair with `[packwiz].preserve_globs` to keep player
+  edits (e.g. their own added servers) across pack updates.
+- **`[packwiz].preserve_globs`** — globs of direct files whose local copy
+  should NOT be overwritten on update once the player has them. Currently
+  `["servers.dat", "config/**", "defaultconfigs/**"]`. Only applies to
+  direct entries; mod jars and metafiles always update.
+- **`[packwiz.optional_mods]`** — mods players can toggle on/off via
+  packwiz-installer's GUI checkbox panel. Key is the Prism `.pw.toml`
+  slug (basename minus `.pw.toml`). Currently: `iris`, `colorwheel`,
+  `distanthorizons` default-on; `sodium-dynamic-lights` default-off
+  (force-emitted from `mods/.index/sodium-dynamic-lights.pw.toml` even
+  though the on-disk file is `.jar.disabled`). Player choices persist in
+  `<instance>/.minecraft/packwiz.json` across launches; change by
+  editing/deleting that file.
 - **`[[custom_mods]]`** — locally-built mods. Each entry: `name`, `source_dir`,
   optional `source_pattern` (defaults to `{name}-*.jar`) and `target_dir`
   (defaults to `mods`).

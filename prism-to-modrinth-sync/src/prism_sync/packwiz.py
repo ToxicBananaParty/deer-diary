@@ -54,7 +54,7 @@ from .instance import (
     read_packignore,
     walk_pack_files,
 )
-from .packwiz_settings import PackwizSettings
+from .packwiz_settings import OptionalMod, PackwizSettings
 from .pwtoml import (
     PwTomlEntry,
     is_curseforge_only,
@@ -256,6 +256,11 @@ def build_packwiz(
     pw_mismatches: list[str] = []
     errors: list[str] = []
     warnings: list[str] = []
+    # Slugs of optional mods we've already emitted via the normal walk. Any
+    # entry in packwiz.optional_mods NOT in this set gets a force-emit pass
+    # after the loop (covers e.g. mods/foo.jar.disabled where the active jar
+    # filename isn't on disk so the walker never reaches the metafile path).
+    seen_optional_slugs: set[str] = set()
 
     # Build into a temp sibling directory so a partial tree never becomes the
     # published one. The final swap is rmtree+rename; not strictly atomic on
@@ -295,7 +300,11 @@ def build_packwiz(
         # 3. Has a .pw.toml metafile (Modrinth-backed; CF-only only if NOT
         #    allowlisted above, in which case the player needs a CF API key).
         if pw_entry is not None:
-            written = _emit_metafile(entry, pw_entry, tmp_dir, pw_mismatches, warnings)
+            slug = _slug_for_pwtoml(pw_entry.source)
+            option = packwiz.optional_mods.get(slug)
+            written = _emit_metafile(
+                entry, pw_entry, tmp_dir, pw_mismatches, warnings, option=option
+            )
             if written is not None:
                 meta_rel, meta_hashes, jar_hashes = written
                 metafile_entries.append(
@@ -310,6 +319,8 @@ def build_packwiz(
                 fingerprint[rel] = jar_hashes.sha512
                 if is_curseforge_only(pw_entry.data):
                     cf_only_paths.append(rel)
+                if option is not None:
+                    seen_optional_slugs.add(slug)
                 continue
             # Fell through (hash mismatch) — fall into the error path below.
 
@@ -333,6 +344,33 @@ def build_packwiz(
             )
         )
         fingerprint[rel] = hashes.sha512
+
+    # Force-emit declared-optional mods whose active jar isn't on disk in the
+    # live instance (e.g. the player kept it as `.jar.disabled` locally).
+    # Without this, packwiz-installer wouldn't see the option at all and
+    # players couldn't opt in.
+    for slug, opt_config in packwiz.optional_mods.items():
+        if slug in seen_optional_slugs:
+            continue
+        pw_entry = _find_pwtoml_by_slug(pw_index, slug)
+        if pw_entry is None:
+            warnings.append(
+                f"Optional mod '{slug}' declared in [packwiz.optional_mods] "
+                "but no matching .pw.toml found in any include_path/.index/. "
+                "Skipping."
+            )
+            continue
+        forced = _emit_metafile_force(
+            pw_entry, tmp_dir, instance.minecraft_dir, opt_config, warnings
+        )
+        if forced is None:
+            continue
+        meta_rel, meta_hashes, jar_rel, jar_sha512 = forced
+        metafile_entries.append(
+            IndexFile(file=meta_rel, hash=meta_hashes.sha256, metafile=True)
+        )
+        fingerprint[jar_rel] = jar_sha512
+        seen_optional_slugs.add(slug)
 
     if errors:
         # Roll back the temp tree so partial state doesn't linger.
@@ -395,6 +433,7 @@ def _emit_metafile(
     output_root: Path,
     mismatches: list[str],
     warnings: list[str],
+    option: OptionalMod | None = None,
 ) -> tuple[str, FileHashes, FileHashes] | None:
     """Copy a Prism ``.pw.toml`` into the Packwiz output tree.
 
@@ -434,25 +473,136 @@ def _emit_metafile(
     # `side = ''` when Modrinth doesn't expose a side for the project.
     # packwiz-installer rejects that as "Invalid side name", even though
     # the Packwiz spec treats `side` as optional and defaulting to "both".
-    # Normalize the value so the published metafile parses cleanly.
+    # Normalize the value so the published metafile parses cleanly. If the
+    # caller flagged this mod as a Packwiz [option], append the block here
+    # too so the installer surfaces it as a user-toggleable.
     src_bytes = pw_entry.source.read_bytes()
-    fixed_bytes = _normalize_metafile_bytes(src_bytes)
+    fixed_bytes = _normalize_metafile_bytes(src_bytes, option=option)
     dest.write_bytes(fixed_bytes)
 
     meta_hashes = hash_file(dest)
     return pack_rel, meta_hashes, on_disk_hashes
 
 
-def _normalize_metafile_bytes(data: bytes) -> bytes:
-    """Fix Prism quirks that trip up packwiz-installer's stricter parser.
+def _normalize_metafile_bytes(
+    data: bytes, option: OptionalMod | None = None
+) -> bytes:
+    """Fix Prism quirks + optionally inject a Packwiz ``[option]`` block.
 
-    Currently: rewrites empty ``side = ''`` (and ``side = ""``) to
-    ``side = 'both'``. Anything else passes through unchanged.
+    Normalizations:
+    - ``side = ''`` → ``side = 'both'`` (Prism writes empty when Modrinth
+      doesn't expose a side; packwiz-installer rejects empty as "Invalid
+      side name").
+
+    If ``option`` is provided, append a ``[option]`` table so packwiz-installer
+    treats the mod as user-toggleable. The block is a new top-level table so
+    appending to the end of the file is always valid TOML regardless of which
+    table came before.
     """
     text = data.decode("utf-8")
     text = text.replace("side = ''", "side = 'both'")
     text = text.replace('side = ""', 'side = "both"')
+    if option is not None:
+        text = text.rstrip() + "\n\n[option]\noptional = true\n"
+        text += f"default = {'true' if option.default else 'false'}\n"
+        text += f"description = {_toml_str(option.description)}\n"
     return text.encode("utf-8")
+
+
+def _slug_for_pwtoml(source: Path) -> str:
+    """Return the slug (basename without .pw.toml) of a metafile path."""
+    name = source.name
+    if name.endswith(".pw.toml"):
+        return name[: -len(".pw.toml")]
+    return source.stem
+
+
+def _sub_for_pwtoml(source: Path, minecraft_dir: Path) -> str | None:
+    """Return the include_path subdirectory the metafile lives under.
+
+    For ``<minecraft>/mods/.index/iris.pw.toml`` returns ``"mods"``. Used by
+    the force-emit path that needs to know where to place the metafile in
+    the published tree when there's no FileEntry to read it from.
+    """
+    try:
+        rel = source.relative_to(minecraft_dir)
+    except ValueError:
+        return None
+    parts = rel.parts
+    if len(parts) < 3 or parts[-2] != ".index":
+        return None
+    return "/".join(parts[:-2])
+
+
+def _find_pwtoml_by_slug(
+    pw_index: dict[str, PwTomlEntry], slug: str
+) -> PwTomlEntry | None:
+    """Look up a metafile by its file basename (minus .pw.toml).
+
+    ``pw_index`` is keyed by the *jar* path (e.g. ``mods/iris.jar``), not by
+    slug, so the optional_mods lookup needs a secondary linear scan. Fast
+    enough — there are ~120 metafiles per build.
+    """
+    for entry in pw_index.values():
+        if _slug_for_pwtoml(entry.source) == slug:
+            return entry
+    return None
+
+
+def _emit_metafile_force(
+    pw_entry: PwTomlEntry,
+    output_root: Path,
+    minecraft_dir: Path,
+    option: OptionalMod,
+    warnings: list[str],
+) -> tuple[str, FileHashes, str, str] | None:
+    """Emit a metafile without requiring the underlying jar on disk.
+
+    Use case: a mod the player has disabled locally (.jar.disabled) but that
+    we want to expose as a Packwiz ``[option]``. We can't hash the jar, so
+    we trust the SHA-512 recorded in the metafile's ``[download]`` block for
+    the state fingerprint.
+
+    Returns ``(metafile_pack_rel, metafile_hashes, jar_pack_rel, jar_sha512)``
+    or ``None`` if the metafile can't be used (missing fields, non-sha512
+    download hash, etc.).
+    """
+    download = pw_entry.data.get("download") or {}
+    jar_filename = pw_entry.data.get("filename", "")
+    pw_hash = (download.get("hash") or "").lower()
+    pw_hash_format = download.get("hash-format")
+    slug = _slug_for_pwtoml(pw_entry.source)
+
+    if not jar_filename:
+        warnings.append(
+            f"Optional mod '{slug}': metafile has no `filename` field; skipping."
+        )
+        return None
+    if pw_hash_format != "sha512" or not pw_hash:
+        warnings.append(
+            f"Optional mod '{slug}': metafile's [download].hash-format is "
+            f"{pw_hash_format!r}, expected 'sha512' for force-emit. Skipping. "
+            "(CurseForge-mode metafiles can't be force-emitted as options.)"
+        )
+        return None
+
+    sub = _sub_for_pwtoml(pw_entry.source, minecraft_dir)
+    if sub is None:
+        warnings.append(
+            f"Optional mod '{slug}': couldn't determine include_path from "
+            f"source {pw_entry.source}. Skipping."
+        )
+        return None
+
+    pack_rel = f"{sub}/{pw_entry.source.name}"
+    jar_pack_rel = f"{sub}/{jar_filename}"
+    dest = output_root / pack_rel
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    src_bytes = pw_entry.source.read_bytes()
+    fixed_bytes = _normalize_metafile_bytes(src_bytes, option=option)
+    dest.write_bytes(fixed_bytes)
+    meta_hashes = hash_file(dest)
+    return pack_rel, meta_hashes, jar_pack_rel, pw_hash
 
 
 def _format_error_message(errors: list[str], packwiz: PackwizSettings) -> str:

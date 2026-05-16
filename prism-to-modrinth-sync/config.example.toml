@@ -116,6 +116,18 @@ optional_files = [
 #     "defaultconfigs/**",
 # ]
 #
+# # Mods the player can toggle at install time via packwiz-installer's GUI.
+# # Key is the Prism .pw.toml slug (basename minus .pw.toml). default sets
+# # the initial checkbox state; description shows next to the checkbox.
+# # Optional mods whose active jar is kept as .jar.disabled in the live
+# # instance still work - the pipeline reads the metafile directly from
+# # mods/.index/<slug>.pw.toml when the walker can't find it.
+# # To change a choice after install: edit <minecraft>/packwiz.json or
+# # delete it to re-prompt on next launch.
+# [packwiz.optional_mods]
+# example-shader-mod = { default = true, description = "Shader support. Disable for performance." }
+# example-alt-renderer = { default = false, description = "Alternative renderer; enable only if not using the main shader stack." }
+#
 # [packwiz.self_host]
 # # Allowlist for mod jars we copy as direct files (no Modrinth/CF metafile).
 # # Mods that already have a `.pw.toml` in `mods/.index/` skip this list
