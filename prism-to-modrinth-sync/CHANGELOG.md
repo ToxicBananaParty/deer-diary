@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026.05.17 (packwiz) — 2026-05-17
+
+Changes since `2026.05.16`:
+
+### Added
+**Mods**
+- `mods/deer-diary-patches-0.2.0-1.21+1.21.1.jar`
+
+**Config**
+- `config/functionalstorage/functionalstorage-client.toml`
+- `config/functionalstorage/functionalstorage-common.toml`
+- `config/titanium/titanium-tags.toml`
+- `config/titanium/titanium.toml`
+- `config/trmt-common.toml`
+- `config/trmt.json.migrated.bak`
+
+### Updated
+**Config**
+- `config/jade/plugins.json`
+- `config/jade/sort-order.json`
+- `config/jei/ingredient-list-mod-sort-order.ini`
+- `config/jei/recipe-category-sort-order.ini`
+
+### Removed
+**Config**
+- `config/trmt.json`
+
 ## 2026.05.16 (packwiz) — 2026-05-16
 
 No content changes since 2026.05.16.

@@ -321,6 +321,16 @@ hash = "cc59fb1039726fda3ab1eb69b06d9b9aebb7496604ea579cfb735bc5377e7825"
 preserve = true
 
 [[files]]
+file = "config/functionalstorage/functionalstorage-client.toml"
+hash = "7255125d2daca7b2f538451b5117511b30efd720c876366fe2b6a31942593404"
+preserve = true
+
+[[files]]
+file = "config/functionalstorage/functionalstorage-common.toml"
+hash = "47595c51ed0a6a3d496402420d025e0ae0418a0ea853e2489fad4152e978b822"
+preserve = true
+
+[[files]]
 file = "config/immediatelyfast.json"
 hash = "a6c9d147a51c9e432c5c74c00285cfc5ba8b6fa4a0c6686051a7168b158d0d7a"
 preserve = true
@@ -342,12 +352,12 @@ preserve = true
 
 [[files]]
 file = "config/jade/plugins.json"
-hash = "3ee864f192e76367994bce40c0e93af542e090594adcacde025d601d2323a743"
+hash = "b196e353e7f80b09555fc7232ef076ab19b3c8c55a3ee92fabd652edb4a86daa"
 preserve = true
 
 [[files]]
 file = "config/jade/sort-order.json"
-hash = "9e8119e1caaa90c10f3461f21cc3155adb6bb085d54a518991ce72772a683385"
+hash = "d6b8a4ecc689da8b53fcdc4aa2b7ad353072d00962a0fac84dbdcb37762b4ee1"
 preserve = true
 
 [[files]]
@@ -367,7 +377,7 @@ preserve = true
 
 [[files]]
 file = "config/jei/ingredient-list-mod-sort-order.ini"
-hash = "c74ba0ecca712a4d711ead3ae9e669d41cebcc770fe534a5dca9a739b9d3c4ec"
+hash = "e2a9c6632f5449e3f7f23c9af69dba42ca01c912d0c0d4befd7030490b38bcb9"
 preserve = true
 
 [[files]]
@@ -397,7 +407,7 @@ preserve = true
 
 [[files]]
 file = "config/jei/recipe-category-sort-order.ini"
-hash = "8c295289f658d0af992d9d81e187147012e7704ca4498b096542e9464b11d450"
+hash = "a418798790835c3fdd409e9fc6b2c9a44790757e469ef1f94f0b3203f95d3af3"
 preserve = true
 
 [[files]]
@@ -616,6 +626,16 @@ hash = "76509eed51fb4284bf2d7a76c6c54bd33467d3bb416c907cedbc5a89186fa567"
 preserve = true
 
 [[files]]
+file = "config/titanium/titanium-tags.toml"
+hash = "0fdb903beac3111899fba270f156d65daf792b534a20915672e2d9b1aacdf06c"
+preserve = true
+
+[[files]]
+file = "config/titanium/titanium.toml"
+hash = "419a23e2c00bb42a68c4285244a50d92bd63d1d16a6e08cc61ef4531fd958579"
+preserve = true
+
+[[files]]
 file = "config/toms_storage-common.toml"
 hash = "a7ff87dbfa4587eda3e1aa9f8e05102bdf0e6f7961fde07a360e86c6cd69da1f"
 preserve = true
@@ -646,7 +666,12 @@ hash = "3f05a62ecf2b307ec62e5bf24f645121685bde1bb8ceae1c0fc375a121dac8c8"
 preserve = true
 
 [[files]]
-file = "config/trmt.json"
+file = "config/trmt-common.toml"
+hash = "73faaa5dc28cf3517adfc5db2a3cdcc767c8bf6566c2152309132357f0f77464"
+preserve = true
+
+[[files]]
+file = "config/trmt.json.migrated.bak"
 hash = "c6b044abf1a7f381ec634646bf547b9dd67b046d50c5ec108f5a288a9bbca4f7"
 preserve = true
 
@@ -956,6 +981,10 @@ metafile = true
 [[files]]
 file = "mods/deer-diary-commands-0.3.0-1.21+1.21.1.jar"
 hash = "d1094615cc69aeb0854ec3bf146062d469778b29363e911970f708c666dafb5d"
+
+[[files]]
+file = "mods/deer-diary-patches-0.2.0-1.21+1.21.1.jar"
+hash = "7d97d6bbd9dd5385e9a0ae0aea5fb66a22ee681ef40fc8c1028df9398de5a1f4"
 
 [[files]]
 file = "mods/diagonal-fences.pw.toml"

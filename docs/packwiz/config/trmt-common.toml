@@ -1,0 +1,169 @@
+#Master per-block-type toggles. Disabling a toggle stops both new erosion AND de-erosion of that block class.
+[erosion]
+	#Allow grass to erode from foot traffic.
+	grassEnabled = true
+	#Allow dirt to erode from foot traffic.
+	dirtEnabled = true
+	#Allow sand to erode from foot traffic.
+	sandEnabled = true
+	#Allow leaves to break from foot traffic.
+	leavesEnabled = true
+	#Allow short plants (flowers, tall grass) to break when walked through.
+	vegetationEnabled = true
+	#Allow mobs (#trmt:tramples) to cause trampling in addition to players.
+	mobTramplingEnabled = true
+	#When true, eroded_grass_block stage 4 → eroded_dirt_path. When false, falls through to legacy eroded_dirt → eroded_coarse_dirt chain.
+	dirtPathEndpoint = true
+	#Pause de-erosion (path healing) while no players are online — prevents chunk-loaded paths from disappearing overnight on dedicated servers.
+	pauseDeErosionWhenEmpty = true
+	#When false, skip erosion/de-erosion in force-loaded chunks (Chunky, chunkloaders, /forceload).
+	allowInForcedChunks = true
+
+#Per-source step multipliers.
+[erosionMultipliers]
+	#Player on foot.
+	# Default: 0.5
+	# Range: 0.0 ~ 100.0
+	player = 0.5
+	#Player riding a mob (multiplied on top of the mob's own multiplier).
+	# Default: 1.5
+	# Range: 0.0 ~ 100.0
+	mounted = 1.5
+	#Fallback multiplier for any mob in #trmt:tramples without an explicit per-entity entry below.
+	# Default: 0.5
+	# Range: 0.0 ~ 100.0
+	defaultTrample = 0.5
+	#Per-entity step multipliers. Format: 'entity_id=multiplier'. Examples: 'minecraft:horse=0.5', 'naturalist:deer=0.7'.
+	#Any mob in #trmt:tramples not listed here uses defaultTrample.
+	tramples = ["minecraft:villager=0.5", "minecraft:horse=0.5"]
+
+#Step thresholds (min/max) per block type. A per-block random threshold is rolled the first time a position is tracked.
+[erosionThresholds]
+
+	[erosionThresholds.grass]
+		# Default: 2.0
+		# Range: 0.0 ~ 10000.0
+		min = 2.0
+		# Default: 4.0
+		# Range: 0.0 ~ 10000.0
+		max = 4.0
+
+	[erosionThresholds.dirt]
+		# Default: 8.0
+		# Range: 0.0 ~ 10000.0
+		min = 8.0
+		# Default: 12.0
+		# Range: 0.0 ~ 10000.0
+		max = 12.0
+
+	[erosionThresholds.coarseDirt]
+		# Default: 12.0
+		# Range: 0.0 ~ 10000.0
+		min = 12.0
+		# Default: 20.0
+		# Range: 0.0 ~ 10000.0
+		max = 20.0
+
+	[erosionThresholds.sand]
+		# Default: 4.0
+		# Range: 0.0 ~ 10000.0
+		min = 4.0
+		# Default: 8.0
+		# Range: 0.0 ~ 10000.0
+		max = 8.0
+
+	[erosionThresholds.vegetation]
+		# Default: 2.0
+		# Range: 0.0 ~ 10000.0
+		min = 2.0
+		# Default: 3.0
+		# Range: 0.0 ~ 10000.0
+		max = 3.0
+		# Default: 0.2
+		# Range: 0.0 ~ 1.0
+		dropChance = 0.2
+
+	[erosionThresholds.leaves]
+		# Default: 2.0
+		# Range: 0.0 ~ 10000.0
+		min = 2.0
+		# Default: 3.0
+		# Range: 0.0 ~ 10000.0
+		max = 3.0
+		# Default: 0.1
+		# Range: 0.0 ~ 1.0
+		dropChance = 0.1
+
+#In-game days before each stage de-erodes back toward its source. Isolated (no neighbors) blocks de-erode in half the time.
+[deErosionTimeoutDays]
+	#Days before eroded_dirt_path reverts to eroded_grass_block stage 4.
+	# Default: 21.0
+	# Range: 0.0 ~ 365.0
+	dirtPath = 21.0
+
+	[deErosionTimeoutDays.grass]
+		# Default: 1.0
+		# Range: 0.0 ~ 365.0
+		stage1 = 1.0
+		# Default: 2.0
+		# Range: 0.0 ~ 365.0
+		stage2 = 2.0
+		# Default: 3.0
+		# Range: 0.0 ~ 365.0
+		stage3 = 3.0
+		# Default: 5.0
+		# Range: 0.0 ~ 365.0
+		stage4 = 5.0
+		# Default: 8.0
+		# Range: 0.0 ~ 365.0
+		stage5 = 8.0
+
+	[deErosionTimeoutDays.dirt]
+		# Default: 13.0
+		# Range: 0.0 ~ 365.0
+		erodedDirt = 13.0
+		# Default: 21.0
+		# Range: 0.0 ~ 365.0
+		erodedCoarseDirt = 21.0
+
+	[deErosionTimeoutDays.sand]
+		# Default: 1.0
+		# Range: 0.0 ~ 365.0
+		stage1 = 1.0
+		# Default: 1.0
+		# Range: 0.0 ~ 365.0
+		stage2 = 1.0
+		# Default: 2.0
+		# Range: 0.0 ~ 365.0
+		stage3 = 2.0
+		# Default: 3.0
+		# Range: 0.0 ~ 365.0
+		stage4 = 3.0
+		# Default: 5.0
+		# Range: 0.0 ~ 365.0
+		stage5 = 5.0
+
+#Seasons compat — only used if SereneSeasons is installed.
+[seasonsMultipliers]
+	#Master switch for season-based erosion-rate modulation.
+	enabled = true
+	# Default: 0.5
+	# Range: 0.0 ~ 100.0
+	winter = 0.5
+	# Default: 1.0
+	# Range: 0.0 ~ 100.0
+	spring = 1.0
+	# Default: 1.0
+	# Range: 0.0 ~ 100.0
+	summer = 1.0
+	# Default: 1.2
+	# Range: 0.0 ~ 100.0
+	autumn = 1.2
+
+#Per-dimension allow/block list. Default BLOCKLIST + empty = unrestricted.
+[dimensions]
+	#ALLOWLIST or BLOCKLIST.
+	#Allowed Values: ALLOWLIST, BLOCKLIST
+	mode = "BLOCKLIST"
+	#Dimension IDs (e.g. 'minecraft:overworld', 'minecraft:the_nether').
+	list = []
