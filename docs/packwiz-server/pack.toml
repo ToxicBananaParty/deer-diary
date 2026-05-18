@@ -1,0 +1,13 @@
+name = "Deer Diary"
+author = "ToxicBananaParty"
+version = "2026.05.18"
+pack-format = "packwiz:1.1.0"
+
+[index]
+file = "index.toml"
+hash-format = "sha256"
+hash = "e14b0fc1a3a1d26f023f3cba0e45d7f8f11aa3594957384b089395f2a6be585f"
+
+[versions]
+minecraft = "1.21.1"
+neoforge = "21.1.228"

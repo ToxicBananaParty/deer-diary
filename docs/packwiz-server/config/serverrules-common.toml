@@ -1,0 +1,18 @@
+#Common configuration for TSL Server Rules.
+#Each rule should be a separate string within the list.
+#To add a rule, add some text enclosed in quotes followed by a comma.
+#Example:
+# serverRules = ["Rule 1: Be respectful.", "Rule 2: No griefing.", "Your New Rule Here", "Rule 4: No hacking."]
+#Incorrect formatting can cause errors, so always double check that that comma is there!
+#If added in a new line order as shown in the Curseforge page, the mod will automatically format it for you and save a backup :)
+#
+#
+serverRules = [
+    "§71.§r §cAll Simulated Contraptions must be reverted to Block Mode when not in use!§r",
+    "§72.§r §aAvoid always-on contraptions as much as possible! Make liberal use of §nClutch§r§aes!§r",
+    "§73.§r §dDo not operate another user's contraption without prior permission!§r",
+    "§74.§r §fMake sure to build collaboratively with your neighbors -- or strike out to form your own community! A huge amount of world has been pregenerated; spread out!§r",
+    "§75a.§r §bThis is a no-metagaming, no-minmaxxing server! Don't use exploits!§r",
+    "§75a.§r §bThis is a no-metagaming, no-minmaxxing server! Don't use exploits!§r",
+    "§6----------------------------------------------------§r"
+]

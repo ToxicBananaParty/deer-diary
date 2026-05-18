@@ -1,0 +1,99 @@
+{
+  "orderMode": {
+    "description": "The order in which messages are broadcast. Options: SEQUENTIAL, RANDOM",
+    "value": "RANDOM"
+  },
+  "globalEnable": {
+    "description": "Enable or disable global announcements in chat.",
+    "value": false
+  },
+  "headerAndFooter": {
+    "description": "Enable or disable the header and footer around global chat announcements.",
+    "value": true
+  },
+  "globalInterval": {
+    "description": "The interval in seconds between each global chat announcement.",
+    "value": 1800
+  },
+  "prefix": {
+    "description": "Prefix prepended to all announcement messages. Use {prefix} placeholder in messages to apply.",
+    "value": "<bold><gradient:#22D3EE:#A78BFA>[Paradigm]</gradient></bold>"
+  },
+  "header": {
+    "description": "The header message sent before a global announcement. Supports colors, gradients, bold, etc.",
+    "value": "<bold><gradient:#FF006E:#8338EC>&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</gradient></bold>"
+  },
+  "footer": {
+    "description": "The footer message sent after a global announcement. Supports colors, gradients, bold, etc.",
+    "value": "<bold><gradient:#667EEA:#764BA2>&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</gradient></bold>"
+  },
+  "sound": {
+    "description": "Sound to play for players when an announcement is made. E.g., 'minecraft:block.note_block.pling'. Leave empty for no sound.",
+    "value": ""
+  },
+  "globalMessages": {
+    "description": "List of messages to be broadcast in global chat. Supports colors, gradients, bold, italic, underline, etc.",
+    "value": [
+      "<bold><gradient:#22D3EE:#A78BFA>[Paradigm]</gradient></bold> <color:#F8FAFC>Welcome!</color> <color:#94A3B8>Type </color><click:suggest_command:/paradigm help><gradient:#38BDF8:#3A86FF><bold><underline>/paradigm help</underline></bold></gradient></click><color:#94A3B8> to see available commands.</color>",
+      "<bold><gradient:#FF006E:#8338EC>[Paradigm]</gradient></bold> <color:#F8FAFC>Links in chat are clickable:</color> <click:open_url:https://example.com><gradient:#C4B5FD:#A78BFA><underline>https://example.com</underline></gradient></click>",
+      "<bold><gradient:#3A86FF:#FB5607>[Paradigm]</gradient></bold> <color:#F8FAFC>Tip:</color> <gradient:#F472B6:#FF006E>Use a group chat</gradient><color:#94A3B8> with </color><click:suggest_command:/groupchat><gradient:#22D3EE:#3A86FF><bold><underline>/groupchat</underline></bold></gradient></click><color:#94A3B8> to keep things organized.</color>",
+      "<bold><gradient:#FFD700:#FB5607>[Paradigm]</gradient></bold> <gradient:#06D6A0:#1ABC9C>Server is running smoothly!</gradient>"
+    ]
+  },
+  "actionbarEnable": {
+    "description": "Enable or disable announcements shown on the action bar.",
+    "value": false
+  },
+  "actionbarInterval": {
+    "description": "The interval in seconds between each action bar announcement.",
+    "value": 1800
+  },
+  "actionbarMessages": {
+    "description": "List of messages to be broadcast on the action bar. Supports colors, gradients, bold, italic, etc.",
+    "value": [
+      "<bold><gradient:#22D3EE:#A78BFA>[Paradigm]</gradient></bold> <gradient:#F8FAFC:#FBBF24>Need help?</gradient> <gradient:#3A86FF:#FB5607><bold>/paradigm</bold></gradient>",
+      "<bold><gradient:#FF006E:#8338EC>[Paradigm]</gradient></bold> <gradient:#06D6A0:#1ABC9C>Enjoy your stay.</gradient>",
+      "<bold><gradient:#FFD700:#FB5607>[Paradigm]</gradient></bold> <gradient:#667EEA:#764BA2>Stay awesome!</gradient>"
+    ]
+  },
+  "titleEnable": {
+    "description": "Enable or disable announcements shown as a screen title.",
+    "value": false
+  },
+  "titleInterval": {
+    "description": "The interval in seconds between each title announcement.",
+    "value": 1800
+  },
+  "titleMessages": {
+    "description": "List of messages to be broadcast as a title. Separate title and subtitle with ' || '. Supports colors, gradients, bold, italic, etc.",
+    "value": [
+      "<bold><gradient:#FF006E:#8338EC>Welcome</gradient></bold> || <color:#F8FAFC>Have fun!</color>",
+      "<bold><gradient:#22D3EE:#A78BFA>Paradigm</gradient></bold> || <color:#F8FAFC>Type </color><gradient:#3A86FF:#FB5607><bold>/paradigm</bold></gradient><color:#F8FAFC> for help</color>",
+      "<bold><gradient:#06D6A0:#1ABC9C>Server Online</gradient></bold> || <gradient:#667EEA:#764BA2>Enjoy your adventure!</gradient>"
+    ]
+  },
+  "bossbarEnable": {
+    "description": "Enable or disable announcements shown as a temporary boss bar.",
+    "value": false
+  },
+  "bossbarInterval": {
+    "description": "The interval in seconds between each boss bar announcement.",
+    "value": 1800
+  },
+  "bossbarColor": {
+    "description": "Color of the boss bar. Options: BLUE, GREEN, PINK, PURPLE, RED, WHITE, YELLOW.",
+    "value": "PURPLE"
+  },
+  "bossbarTime": {
+    "description": "How long the boss bar should remain on screen, in seconds.",
+    "value": 10
+  },
+  "bossbarMessages": {
+    "description": "List of messages to be broadcast in a boss bar. Note: bossbars do not support click/hover actions. Supports colors, gradients, bold, italic, etc.",
+    "value": [
+      "<bold><gradient:#FF006E:#8338EC>[Paradigm]</gradient></bold> <gradient:#E2E8F0:#A78BFA>Server announcement</gradient>",
+      "<bold><gradient:#3A86FF:#FB5607>[Paradigm]</gradient></bold> <gradient:#06D6A0:#1ABC9C>Check chat for details</gradient>",
+      "<bold><gradient:#FFD700:#FB5607>[Paradigm]</gradient></bold> <gradient:#667EEA:#764BA2>Important update incoming!</gradient>"
+    ]
+  }
+}

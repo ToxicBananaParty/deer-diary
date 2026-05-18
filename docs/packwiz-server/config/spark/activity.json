@@ -1,0 +1,15 @@
+[
+  {
+    "user": {
+      "type": "player",
+      "name": "Jimdude2345",
+      "uniqueId": "5deb4178-aa31-41fa-abf0-d170b84303d2"
+    },
+    "time": 1778860096189,
+    "type": "Profiler",
+    "data": {
+      "type": "url",
+      "value": "https://spark.lucko.me/8z7OjSJ6V7"
+    }
+  }
+]

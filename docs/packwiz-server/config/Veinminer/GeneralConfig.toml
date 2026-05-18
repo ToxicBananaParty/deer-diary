@@ -1,0 +1,56 @@
+[General]
+	#Enable or disable Veinminer entirely
+	veinminerEnabled = true
+	#Require the player to crouch (sneak) to activate Veinminer
+	requireCrouch = true
+	#Prevent Veinminer from activating if the tool would break
+	checkToolDurability = true
+	#Minimum durability to keep when Veinminer activates
+	durabilityCap = 1
+	#ABSOLUTE keeps a fixed number of durability points, PERCENTAGE keeps a percentage
+	durabilityThreshold = "ABSOLUTE"
+	#Number of worker threads used for asynchronous operations
+	threadCount = 4
+
+[Cooldown]
+	#Enable a cooldown between Veinminer uses
+	enabled = false
+	#Cooldown duration in seconds
+	seconds = 5
+
+[BlockLimits]
+	#Dynamically adjust max mined blocks based on server TPS
+	dynamicMaxBlocks = false
+	#Maximum blocks mined when dynamic scaling is disabled
+	maxBlocks = 64
+	#Lower bound for dynamic scaling
+	minBlocks = 16
+	#Upper bound for dynamic scaling
+	maxDynamicBlocks = 64
+
+[Particles]
+	#Render an outline around blocks scheduled to be mined
+	enabled = true
+	#Particle lifespan in ticks
+	durationTicks = 60
+	red = 255
+	green = 0
+	blue = 0
+
+[Exhaustion]
+	#Apply hunger exhaustion for blocks broken by Veinminer
+	enabled = false
+	#Exhaustion multiplier. 1.0 = vanilla per-block exhaustion, 0.5 = half, 2.0 = double
+	scale = 1.0
+
+[Advanced]
+	#Use WHITELIST or BLACKLIST. The blockPerTool toggle decides whether the lists are global or per-tool.
+	blockListMode = "WHITELIST"
+	#If true, block lists are per-tool; if false, a single global list is used.
+	blocksPerTool = false
+	#If false, admins will be prompted on login to run /veinminer setup.
+	setupWizardPromptComplete = true
+
+[Integration]
+	#Attempt to hook into LuckPerms automatically if present
+	autoLuckPerms = false

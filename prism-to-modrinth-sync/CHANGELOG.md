@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.05.18 (server) — 2026-05-18
+
+Initial release.
+
 ## 2026.05.17 (packwiz) — 2026-05-17
 
 Changes since `2026.05.16`:

@@ -1,0 +1,88 @@
+{
+  "restartType": {
+    "description": "The method for scheduling restarts. Use \"Fixed\" for intervals or \"Realtime\" for specific times of day.",
+    "value": "Realtime"
+  },
+  "restartInterval": {
+    "description": "If restartType is \"Fixed\", this is the interval in hours between restarts.",
+    "value": 6.0
+  },
+  "realTimeInterval": {
+    "description": "If restartType is \"Realtime\", this is a list of times (in HH:mm format) to restart the server.",
+    "value": [
+      "08:00",
+      "20:00"
+    ]
+  },
+  "bossbarEnabled": {
+    "description": "Enable or disable the boss bar warning for restarts.",
+    "value": false
+  },
+  "bossBarMessage": {
+    "description": "The message to display in the boss bar. Placeholders: {hours}, {minutes}, {seconds}, {time}.",
+    "value": "&cThe server will be restarting in {minutes}:{seconds}"
+  },
+  "timerUseChat": {
+    "description": "Enable or disable sending restart warnings to the chat.",
+    "value": true
+  },
+  "BroadcastMessage": {
+    "description": "The message to broadcast in chat. Placeholders: {hours}, {minutes}, {seconds}, {time}.",
+    "value": "&cThe server will be restarting in &e{time}"
+  },
+  "timerBroadcast": {
+    "description": "A list of times in seconds before a restart to broadcast a warning.",
+    "value": [
+      3600,
+      1800,
+      600,
+      300,
+      120,
+      60,
+      30,
+      10,
+      5,
+      4,
+      3,
+      2,
+      1
+    ]
+  },
+  "defaultRestartReason": {
+    "description": "The default kick message shown to players when the server restarts.",
+    "value": "&6The server is restarting!"
+  },
+  "playSoundEnabled": {
+    "description": "Enable or disable playing a sound effect for restart warnings.",
+    "value": true
+  },
+  "playSoundFirstTime": {
+    "description": "The time in seconds before a restart at which to start playing warning sounds.",
+    "value": 10.0
+  },
+  "titleEnabled": {
+    "description": "Enable or disable the on-screen title warning for restarts.",
+    "value": true
+  },
+  "titleStayTime": {
+    "description": "How long the title warning should stay on screen, in seconds.",
+    "value": 2
+  },
+  "titleMessage": {
+    "description": "The message to display as a title. Placeholders: {hours}, {minutes}, {seconds}, {time}.",
+    "value": "&cRestarting in {minutes}:{seconds}"
+  },
+  "preRestartCommands": {
+    "description": "Commands to run seconds before the restart. Each item has 'secondsBefore' and 'command'. Use [asPlayer], asplayer:, or each: at the start to run the command once per online player as that player (with per-player placeholders). Without a marker, the command runs as console.",
+    "value": [
+      {
+        "secondsBefore": 30,
+        "command": "broadcast &e[Server] Restarting in 30 seconds..."
+      },
+      {
+        "secondsBefore": 10,
+        "command": "[asPlayer] tell {player_name} &cServer restarting in {seconds}s"
+      }
+    ]
+  }
+}

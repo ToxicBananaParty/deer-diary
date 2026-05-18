@@ -1,0 +1,19 @@
+{
+  "users": [
+    {
+      "permissions": [],
+      "uuid": "5deb4178-aa31-41fa-abf0-d170b84303d2",
+      "group": "admin"
+    },
+    {
+      "permissions": [],
+      "uuid": "2ca4076f-0bd6-4e1b-9011-ca54eef4411c",
+      "group": "moderator"
+    },
+    {
+      "permissions": [],
+      "uuid": "5bc5f203-6fe9-46fc-a051-b5fbb2744e33",
+      "group": "default"
+    }
+  ]
+}

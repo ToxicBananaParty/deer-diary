@@ -1,0 +1,13 @@
+filename = "dcintegration-neoforge-3.0.7-1.21.jar"
+name = "DiscordIntegration-NeoForge 3.0.7 (MC 1.21)"
+side = "both"
+
+side = "both"
+[download]
+hash = "d3236f5f5e6403e1251aac74b8947672a9247125c67d6834e17e2a34c9b1f91e6a50657251423a6e75e466e043b30d7c47831572aac884631140d83f0b34bd04"
+hash-format = "sha512"
+url = "https://cdn.modrinth.com/data/rbJ7eS5V/versions/Tvnxofx4/dcintegration-neoforge-3.0.7-1.21.jar"
+
+[update.modrinth]
+mod-id = "rbJ7eS5V"
+version = "Tvnxofx4"

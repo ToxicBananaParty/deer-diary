@@ -1,0 +1,14 @@
+{
+  "rtp": {
+    "cooldown_seconds": 600,
+    "min_distance": 500,
+    "max_distance": 12500,
+    "max_tries": 100,
+    "dimension_whitelist": [
+      "minecraft:overworld"
+    ],
+    "dimension_blacklist": [
+      "minecraft:the_end"
+    ]
+  }
+}

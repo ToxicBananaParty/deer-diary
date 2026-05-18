@@ -1,0 +1,10 @@
+{
+	"favorites": [
+		"{mode:\"NOT_SET\",type:\"roughlyenoughitems:gamemode\"}",
+		"{type:\"roughlyenoughitems:weather\",weather:\"NOT_SET\"}",
+		"{mode:\"NOT_SET\",type:\"roughlyenoughitems:time\"}",
+		"{data:{count:1,id:\"minecraft:oak_planks\",type:\"minecraft:item\"},type:\"roughlyenoughitems:entry_stack\"}"
+	],
+	"hiddenFavorites": [],
+	"displays": []
+}

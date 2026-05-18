@@ -1,0 +1,54 @@
+{
+  "MENTION_SYMBOL": {
+    "description": "The symbol used for mentions (e.g., '@').",
+    "value": "@"
+  },
+  "INDIVIDUAL_MENTION_MESSAGE": {
+    "description": "The message sent to a player when they are individually mentioned. %s is the mentioner's name.",
+    "value": "§4%s §cmentioned you in chat!"
+  },
+  "EVERYONE_MENTION_MESSAGE": {
+    "description": "The message sent to everyone when @everyone is used. %s is the mentioner's name.",
+    "value": "§4%s §cmentioned everyone in chat!"
+  },
+  "INDIVIDUAL_TITLE_MESSAGE": {
+    "description": "The title message shown to a player when they are individually mentioned. %s is the mentioner's name.",
+    "value": "§4%s §cmentioned you!"
+  },
+  "EVERYONE_TITLE_MESSAGE": {
+    "description": "The title message shown to everyone when @everyone is used. %s is the mentioner's name.",
+    "value": "§4%s §cmentioned everyone!"
+  },
+  "INDIVIDUAL_MENTION_RATE_LIMIT": {
+    "description": "The cooldown in seconds for individual player mentions.",
+    "value": 30
+  },
+  "EVERYONE_MENTION_RATE_LIMIT": {
+    "description": "The cooldown in seconds for @everyone mentions.",
+    "value": 60
+  },
+  "enableChatNotification": {
+    "description": "Enable or disable chat notifications for mentions.",
+    "value": true
+  },
+  "enableTitleNotification": {
+    "description": "Enable or disable title notifications for mentions.",
+    "value": true
+  },
+  "enableSubtitleNotification": {
+    "description": "Enable or disable subtitle notifications for mentions.",
+    "value": true
+  },
+  "SENDER_FEEDBACK_PLAYER_MESSAGE": {
+    "description": "Feedback message shown to the sender after mentioning players. %s is the list of mentioned player names.",
+    "value": "You mentioned %s in chat."
+  },
+  "SENDER_FEEDBACK_EVERYONE_MESSAGE": {
+    "description": "Feedback message shown to the sender after using @everyone.",
+    "value": "You mentioned everyone in chat."
+  },
+  "CHAT_APPEND_PREFIX": {
+    "description": "Prefix used when appending the leftover message content in chat notifications (after a newline).",
+    "value": "- "
+  }
+}

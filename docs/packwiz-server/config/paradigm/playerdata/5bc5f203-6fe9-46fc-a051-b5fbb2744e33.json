@@ -1,0 +1,50 @@
+{
+  "uuid": "5bc5f203-6fe9-46fc-a051-b5fbb2744e33",
+  "name": "vee_dell",
+  "homes": {
+    "home": {
+      "name": "home",
+      "location": {
+        "worldId": "minecraft:overworld",
+        "x": 8647.5,
+        "y": 70.0,
+        "z": 587.5,
+        "yaw": 9.150039,
+        "pitch": 14.100001
+      }
+    },
+    "nether": {
+      "name": "nether",
+      "location": {
+        "worldId": "minecraft:the_nether",
+        "x": 759.3233329093033,
+        "y": 72.0,
+        "z": 326.4400615883197,
+        "yaw": 85.05959,
+        "pitch": 15.74992
+      }
+    },
+    "mines": {
+      "name": "mines",
+      "location": {
+        "worldId": "minecraft:overworld",
+        "x": 8831.192124117017,
+        "y": 7.0,
+        "z": 539.5538663623983,
+        "yaw": -127.8501,
+        "pitch": 12.450429
+      }
+    }
+  },
+  "lastLocation": {
+    "worldId": "minecraft:overworld",
+    "x": 8601.913955088787,
+    "y": 82.0,
+    "z": 570.7973744469518,
+    "yaw": 3.9641724,
+    "pitch": -2.099942
+  },
+  "lastSeenMs": 1778992951326,
+  "ignoredPlayers": [],
+  "tempGroups": []
+}

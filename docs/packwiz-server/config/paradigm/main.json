@@ -1,0 +1,126 @@
+{
+  "announcementsEnable": {
+    "description": "Enable or disable the Announcements module.",
+    "value": true
+  },
+  "motdEnable": {
+    "description": "Enable or disable the Message of the Day (MOTD) module.",
+    "value": true
+  },
+  "mentionsEnable": {
+    "description": "Enable or disable the player @mentions module.",
+    "value": true
+  },
+  "restartEnable": {
+    "description": "Enable or disable the scheduled server Restart module.",
+    "value": true
+  },
+  "debugEnable": {
+    "description": "Enable or disable debug logging for Paradigm modules. This can be very verbose.",
+    "value": false
+  },
+  "defaultLanguage": {
+    "description": "The default language for translatable messages. E.g., 'en', 'de', 'es'.",
+    "value": "en"
+  },
+  "commandManagerEnable": {
+    "description": "Enable or disable the custom Command Manager for custom commands.",
+    "value": true
+  },
+  "internalPermissionsEnable": {
+    "description": "Enable or disable Paradigm internal permissions/groups (permissions.json and /paradigm group).",
+    "value": false
+  },
+  "telemetryEnable": {
+    "description": "Enables anonymous telemetry (server count, online players). Sends only anonymized metrics.",
+    "value": false
+  },
+  "telemetryIntervalSeconds": {
+    "description": "Telemetry ping interval in seconds.",
+    "value": 300
+  },
+  "telemetryServerId": {
+    "description": "Anonymous server ID (auto-generated when empty).",
+    "value": "5acbb01b-585d-4a50-bb5e-125dddebe706"
+  },
+  "webEditorTestUrl": {
+    "description": "When enabled, use the local web editor test URL (http://localhost:8083) instead of production.",
+    "value": false
+  },
+  "spawnWorld": {
+    "description": "Global spawn world id (set via /setspawn). Empty means spawn is not configured.",
+    "value": ""
+  },
+  "spawnX": {
+    "description": "Global spawn X coordinate.",
+    "value": 0.0
+  },
+  "spawnY": {
+    "description": "Global spawn Y coordinate.",
+    "value": 64.0
+  },
+  "spawnZ": {
+    "description": "Global spawn Z coordinate.",
+    "value": 0.0
+  },
+  "spawnYaw": {
+    "description": "Global spawn yaw rotation.",
+    "value": 0.0
+  },
+  "spawnPitch": {
+    "description": "Global spawn pitch rotation.",
+    "value": 0.0
+  },
+  "homeCommandsEnable": {
+    "description": "Enable or disable /sethome, /home, /delhome, /homes and /back commands.",
+    "value": true
+  },
+  "tpaCommandsEnable": {
+    "description": "Enable or disable /tpa, /tpahere, /tpaccept, /tpdeny and /tpcancel commands.",
+    "value": true
+  },
+  "warpCommandsEnable": {
+    "description": "Enable or disable /warp, /warps, /setwarp, /delwarp and /warpinfo commands.",
+    "value": true
+  },
+  "spawnCommandsEnable": {
+    "description": "Enable or disable /spawn and /setspawn commands.",
+    "value": true
+  },
+  "seenCommandEnable": {
+    "description": "Enable or disable /seen command.",
+    "value": true
+  },
+  "ignoreCommandsEnable": {
+    "description": "Enable or disable /ignore and /unignore commands.",
+    "value": true
+  },
+  "gamemodeCommandsEnable": {
+    "description": "Enable or disable /gamemode and gm aliases.",
+    "value": true
+  },
+  "flyCommandEnable": {
+    "description": "Enable or disable /fly command.",
+    "value": true
+  },
+  "clearInventoryCommandEnable": {
+    "description": "Enable or disable /clearinv and /ci commands.",
+    "value": true
+  },
+  "timeWeatherCommandsEnable": {
+    "description": "Enable or disable /day, /night, /sun, /rain and /thunder commands.",
+    "value": true
+  },
+  "speedCommandEnable": {
+    "description": "Enable or disable /speed command.",
+    "value": true
+  },
+  "feedCommandEnable": {
+    "description": "Enable or disable /feed command.",
+    "value": true
+  },
+  "healCommandEnable": {
+    "description": "Enable or disable /heal command.",
+    "value": true
+  }
+}

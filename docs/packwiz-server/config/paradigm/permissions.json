@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "default_group": "default",
+  "groups": {
+    "default": {
+      "description": "Default group for all players",
+      "prefix": "&b[Default]&r ",
+      "suffix": " &7#New",
+      "weight": 0,
+      "perms": [
+        "paradigm.msg",
+        "paradigm.reply",
+        "paradigm.mention.player",
+        "paradigm.spawn",
+        "paradigm.seen",
+        "paradigm.ignore",
+        "paradigm.home",
+        "paradigm.sethome",
+        "paradigm.delhome",
+        "paradigm.homes",
+        "paradigm.back",
+        "paradigm.tpa",
+        "paradigm.tpahere",
+        "paradigm.tpaccept",
+        "paradigm.tpdeny",
+        "paradigm.tpcancel",
+        "paradigm.warp",
+        "paradigm.warps",
+        "paradigm.warp.info"
+      ],
+      "inherits": []
+    },
+    "admin": {
+      "description": "Administrative group with full Paradigm access",
+      "prefix": "&c[Admin]&r ",
+      "suffix": "",
+      "weight": 0,
+      "perms": [
+        "paradigm.*"
+      ],
+      "inherits": [
+        "default"
+      ]
+    }
+  },
+  "users": {}
+}
