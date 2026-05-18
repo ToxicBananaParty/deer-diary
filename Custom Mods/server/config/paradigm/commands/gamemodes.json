@@ -1,0 +1,44 @@
+[
+  {
+    "name": "creative",
+    "description": "Set your own gamemode to Creative.",
+    "permission": "paradigm.command.creative",
+    "requirePermission": true,
+    "permissionErrorMessage": "&cYou do not have permission to use /creative.",
+    "actions": [
+      {
+        "type": "run_console",
+        "commands": [
+          "execute as {player} at @s run gamemode creative @s"
+        ]
+      },
+      {
+        "type": "message",
+        "text": [
+          "&aYour gamemode has been set to &eCreative&a."
+        ]
+      }
+    ]
+  },
+  {
+    "name": "survival",
+    "description": "Set your own gamemode to Survival.",
+    "permission": "paradigm.command.survival",
+    "requirePermission": true,
+    "permissionErrorMessage": "&cYou do not have permission to use /survival.",
+    "actions": [
+      {
+        "type": "run_console",
+        "commands": [
+          "execute as {player} at @s run gamemode survival @s"
+        ]
+      },
+      {
+        "type": "message",
+        "text": [
+          "&aYour gamemode has been set to &eSurvival&a."
+        ]
+      }
+    ]
+  }
+]

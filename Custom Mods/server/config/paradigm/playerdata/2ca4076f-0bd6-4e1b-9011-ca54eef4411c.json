@@ -1,0 +1,39 @@
+{
+  "uuid": "2ca4076f-0bd6-4e1b-9011-ca54eef4411c",
+  "name": "hotdogsyrup420",
+  "homes": {
+    "echo": {
+      "name": "echo",
+      "location": {
+        "worldId": "minecraft:overworld",
+        "x": 8826.888240645818,
+        "y": 8.0,
+        "z": 527.6506019112367,
+        "yaw": -131.27435,
+        "pitch": 1.7995577
+      }
+    },
+    "home": {
+      "name": "home",
+      "location": {
+        "worldId": "minecraft:overworld",
+        "x": 8614.716783272554,
+        "y": 78.0,
+        "z": 588.1446073292956,
+        "yaw": -57.63147,
+        "pitch": 63.300003
+      }
+    }
+  },
+  "lastLocation": {
+    "worldId": "minecraft:overworld",
+    "x": 8828.145476344665,
+    "y": 8.0,
+    "z": 529.8628298917081,
+    "yaw": 118.45068,
+    "pitch": 90.0
+  },
+  "lastSeenMs": 1778891442554,
+  "ignoredPlayers": [],
+  "tempGroups": []
+}

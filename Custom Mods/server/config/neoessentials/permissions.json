@@ -1,0 +1,78 @@
+{
+  "defaultGroup": "default",
+  "groups": [
+    {
+      "prefix": "&8[&7User&8]&7",
+      "permissions": [
+        "neoessentials.info",
+        "neoessentials.teleport.home.set",
+        "neoessentials.afk",
+        "neoessentials.teleport.request.deny",
+        "neoessentials.chat.msgtoggle",
+        "neoessentials.teleport.request.accept",
+        "neoessentials.teleport.warp",
+        "neoessentials.teleport.warp.list",
+        "neoessentials.teleport.request.tpa",
+        "neoessentials.teleport.home.delete",
+        "neoessentials.chat.msg",
+        "neoessentials.chat.reply",
+        "neoessentials.chat.ignore",
+        "neoessentials.teleport.home.list",
+        "neoessentials.teleport.request.cancel",
+        "neoessentials.teleport.home",
+        "neoessentials.teleport.spawn",
+        "neoessentials.teleport.top",
+        "neoessentials.teleport.back",
+        "neoessentials.chat.unignore",
+        "neoessentials.teleport.request.tpahere"
+      ],
+      "name": "default",
+      "suffix": "",
+      "inherits": []
+    },
+    {
+      "prefix": "&8[&cMod&8]&7",
+      "permissions": [
+        "neoessentials.chat.socialspy",
+        "neoessentials.teleport.admin.tp",
+        "neoessentials.chat.mutelist",
+        "neoessentials.afk.exempt",
+        "neoessentials.teleport.jump",
+        "neoessentials.kits.admin.delete",
+        "neoessentials.item.*",
+        "neoessentials.teleport.admin.tphere",
+        "neoessentials.economy.admin",
+        "neoessentials.permissions.list",
+        "neoessentials.kits.admin.list",
+        "neoessentials.teleport.warp.delete",
+        "neoessentials.chat.unmute",
+        "neoessentials.teleport.spawn.set",
+        "neoessentials.economy.balance.others",
+        "neoessentials.kits.admin.create",
+        "neoessentials.teleport.warp.create",
+        "neoessentials.chat.mute",
+        "neoessentials.permissions.reload",
+        "neoessentials.teleport.admin.tppos",
+        "neoessentials.teleport.jumpto",
+        "neoessentials.teleport.home.others",
+        "neoessentials.teleport.tpr"
+      ],
+      "name": "moderator",
+      "suffix": "",
+      "inherits": [
+        "default"
+      ]
+    },
+    {
+      "prefix": "&8[&3Admin&8]&7",
+      "permissions": [
+        "neoessentials.*"
+      ],
+      "name": "admin",
+      "suffix": "",
+      "inherits": [
+        "moderator"
+      ]
+    }
+  ]
+}

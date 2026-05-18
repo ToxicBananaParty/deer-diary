@@ -1,0 +1,5 @@
+#Allowed tool registry ids or tag strings starting with '#'. Use 'hand' to permit empty-hand veinmining.
+tools = [
+    "#minecraft:axes",
+    "#minecraft:pickaxes"
+]

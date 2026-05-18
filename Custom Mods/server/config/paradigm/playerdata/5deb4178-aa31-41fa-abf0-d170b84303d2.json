@@ -1,0 +1,61 @@
+{
+  "uuid": "5deb4178-aa31-41fa-abf0-d170b84303d2",
+  "name": "Jimdude2345",
+  "homes": {
+    "m": {
+      "name": "m",
+      "location": {
+        "worldId": "minecraft:overworld",
+        "x": 8824.160942201135,
+        "y": 8.0,
+        "z": 528.4257194614371,
+        "yaw": -98.711426,
+        "pitch": 12.2997675
+      }
+    },
+    "nether_fort": {
+      "name": "nether_fort",
+      "location": {
+        "worldId": "minecraft:the_nether",
+        "x": 2270.3270756625006,
+        "y": 74.0,
+        "z": 1593.0919514896443,
+        "yaw": 174.99239,
+        "pitch": 22.19996
+      }
+    },
+    "h": {
+      "name": "h",
+      "location": {
+        "worldId": "minecraft:overworld",
+        "x": 8622.104206935554,
+        "y": 73.0,
+        "z": 589.115074851275,
+        "yaw": 122.06073,
+        "pitch": 7.1999927
+      }
+    },
+    "warehouse": {
+      "name": "warehouse",
+      "location": {
+        "worldId": "minecraft:overworld",
+        "x": 8724.22037122575,
+        "y": 67.0,
+        "z": 447.1711017698765,
+        "yaw": 123.5484,
+        "pitch": 29.700052
+      }
+    }
+  },
+  "lastLocation": {
+    "worldId": "minecraft:overworld",
+    "x": 8619.706873379071,
+    "y": 73.0,
+    "z": 587.6436775931886,
+    "yaw": 151.59795,
+    "pitch": 21.750084
+  },
+  "lastSeenMs": 1778997891171,
+  "ignoredPlayers": [],
+  "tempGroups": []
+}

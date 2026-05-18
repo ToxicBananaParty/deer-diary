@@ -1,0 +1,56 @@
+[
+  {
+    "name": "motd",
+    "description": "Check the motd",
+    "permission": "paradigm.command.motd",
+    "requirePermission": false,
+    "actions": [
+      {
+        "type": "message",
+        "text": [
+          "&r&lWelcome to the server, &a{player}&r!"
+        ]
+      },
+      {
+        "type": "message",
+        "text": [
+          "&rMake sure you're up-to-date on the"
+        ]
+      },
+      {
+        "type": "message",
+        "text": [
+          "&rserver rules using the &6&n/rules&r command."
+        ]
+      },
+      {
+        "type": "message",
+        "text": []
+      }
+    ]
+  },
+  {
+    "name": "tppos",
+    "description": "Teleport yourself to coordinates.",
+    "permission": "paradigm.command.tppos",
+    "requirePermission": true,
+    "permissionErrorMessage": "&cYou do not have permission to teleport to coordinates.",
+    "actions": [
+      {
+        "type": "run_console",
+        "text": [
+          "&aTeleported to &e$1 $2 $3&a.&r"
+        ],
+        "commands": [
+          "execute as {player} at @s run tp @s $*"
+        ]
+      },
+      {
+        "type": "message",
+        "text": [
+          "&aTeleported to &e$1 $2 $3&a.&r"
+        ]
+      }
+    ]
+  }
+]

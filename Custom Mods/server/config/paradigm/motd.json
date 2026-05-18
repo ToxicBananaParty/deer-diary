@@ -1,0 +1,32 @@
+{
+  "motdLines": [
+    "",
+    "<bold>Welcome to the server, <color:green>{player}</color>!</bold>",
+    "Make sure you're up-to-date on the",
+    "server rules using the <color:gold><underline>/rules</underline></color> command.",
+    ""
+  ],
+  "iconEnabled": {
+    "description": "",
+    "value": true
+  },
+  "serverlistMotdEnabled": {
+    "description": "",
+    "value": true
+  },
+  "motds": {
+    "description": "",
+    "value": [
+      {
+        "icon": "random",
+        "line1": "<rainbow>Geeks and Gamers ONLY</rainbow>",
+        "line2": "",
+        "playerCount": {
+          "hoverText": "<gradient:aqua:cyan>Join or don't</gradient>",
+          "maxPlayers": 12,
+          "showActualCount": true
+        }
+      }
+    ]
+  }
+}
