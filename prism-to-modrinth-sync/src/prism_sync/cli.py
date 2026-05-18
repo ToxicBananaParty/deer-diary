@@ -677,6 +677,7 @@ def cmd_server_bootstrap_from_sftp(args: argparse.Namespace) -> int:
     total_files = 0
     total_bytes = 0
     total_skipped = 0
+    total_denied: list[str] = []
     print()
     print("Pull summary:")
     for rel, stats in stats_by_rel.items():
@@ -684,15 +685,27 @@ def cmd_server_bootstrap_from_sftp(args: argparse.Namespace) -> int:
         print(
             f"  {marker} {rel}: {stats.files} files, {stats.megabytes:.1f} MB"
             + (f" (skipped: {stats.skipped})" if stats.skipped else "")
+            + (f" (denied: {len(stats.denied)})" if stats.denied else "")
         )
         total_files += stats.files
         total_bytes += stats.bytes
         total_skipped += stats.skipped
+        total_denied.extend(f"{rel}/{d}" for d in stats.denied)
     print()
     print(
         f"Total: {total_files} files, {total_bytes / (1024 * 1024):.1f} MB"
         + (f" ({total_skipped} remote path(s) skipped)" if total_skipped else "")
     )
+    if total_denied:
+        print()
+        print(f"Denied by [packwiz_server.deploy].bootstrap_deny_paths:")
+        for path in total_denied:
+            print(f"  ! {path}")
+        print(
+            "(These files exist on BloomHost and are preserved across pack "
+            "updates by [packwiz_server].preserve_globs; they just won't "
+            "live in this repo.)"
+        )
     print()
     print("Next steps:")
     print(f"  1. git add \"{server_dir.relative_to(config.config_dir.parent)}\"")

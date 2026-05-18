@@ -284,6 +284,20 @@ bootstrap_pull = [
     "defaultconfigs",
 ]
 
+# Files matching ANY of these glob patterns are excluded from the bootstrap
+# pull (and skipped by future re-pulls). Use for known-sensitive configs
+# that contain real secrets you don't want mirrored into the local repo.
+# The live BloomHost server keeps the canonical copy; preserve_globs in
+# [packwiz_server] means packwiz-installer won't overwrite it on update.
+# Patterns match both the relative path under remote_dir AND the basename,
+# so "Discord-Integration.toml" catches the file wherever it lives.
+bootstrap_deny_paths = [
+    "Discord-Integration.toml",   # dcintegration bot token
+    # Add more as you discover them. Sample candidates for typical setups:
+    # "luckperms/luckperms.conf",  # if you use a DB password
+    # "*-rcon.conf",               # any RCON password file
+]
+
 # Paths SFTP-pushed by `server-deploy-wrapper`. Run once after credentials
 # are set, then once whenever wrapper/* changes.
 wrapper_push = [

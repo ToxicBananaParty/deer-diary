@@ -24,6 +24,14 @@ prism-to-modrinth-sync/*.mrpack
 prism-to-modrinth-sync/config.local.toml
 .env
 
+# --- Server configs known to contain secrets ---
+# The live BloomHost server has the canonical copy. preserve_globs in the
+# server pack means packwiz-installer never overwrites the player-side
+# (BloomHost-side) file regardless of what's in the published index, so
+# omitting it from the repo is safe.
+# bootstrap_deny_paths in [packwiz_server.deploy] also blocks re-pulling.
+Custom Mods/server/config/Discord-Integration.toml
+
 # --- prism-to-modrinth-sync one-off diagnostics ---
 prism-to-modrinth-sync/diagnose.py
 prism-to-modrinth-sync/promote.py

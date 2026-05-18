@@ -15,6 +15,7 @@ otherwise read the password from the env var named by ``password_env``.
 
 from __future__ import annotations
 
+import fnmatch
 import logging
 import os
 import posixpath
@@ -41,6 +42,11 @@ class TransferStats:
     files: int = 0
     bytes: int = 0
     skipped: int = 0  # remote paths that didn't exist (logged, not fatal)
+    denied: list[str] = None  # type: ignore[assignment]  # filenames blocked by deny-list
+
+    def __post_init__(self) -> None:
+        if self.denied is None:
+            self.denied = []
 
     def add(self, byte_count: int) -> None:
         self.files += 1
@@ -49,6 +55,38 @@ class TransferStats:
     @property
     def megabytes(self) -> float:
         return self.bytes / (1024 * 1024)
+
+
+class DenyMatcher:
+    """fnmatch-based blocklist for SFTP file paths.
+
+    A path is denied if any pattern matches either:
+      - the file's POSIX path relative to the current download root, or
+      - the file's basename (so `Discord-Integration.toml` catches the
+        file no matter how deep it's nested).
+
+    Patterns support shell glob syntax via :mod:`fnmatch` (``*``, ``?``,
+    ``[seq]``). Empty pattern list = no denies.
+    """
+
+    def __init__(self, patterns: list[str]) -> None:
+        self._patterns = [p.replace("\\", "/").lstrip("/") for p in patterns if p]
+
+    @property
+    def has_patterns(self) -> bool:
+        return bool(self._patterns)
+
+    def matches(self, posix_rel_path: str) -> bool:
+        if not self._patterns:
+            return False
+        rel = posix_rel_path.replace("\\", "/").lstrip("/")
+        basename = posixpath.basename(rel)
+        for pattern in self._patterns:
+            if fnmatch.fnmatchcase(rel, pattern):
+                return True
+            if fnmatch.fnmatchcase(basename, pattern):
+                return True
+        return False
 
 
 def _resolve_remote(deploy: SftpDeploy, rel: str) -> str:
@@ -117,6 +155,8 @@ def download_tree(
     local_root: Path,
     *,
     skip_names: frozenset[str] = frozenset(),
+    deny_matcher: DenyMatcher | None = None,
+    _rel_prefix: str = "",
 ) -> TransferStats:
     """Mirror a remote directory tree into ``local_root``.
 
@@ -124,10 +164,13 @@ def download_tree(
     (the bootstrap is a one-time-ish operation; we don't bother with
     timestamp/hash comparisons). ``skip_names`` is matched against the
     *basename* of each entry — useful for ignoring `logs/`, `crash-reports/`
-    etc. while crawling a parent.
+    etc. while crawling a parent. ``deny_matcher`` blocks specific files
+    by glob pattern (used for known-sensitive paths like Discord-Integration.toml).
 
     Returns transfer stats. Raises :class:`SftpError` if the remote root
-    doesn't exist or isn't a directory.
+    doesn't exist or isn't a directory. ``_rel_prefix`` is internal; the
+    public caller passes "" so paths in deny-match are relative to the
+    initial root.
     """
     stats = TransferStats()
     try:
@@ -139,8 +182,14 @@ def download_tree(
 
     if not stat.S_ISDIR(st.st_mode or 0):
         # Single-file case — copy directly into local_root as the same name.
+        basename = posixpath.basename(remote_root)
+        rel = posixpath.join(_rel_prefix, basename) if _rel_prefix else basename
+        if deny_matcher is not None and deny_matcher.matches(rel):
+            log.info("Denied (matches deny-list): %s", rel)
+            stats.denied.append(rel)
+            return stats
         local_root.mkdir(parents=True, exist_ok=True)
-        dest = local_root / posixpath.basename(remote_root)
+        dest = local_root / basename
         sftp.get(remote_root, str(dest))
         stats.add(dest.stat().st_size)
         return stats
@@ -152,14 +201,25 @@ def download_tree(
             continue
         remote_path = posixpath.join(remote_root, name)
         local_path = local_root / name
+        rel = posixpath.join(_rel_prefix, name) if _rel_prefix else name
         if stat.S_ISDIR(attr.st_mode or 0):
             sub_stats = download_tree(
-                sftp, remote_path, local_path, skip_names=skip_names
+                sftp,
+                remote_path,
+                local_path,
+                skip_names=skip_names,
+                deny_matcher=deny_matcher,
+                _rel_prefix=rel,
             )
             stats.files += sub_stats.files
             stats.bytes += sub_stats.bytes
             stats.skipped += sub_stats.skipped
+            stats.denied.extend(sub_stats.denied)
         else:
+            if deny_matcher is not None and deny_matcher.matches(rel):
+                log.info("Denied (matches deny-list): %s", rel)
+                stats.denied.append(rel)
+                continue
             local_path.parent.mkdir(parents=True, exist_ok=True)
             sftp.get(remote_path, str(local_path))
             stats.add(attr.st_size or 0)
@@ -252,11 +312,15 @@ def bootstrap_pull(
     local_server_dir: Path,
     *,
     skip_names: frozenset[str] | None = None,
+    extra_deny_patterns: list[str] | None = None,
 ) -> dict[str, TransferStats]:
     """Pull every path in ``deploy.bootstrap_pull`` into ``local_server_dir``.
 
-    Returns a dict mapping each relative path → its per-tree stats so the
-    CLI can print a useful summary.
+    Returns a dict mapping each relative path -> its per-tree stats so the
+    CLI can print a useful summary. Files matching ``deploy.bootstrap_deny_paths``
+    (plus any ``extra_deny_patterns``) are skipped — used to prevent secret-
+    bearing configs (e.g. Discord-Integration.toml) from being pulled into
+    the local mirror.
     """
     skip = skip_names if skip_names is not None else DEFAULT_SKIP_NAMES
     if not deploy.bootstrap_pull:
@@ -265,13 +329,20 @@ def bootstrap_pull(
             "remote path (e.g. \"mods\")."
         )
 
+    patterns = list(deploy.bootstrap_deny_paths)
+    if extra_deny_patterns:
+        patterns.extend(extra_deny_patterns)
+    deny = DenyMatcher(patterns)
+
     out: dict[str, TransferStats] = {}
     with open_sftp(deploy) as sftp:
         for rel in deploy.bootstrap_pull:
             remote = _resolve_remote(deploy, rel)
             local = local_server_dir / rel
             log.info("Pulling %s -> %s", remote, local)
-            out[rel] = download_tree(sftp, remote, local, skip_names=skip)
+            out[rel] = download_tree(
+                sftp, remote, local, skip_names=skip, deny_matcher=deny
+            )
     return out
 
 

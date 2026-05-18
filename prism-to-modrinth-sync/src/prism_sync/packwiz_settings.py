@@ -115,6 +115,7 @@ class SftpDeploy:
     key_path: Path | None = None
     remote_dir: str = "/home/container"
     bootstrap_pull: list[str] = field(default_factory=list)
+    bootstrap_deny_paths: list[str] = field(default_factory=list)
     wrapper_push: list[str] = field(default_factory=list)
 
     @property
@@ -139,6 +140,7 @@ class SftpDeploy:
             key_path=key_path,
             remote_dir=str(raw.get("remote_dir", "/home/container")),
             bootstrap_pull=list(raw.get("bootstrap_pull", []) or []),
+            bootstrap_deny_paths=list(raw.get("bootstrap_deny_paths", []) or []),
             wrapper_push=list(raw.get("wrapper_push", []) or []),
         )
 
