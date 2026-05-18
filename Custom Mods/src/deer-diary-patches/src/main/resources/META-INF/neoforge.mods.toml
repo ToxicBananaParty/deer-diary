@@ -1,0 +1,43 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version}"
+license = "MIT"
+
+[[mods]]
+    modId = "${mod_id}"
+    version = "${version}"
+    displayName = "Deer Diary Patches"
+    description = '''A container for small Mixin patches against third-party mods in the Deer Diary modpack. Currently patches Tom's Simple Storage so that placing a Polymorphic Item Filter on an Inventory Cable Connector no longer hides the target inventory's existing items from the terminal or blocks their extraction (gates insertion only, as designed).'''
+    authors = "Ryan"
+
+[[mixins]]
+    config = "deer_diary_patches.minecraft.mixins.json"
+
+[[mixins]]
+    config = "deer_diary_patches.sable.mixins.json"
+
+[[mixins]]
+    config = "deer_diary_patches.tomsstorage.mixins.json"
+
+[[dependencies.${mod_id}]]
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[${neoforge_version},)"
+    ordering = "NONE"
+    side = "BOTH"
+
+[[dependencies.${mod_id}]]
+    modId = "minecraft"
+    type = "required"
+    versionRange = "[${minecraft_version},1.21.2)"
+    ordering = "NONE"
+    side = "BOTH"
+
+# Tom's Simple Storage — declared optional so this mod loads cleanly if TSS is
+# absent (the Mixin config sets `required = false` so missing targets are a
+# warning rather than a crash). Ordering AFTER so our Mixin sees TSS classes.
+[[dependencies.${mod_id}]]
+    modId = "toms_storage"
+    type = "optional"
+    versionRange = "[1.21-2.3.0,)"
+    ordering = "AFTER"
+    side = "BOTH"

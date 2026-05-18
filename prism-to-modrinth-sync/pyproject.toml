@@ -5,6 +5,7 @@ description = "Publish a Prism Launcher Minecraft instance as a Modrinth modpack
 requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31",
+    "paramiko>=3.4",
 ]
 
 [project.scripts]

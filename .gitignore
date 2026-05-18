@@ -60,6 +60,9 @@ Custom Mods/src/*/LEARNINGS.md
 # implementing deer-diary-commands. Out of caution we don't republish them.)
 Custom Mods/src/FTB-Essentials-*/
 Custom Mods/src/FTB-Library-*/
+# Tom's Simple Storage — cloned only as reference while authoring Mixin
+# patches in deer-diary-patches. Upstream MIT, but we don't republish.
+Custom Mods/src/Toms-Storage/
 
 # --- OS noise ---
 .DS_Store

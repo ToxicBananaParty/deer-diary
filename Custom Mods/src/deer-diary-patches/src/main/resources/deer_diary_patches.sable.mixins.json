@@ -1,0 +1,14 @@
+{
+	"required": false,
+	"package": "toxicbananaparty.ddp.sable.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"SableUDPPacketDecoderMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

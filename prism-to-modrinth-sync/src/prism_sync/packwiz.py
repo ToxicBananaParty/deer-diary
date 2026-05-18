@@ -54,6 +54,15 @@ from .instance import (
     read_packignore,
     walk_pack_files,
 )
+from .packwiz_emit import (
+    IndexFile,
+    build_optional_block,
+    copy_direct as _copy_direct,
+    normalize_metafile_bytes,
+    render_index_toml as _render_index_toml,
+    render_pack_toml as _render_pack_toml,
+    toml_str as _toml_str,
+)
 from .packwiz_settings import OptionalMod, PackwizSettings
 from .pwtoml import (
     PwTomlEntry,
@@ -63,17 +72,6 @@ from .pwtoml import (
 
 
 log = logging.getLogger(__name__)
-
-
-@dataclass
-class IndexFile:
-    """One row in ``index.toml``'s ``[[files]]`` table."""
-
-    file: str       # POSIX, relative to pack root
-    hash: str       # sha256 hex
-    metafile: bool = False
-    preserve: bool = False
-    alias: str = ""
 
 
 @dataclass
@@ -101,75 +99,6 @@ class PackwizBuildResult:
 
 class PackwizError(RuntimeError):
     pass
-
-
-# ---------------------------------------------------------------------------
-# TOML rendering
-# ---------------------------------------------------------------------------
-#
-# We hand-write the two pack-root TOML files because Python's stdlib doesn't
-# bundle a writer, and our schemas are simple enough that pulling in tomli-w
-# isn't worth the dependency churn. All string values we serialize here are
-# generated from filenames, hashes, and config values — they never contain
-# quotes, backslashes, or non-ASCII, so the basic-string form is safe.
-
-
-def _toml_str(s: str) -> str:
-    """Render a string as a basic TOML string literal (with double quotes).
-
-    Escapes the few characters that ever realistically appear in our inputs.
-    For arbitrary user input you'd want a full TOML serializer, but our inputs
-    are pack metadata: paths (forward-slash POSIX), hashes (hex), version
-    numbers, and config values we control.
-    """
-    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
-def _render_pack_toml(
-    *,
-    name: str,
-    author: str,
-    version: str,
-    pack_format: str,
-    index_hash: str,
-    minecraft_version: str,
-    loader_key: str,
-    loader_version: str,
-) -> str:
-    lines = [
-        f"name = {_toml_str(name)}",
-    ]
-    if author:
-        lines.append(f"author = {_toml_str(author)}")
-    lines.append(f"version = {_toml_str(version)}")
-    lines.append(f"pack-format = {_toml_str(pack_format)}")
-    lines.append("")
-    lines.append("[index]")
-    lines.append('file = "index.toml"')
-    lines.append('hash-format = "sha256"')
-    lines.append(f"hash = {_toml_str(index_hash)}")
-    lines.append("")
-    lines.append("[versions]")
-    lines.append(f"minecraft = {_toml_str(minecraft_version)}")
-    lines.append(f"{loader_key} = {_toml_str(loader_version)}")
-    lines.append("")
-    return "\n".join(lines)
-
-
-def _render_index_toml(entries: Iterable[IndexFile]) -> str:
-    lines = ['hash-format = "sha256"', ""]
-    for entry in sorted(entries, key=lambda e: e.file):
-        lines.append("[[files]]")
-        lines.append(f"file = {_toml_str(entry.file)}")
-        lines.append(f"hash = {_toml_str(entry.hash)}")
-        if entry.metafile:
-            lines.append("metafile = true")
-        if entry.preserve:
-            lines.append("preserve = true")
-        if entry.alias:
-            lines.append(f"alias = {_toml_str(entry.alias)}")
-        lines.append("")
-    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -422,11 +351,6 @@ def build_packwiz(
     )
 
 
-def _copy_direct(src: Path, dest: Path) -> None:
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, dest)
-
-
 def _emit_metafile(
     entry: FileEntry,
     pw_entry: PwTomlEntry,
@@ -469,44 +393,18 @@ def _emit_metafile(
     pack_rel = f"{sub}/{pw_entry.source.name}"
     dest = output_root / pack_rel
     dest.parent.mkdir(parents=True, exist_ok=True)
-    # Read-modify-write rather than a plain copy: Prism sometimes writes
-    # `side = ''` when Modrinth doesn't expose a side for the project.
-    # packwiz-installer rejects that as "Invalid side name", even though
-    # the Packwiz spec treats `side` as optional and defaulting to "both".
-    # Normalize the value so the published metafile parses cleanly. If the
-    # caller flagged this mod as a Packwiz [option], append the block here
-    # too so the installer surfaces it as a user-toggleable.
     src_bytes = pw_entry.source.read_bytes()
-    fixed_bytes = _normalize_metafile_bytes(src_bytes, option=option)
-    dest.write_bytes(fixed_bytes)
+    optional_block = (
+        build_optional_block(option.default, option.description)
+        if option is not None
+        else None
+    )
+    dest.write_bytes(
+        normalize_metafile_bytes(src_bytes, optional_block=optional_block)
+    )
 
     meta_hashes = hash_file(dest)
     return pack_rel, meta_hashes, on_disk_hashes
-
-
-def _normalize_metafile_bytes(
-    data: bytes, option: OptionalMod | None = None
-) -> bytes:
-    """Fix Prism quirks + optionally inject a Packwiz ``[option]`` block.
-
-    Normalizations:
-    - ``side = ''`` → ``side = 'both'`` (Prism writes empty when Modrinth
-      doesn't expose a side; packwiz-installer rejects empty as "Invalid
-      side name").
-
-    If ``option`` is provided, append a ``[option]`` table so packwiz-installer
-    treats the mod as user-toggleable. The block is a new top-level table so
-    appending to the end of the file is always valid TOML regardless of which
-    table came before.
-    """
-    text = data.decode("utf-8")
-    text = text.replace("side = ''", "side = 'both'")
-    text = text.replace('side = ""', 'side = "both"')
-    if option is not None:
-        text = text.rstrip() + "\n\n[option]\noptional = true\n"
-        text += f"default = {'true' if option.default else 'false'}\n"
-        text += f"description = {_toml_str(option.description)}\n"
-    return text.encode("utf-8")
 
 
 def _slug_for_pwtoml(source: Path) -> str:
@@ -599,8 +497,10 @@ def _emit_metafile_force(
     dest = output_root / pack_rel
     dest.parent.mkdir(parents=True, exist_ok=True)
     src_bytes = pw_entry.source.read_bytes()
-    fixed_bytes = _normalize_metafile_bytes(src_bytes, option=option)
-    dest.write_bytes(fixed_bytes)
+    optional_block = build_optional_block(option.default, option.description)
+    dest.write_bytes(
+        normalize_metafile_bytes(src_bytes, optional_block=optional_block)
+    )
     meta_hashes = hash_file(dest)
     return pack_rel, meta_hashes, jar_pack_rel, pw_hash
 

@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "toxicbananaparty.ddp.minecraft.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"ConnectionMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

@@ -14,7 +14,7 @@ import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Literal
 
 from .hashing import hash_file
 from .instance import InstanceInfo
@@ -27,6 +27,10 @@ log = logging.getLogger(__name__)
 _EXCLUDED_JAR_SUFFIXES = ("-sources.jar", "-javadoc.jar", "-dev.jar", "-all.jar")
 
 
+Side = Literal["client", "server", "both"]
+VALID_SIDES: tuple[Side, ...] = ("client", "server", "both")
+
+
 @dataclass
 class CustomModConfig:
     """One locally-built mod or datapack to keep in sync with the instance.
@@ -37,12 +41,20 @@ class CustomModConfig:
     (e.g. `"key-to-necklace.zip"` or `"*.zip"`) for datapacks, resourcepacks,
     or any artifact whose filename doesn't follow the `<name>-<version>.jar`
     convention.
+
+    `side` controls which packs the artifact ends up in:
+      - "client": shipped to client pack only; skipped by server sync.
+      - "server": shipped to server pack only; sync drops the latest jar
+        into <server_root>/<target_dir>/ for the server build to walk.
+      - "both":   both packs; sync drops into the Prism instance AND the
+        server folder.
     """
 
     name: str
     source_dir: Path
     target_dir: str = "mods"  # relative to <instance>/minecraft/
     source_pattern: str = ""
+    side: Side = "both"
 
     @property
     def pattern(self) -> str:
@@ -119,8 +131,19 @@ def sync_custom_mods(
     custom_mods: Iterable[CustomModConfig],
     instance: InstanceInfo,
     config_dir: Path,
+    *,
+    server_root: Path | None = None,
 ) -> CustomModSyncResult:
-    """Replace each custom mod in the instance if the source dir has a newer build."""
+    """Replace each custom mod in the instance if the source dir has a newer build.
+
+    If ``server_root`` is given, ALSO mirror the latest source jar into
+    ``<server_root>/<target_dir>/`` for mods with ``side in ("server", "both")``.
+    The server build walks ``server_root`` directly, so this keeps custom
+    builds flowing into the server pack without manual copies. ``side="client"``
+    mods are skipped from the server mirror; the instance sync is unchanged
+    (everything still lands in the client instance regardless of side, since
+    the existing client pipeline relies on it).
+    """
     out = CustomModSyncResult()
     for mod in custom_mods:
         source_dir = _resolve_source_dir(config_dir, mod.source_dir)
@@ -149,6 +172,7 @@ def sync_custom_mods(
         if not targets:
             dest = target_root / source_jar.name
             shutil.copy2(source_jar, dest)
+            _mirror_to_server(mod, source_jar, server_root)
             out.results.append(
                 CustomModResult(
                     name=mod.name,
@@ -180,6 +204,9 @@ def sync_custom_mods(
         if source_version == target_version:
             # Same version — only replace if the bytes differ (e.g. dev rebuild).
             if hash_file(source_jar).sha512 == hash_file(target_jar).sha512:
+                # Still re-mirror to server in case the server folder is stale
+                # (e.g. first run after adding server_root parameter).
+                _mirror_to_server(mod, source_jar, server_root)
                 out.results.append(
                     CustomModResult(
                         name=mod.name,
@@ -208,11 +235,38 @@ def sync_custom_mods(
             for toml_path in index_dir.glob(f"{mod.name}*.pw.toml"):
                 toml_path.unlink()
 
+        _mirror_to_server(mod, source_jar, server_root)
+
         out.results.append(
             CustomModResult(name=mod.name, action="swapped", detail=detail_prefix)
         )
 
     return out
+
+
+def _mirror_to_server(
+    mod: CustomModConfig, source_jar: Path, server_root: Path | None
+) -> None:
+    """Drop the latest source jar into <server_root>/<target_dir>/ for server-
+    side mods, and remove any older versions in the same dir.
+
+    No-op when ``server_root`` is None or ``mod.side == "client"``.
+    """
+    if server_root is None or mod.side == "client":
+        return
+
+    server_dir = server_root / mod.target_dir
+    server_dir.mkdir(parents=True, exist_ok=True)
+    dest = server_dir / source_jar.name
+    # Idempotent copy; shutil.copy2 overwrites.
+    shutil.copy2(source_jar, dest)
+
+    # Remove older versions of this same custom mod that may linger from a
+    # prior sync (so the server folder always has just the latest jar).
+    for old in _candidate_jars(mod, server_dir):
+        if old.resolve() == dest.resolve():
+            continue
+        old.unlink()
 
 
 def print_summary(result: CustomModSyncResult) -> None:

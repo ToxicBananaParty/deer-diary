@@ -1,0 +1,89 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev' version '0.1.96'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+    withSourcesJar()
+}
+
+neoForge {
+    version = project.neoforge_version
+
+    parchment {
+        minecraftVersion = project.parchment_minecraft_version
+        mappingsVersion = project.parchment_mappings_version
+    }
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+    }
+
+    mods {
+        deer_diary_patches {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+repositories {
+    // Modrinth maven — Tom's Simple Storage publishes there. Used as a
+    // compileOnly classpath dep so our Mixins can reference its types
+    // without bundling the mod.
+    maven {
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
+    }
+}
+
+dependencies {
+    // Tom's Simple Storage — compileOnly so the patch mod loads fine if TSS
+    // is absent (Mixin will silently skip targets whose classes are missing).
+    // Coordinate string is `maven.modrinth:<slug>:<version>`. The version
+    // tracks what's currently in the Deer Diary pack; bump when TSS does.
+    compileOnly "maven.modrinth:toms-storage:1.21-2.3.2"
+
+    // Sable (Ryan's own physics-sub-levels library mod, used by Create
+    // Aeronautics / Simulated). Published on Modrinth at the `sable` slug.
+    // Pin to the version the pack actually ships so our Mixin targets the
+    // exact bytecode we patched against; bump when the pack bumps Sable.
+    compileOnly "maven.modrinth:sable:1.2.1+mc1.21.1"
+}
+
+processResources {
+    var replaceProperties = [
+        version          : version,
+        neoforge_version : project.neoforge_version,
+        loader_version   : project.hasProperty('loader_version') ? project.loader_version : '[4,)',
+        minecraft_version: project.minecraft_version,
+        mod_id           : project.mod_id,
+    ]
+    inputs.properties(replaceProperties)
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.name}" }
+    }
+}
+
+// Mirror the built jar to the sibling dist folder so the publish pipeline
+// (prism-to-modrinth-sync's customs.py) can pick it up automatically.
+tasks.register('copyJarToDist', Copy) {
+    dependsOn jar
+    from jar.archiveFile
+    into rootProject.file('../../dist/deer-diary-patches')
+}
+build.finalizedBy(copyJarToDist)

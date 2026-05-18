@@ -4,6 +4,7 @@ import argparse
 import datetime as dt
 import logging
 import sys
+import tomllib
 from pathlib import Path
 
 import requests
@@ -18,6 +19,7 @@ from .customs import print_summary as print_custom_summary, sync_custom_mods
 from .diff import PackDiff, diff_fingerprints
 from . import gitutil
 from .gitutil import GitError
+from .hashing import hash_file
 from .instance import InstanceError, read_instance
 from .mrpack import BuildResult, build_mrpack, fingerprint_from_mrpack
 from .packwiz import (
@@ -26,8 +28,26 @@ from .packwiz import (
     build_packwiz,
     print_build_summary as print_packwiz_summary,
 )
+from .jar_meta import collect_mod_ids, read_jar_meta
+from .modrinth_lookup import (
+    latest_compatible_version,
+    lookup_by_sha1,
+    synthesize_pwtoml,
+)
+from .notify import NotifyError, post_discord_changelog
 from .publish import format_dry_run, make_payload, next_available_version_number, post_version
 from .remote import download_mrpack, latest_version
+from .server import (
+    ServerBuildError,
+    build_server_pack,
+    print_build_summary as print_server_summary,
+)
+from .sftp import (
+    SftpError,
+    approve_version as sftp_approve_version,
+    bootstrap_pull as sftp_bootstrap_pull,
+    deploy_wrapper as sftp_deploy_wrapper,
+)
 from .state import PublishedState, load_state, save_state, utc_now_iso
 
 
@@ -593,6 +613,583 @@ def _post_publish_git(
         print(f"warning: push failed: {exc}", file=sys.stderr)
 
 
+# ---------------------------------------------------------------------------
+# Server-pack subcommands (Phase 0: bootstrap)
+# ---------------------------------------------------------------------------
+
+
+def _require_server_enabled(config: Config) -> None:
+    """Most server-* commands need [packwiz_server].enabled = true.
+
+    Exception: server-bootstrap-from-sftp runs even when the pipeline isn't
+    flipped on yet (you need the local mirror BEFORE you can configure or
+    publish), so it skips this check itself.
+    """
+    if not config.packwiz_server.enabled:
+        raise PackwizError(
+            "Server pipeline is not enabled. Set [packwiz_server].enabled = true "
+            "in config.toml."
+        )
+
+
+def cmd_server_bootstrap_from_sftp(args: argparse.Namespace) -> int:
+    """One-time: pull the current BloomHost server tree into Custom Mods/server/.
+
+    Mirrors every path listed in [packwiz_server.deploy].bootstrap_pull from
+    the remote into local subdirectories of [packwiz_server].server_dir. This
+    is your starting snapshot — after running, commit Custom Mods/server/ as
+    "Server state snapshot YYYY-MM-DD" so you have a rollback anchor.
+
+    Re-running is non-destructive by default (files get overwritten; nothing
+    is deleted). Pass --clean to wipe each target subdir first.
+    """
+    config = load_config(args.config_dir)
+    deploy = config.packwiz_server.deploy
+    server_dir = config.packwiz_server.server_dir
+
+    if not deploy.configured:
+        raise SftpError(
+            "SFTP not configured. Set host + user in [packwiz_server.deploy] "
+            "and password_env (or key_path) in config.local.toml."
+        )
+    if not deploy.bootstrap_pull:
+        raise SftpError(
+            "[packwiz_server.deploy].bootstrap_pull is empty. Add at least one "
+            'remote path (e.g. "mods").'
+        )
+
+    if args.clean and server_dir.exists():
+        import shutil as _shutil
+
+        for rel in deploy.bootstrap_pull:
+            target = server_dir / rel
+            if target.exists():
+                print(f"Cleaning {target}")
+                _shutil.rmtree(target)
+
+    server_dir.mkdir(parents=True, exist_ok=True)
+    print(f"SFTP {deploy.user}@{deploy.host}:{deploy.remote_dir} -> {server_dir}")
+    print(f"Paths: {', '.join(deploy.bootstrap_pull)}")
+    print()
+
+    stats_by_rel = sftp_bootstrap_pull(deploy, server_dir)
+
+    total_files = 0
+    total_bytes = 0
+    total_skipped = 0
+    print()
+    print("Pull summary:")
+    for rel, stats in stats_by_rel.items():
+        marker = "+" if stats.files else ("-" if stats.skipped else ".")
+        print(
+            f"  {marker} {rel}: {stats.files} files, {stats.megabytes:.1f} MB"
+            + (f" (skipped: {stats.skipped})" if stats.skipped else "")
+        )
+        total_files += stats.files
+        total_bytes += stats.bytes
+        total_skipped += stats.skipped
+    print()
+    print(
+        f"Total: {total_files} files, {total_bytes / (1024 * 1024):.1f} MB"
+        + (f" ({total_skipped} remote path(s) skipped)" if total_skipped else "")
+    )
+    print()
+    print("Next steps:")
+    print(f"  1. git add \"{server_dir.relative_to(config.config_dir.parent)}\"")
+    print('  2. git commit -m "Server state snapshot from BloomHost"')
+    print("  3. Flip [packwiz_server].enabled = true in config.toml")
+    print("  4. Run `prism_sync server-build` and inspect docs/packwiz-server/")
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Server build / check / publish
+# ---------------------------------------------------------------------------
+
+
+def _print_server_diff(diff: PackDiff, previous_version: str | None) -> None:
+    if diff.is_empty:
+        print(f"No changes since {previous_version or 'last published state'}.")
+        return
+    print(
+        f"Changes since {previous_version or 'last published state'}: "
+        f"+{len(diff.added)} ~{len(diff.updated)} -{len(diff.removed)}"
+    )
+    for kind, items in (("+", diff.added), ("~", diff.updated), ("-", diff.removed)):
+        for path in items:
+            print(f"  {kind} {path}")
+
+
+def cmd_server_build(args: argparse.Namespace) -> int:
+    """Build the server pack from Custom Mods/server/ + docs/packwiz/."""
+    config = load_config(args.config_dir)
+    _require_server_enabled(config)
+    version = args.version or _today_version()
+    result = build_server_pack(config, version_id=version)
+    print_server_summary(result, verbose=args.verbose)
+    if config.packwiz_server.base_url:
+        print(f"\nServed at: {config.packwiz_server.base_url}/pack.toml")
+    return 0
+
+
+def cmd_server_check(args: argparse.Namespace) -> int:
+    """Build the server tree and diff against the server state file."""
+    config = load_config(args.config_dir)
+    _require_server_enabled(config)
+    version = args.version or _today_version()
+
+    state = load_state(config.server_state_file)
+    if state is None:
+        print(
+            f"No state file at {config.server_state_file}; treating every file as new.",
+            file=sys.stderr,
+        )
+        state = PublishedState(version_id="", fingerprint={})
+
+    result = build_server_pack(config, version_id=version)
+    print_server_summary(result, verbose=args.verbose)
+    diff = diff_fingerprints(state.fingerprint, result.fingerprint)
+    print()
+    _print_server_diff(diff, state.version_id)
+    if args.changelog and not diff.is_empty:
+        print()
+        print("--- Changelog ---")
+        print(render_changelog(diff, state.version_id, version))
+    return 0 if diff.is_empty else 1
+
+
+def cmd_server_publish(args: argparse.Namespace) -> int:
+    """Build, update server state, optionally commit+push the server tree."""
+    config = load_config(args.config_dir)
+    _require_server_enabled(config)
+    version = args.version or _today_version()
+
+    state = load_state(config.server_state_file)
+    previous_version = state.version_id if state else None
+    result = build_server_pack(config, version_id=version)
+    print_server_summary(result, verbose=args.verbose)
+    print()
+
+    if state is not None:
+        diff = diff_fingerprints(state.fingerprint, result.fingerprint)
+        _print_server_diff(diff, previous_version)
+        if diff.is_empty and not args.allow_no_changes:
+            print(
+                "\nNo changes since last server publish. Pass --allow-no-changes "
+                "to publish anyway.",
+                file=sys.stderr,
+            )
+            return 1
+    else:
+        diff = None
+
+    new_state = PublishedState(
+        version_id=version,
+        fingerprint=result.fingerprint,
+        published_at=utc_now_iso(),
+        notes={"published_via": "server"},
+    )
+    save_state(config.server_state_file, new_state)
+    print(f"Updated state file: {config.server_state_file}")
+
+    if args.push:
+        _post_publish_server_git(
+            config_dir=config.config_dir,
+            state_file=config.server_state_file,
+            server_output_dir=result.output_dir,
+            diff=diff,
+            previous_version=previous_version,
+            new_version=version,
+            commit_message_override=args.message,
+        )
+
+    if args.notify:
+        webhook = config.packwiz_server.notify.discord_webhook_url
+        if not webhook:
+            print(
+                "warning: --notify passed but [packwiz_server.notify]."
+                "discord_webhook_url is not set in config.local.toml; "
+                "skipping Discord post.",
+                file=sys.stderr,
+            )
+        elif diff is None or diff.is_empty:
+            # Either first publish or no-changes-with-allow-no-changes; still
+            # post so subscribers know a publish happened.
+            changelog_text = (
+                "_Initial server pack publish._"
+                if diff is None
+                else f"_Republished (no content changes since {previous_version})._"
+            )
+            try:
+                post_discord_changelog(
+                    webhook,
+                    version=version,
+                    changelog_md=changelog_text,
+                    approve_command_hint=f"To apply: `prism_sync server-approve {version}` then restart.",
+                )
+                print("Posted notification to Discord.")
+            except NotifyError as exc:
+                print(f"warning: Discord notify failed: {exc}", file=sys.stderr)
+        else:
+            changelog_text = render_changelog(diff, previous_version, version)
+            try:
+                post_discord_changelog(
+                    webhook,
+                    version=version,
+                    changelog_md=changelog_text,
+                    approve_command_hint=f"To apply: `prism_sync server-approve {version}` then restart.",
+                )
+                print("Posted notification to Discord.")
+            except NotifyError as exc:
+                print(f"warning: Discord notify failed: {exc}", file=sys.stderr)
+
+    if config.packwiz_server.base_url:
+        print(f"\nServed at: {config.packwiz_server.base_url}/pack.toml")
+    return 0
+
+
+def _post_publish_server_git(
+    *,
+    config_dir: Path,
+    state_file: Path,
+    server_output_dir: Path,
+    diff: PackDiff | None,
+    previous_version: str | None,
+    new_version: str,
+    commit_message_override: str | None,
+) -> None:
+    """Stage server tree + state + CHANGELOG, commit with `(server)` tag, push."""
+    repo_root = _find_git_root(config_dir)
+    if repo_root is None:
+        print(
+            f"warning: no .git directory found above {config_dir}; skipping --push.",
+            file=sys.stderr,
+        )
+        return
+
+    changelog_path = config_dir / "CHANGELOG.md"
+    fallback = "Initial release." if diff is None else None
+    entry = render_file_entry(
+        diff or PackDiff(),
+        previous_version=previous_version,
+        new_version=f"{new_version} (server)",
+        fallback_summary=fallback,
+    )
+    prepend_to_changelog_file(changelog_path, entry)
+    print(f"Updated changelog: {changelog_path}")
+
+    tracked_paths = [
+        _repo_relative(repo_root, server_output_dir),
+        _repo_relative(repo_root, state_file),
+        _repo_relative(repo_root, changelog_path),
+    ]
+    gitutil.stage(repo_root, tracked_paths)
+
+    if not gitutil.has_staged_or_unstaged_changes_for(repo_root, tracked_paths):
+        print("Nothing to commit (no tracked files changed).")
+        return
+
+    if commit_message_override:
+        message = commit_message_override
+    elif diff is None or diff.is_empty:
+        message = f"Server release {new_version}"
+    else:
+        message = (
+            f"Server release {new_version}: "
+            f"+{len(diff.added)} ~{len(diff.updated)} -{len(diff.removed)}"
+        )
+    gitutil.commit(repo_root, message)
+    print(f"Committed: {message}")
+
+    if not gitutil.has_remote(repo_root):
+        print("No `origin` remote configured; skipping push.", file=sys.stderr)
+        return
+    try:
+        gitutil.push(repo_root)
+        print(f"Pushed to {gitutil.current_branch(repo_root)}.")
+    except GitError as exc:
+        print(f"warning: push failed: {exc}", file=sys.stderr)
+
+
+# ---------------------------------------------------------------------------
+# Server-only Modrinth attach + refresh
+# ---------------------------------------------------------------------------
+
+
+def cmd_server_attach_metafiles(args: argparse.Namespace) -> int:
+    """Hash-lookup server-only jars against Modrinth, write .pw.toml's for matches.
+
+    "Server-only" here means: jar in Custom Mods/server/mods/ whose mod ID
+    doesn't match any client mod (those already auto-resolve via the
+    client's metafile). For each such jar, we hash it (SHA-1), batch-query
+    Modrinth, and if a match is found write a .pw.toml alongside the jar
+    so subsequent builds ship it as a CDN reference instead of self-host.
+
+    Idempotent: skips jars that already have an adjacent .pw.toml.
+    """
+    config = load_config(args.config_dir)
+    _require_server_enabled(config)
+
+    server_dir = config.packwiz_server.server_dir
+    mods_dir = server_dir / "mods"
+    if not mods_dir.is_dir():
+        raise ServerBuildError(
+            f"{mods_dir} does not exist. Run `server-bootstrap-from-sftp` first."
+        )
+
+    # Build the set of mod IDs already present on the client side so we can
+    # skip "client-matched" jars (those resolve automatically; don't need a
+    # standalone server-side metafile).
+    client_mods_dir = config.packwiz.output_dir / "mods"
+    client_mod_ids: set[str] = set()
+    if client_mods_dir.is_dir():
+        for jar in client_mods_dir.glob("*.jar"):
+            meta = read_jar_meta(jar)
+            if meta:
+                client_mod_ids.add(meta.mod_id)
+    # Also scan Prism instance mods for IDs (client metafiles point at jars
+    # there too).
+    prism_ids = collect_mod_ids(config.minecraft_dir / "mods")
+    client_mod_ids.update(prism_ids.keys())
+
+    # Find candidate jars (server-only, no adjacent .pw.toml).
+    candidates: list[Path] = []
+    sha1_by_path: dict[Path, str] = {}
+    skipped_paired = 0
+    skipped_client_matched = 0
+    for jar in sorted(mods_dir.glob("*.jar")):
+        adj = jar.with_suffix(".pw.toml")
+        # Also check for slug-based adjacent .pw.toml.
+        meta = read_jar_meta(jar)
+        if adj.exists() or (meta and (mods_dir / f"{meta.mod_id}.pw.toml").exists()):
+            skipped_paired += 1
+            continue
+        if meta and meta.mod_id in client_mod_ids:
+            skipped_client_matched += 1
+            continue
+        candidates.append(jar)
+        sha1_by_path[jar] = hash_file(jar).sha1
+
+    if not candidates:
+        print(
+            f"Nothing to attach: {skipped_paired} already paired, "
+            f"{skipped_client_matched} client-matched (use client's metafile)."
+        )
+        return 0
+
+    print(
+        f"Hash-looking up {len(candidates)} server-only jar(s) against Modrinth..."
+    )
+    sha1_list = list(sha1_by_path.values())
+    lookups = lookup_by_sha1(sha1_list, config.user_agent)
+
+    written = 0
+    unmatched: list[Path] = []
+    for jar in candidates:
+        sha1 = sha1_by_path[jar]
+        version = lookups.get(sha1)
+        if version is None:
+            unmatched.append(jar)
+            continue
+        file = version.file_by_sha1(sha1) or version.primary_file()
+        if file is None or not file.is_cdn_safe:
+            unmatched.append(jar)
+            continue
+        slug = read_jar_meta(jar)
+        slug_str = slug.filename_slug if slug else jar.stem
+        out_path = mods_dir / f"{slug_str}.pw.toml"
+        out_path.write_text(
+            synthesize_pwtoml(
+                project_slug_or_id=version.project_id,
+                version=version,
+                file=file,
+                side="both",
+            ),
+            encoding="utf-8",
+        )
+        print(f"  + {out_path.name} -> {version.project_id} v{version.version_number}")
+        written += 1
+
+    print()
+    print(
+        f"Attached {written} metafile(s); {len(unmatched)} unmatched "
+        f"(not on Modrinth or no CDN-safe file)."
+    )
+    if unmatched and args.verbose:
+        for j in unmatched:
+            print(f"  - {j.name}")
+    return 0
+
+
+def cmd_server_refresh_metafiles(args: argparse.Namespace) -> int:
+    """Bump every .pw.toml in Custom Mods/server/mods/ to the latest compatible version.
+
+    Queries Modrinth's project version list, filtered by the pack's MC +
+    loader. If a newer version is available, rewrites the .pw.toml with
+    the new download URL + hash. Prints a per-mod diff.
+    """
+    config = load_config(args.config_dir)
+    _require_server_enabled(config)
+
+    instance = read_instance(config.instance_path)
+    mc_version = instance.minecraft_version
+    loader = instance.loader.mrpack_key
+    mods_dir = config.packwiz_server.server_dir / "mods"
+    if not mods_dir.is_dir():
+        raise ServerBuildError(
+            f"{mods_dir} does not exist. Run `server-bootstrap-from-sftp` first."
+        )
+
+    pwtomls = sorted(mods_dir.glob("*.pw.toml"))
+    if not pwtomls:
+        print("No .pw.toml files in server mods/. Nothing to refresh.")
+        return 0
+
+    updated = 0
+    up_to_date = 0
+    failed: list[tuple[str, str]] = []
+    for pw in pwtomls:
+        try:
+            data = tomllib.loads(pw.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+            failed.append((pw.name, f"unparseable TOML ({exc})"))
+            continue
+        update = data.get("update") or {}
+        modrinth_block = update.get("modrinth") or {}
+        project_id = modrinth_block.get("mod-id")
+        current_version_id = modrinth_block.get("version")
+        if not project_id:
+            failed.append(
+                (pw.name, "no [update.modrinth].mod-id (not a Modrinth metafile)")
+            )
+            continue
+
+        latest = latest_compatible_version(
+            project_id,
+            user_agent=config.user_agent,
+            minecraft_version=mc_version,
+            loader=loader,
+        )
+        if latest is None:
+            failed.append(
+                (pw.name, f"no compatible version for MC {mc_version} / {loader}")
+            )
+            continue
+        if latest.id == current_version_id:
+            up_to_date += 1
+            continue
+        file = latest.primary_file()
+        if file is None:
+            failed.append((pw.name, "latest version has no CDN-safe file"))
+            continue
+        pw.write_text(
+            synthesize_pwtoml(
+                project_slug_or_id=project_id,
+                version=latest,
+                file=file,
+                side="both",
+            ),
+            encoding="utf-8",
+        )
+        print(
+            f"  ~ {pw.name}: {current_version_id or '(unset)'} -> "
+            f"{latest.id} (v{latest.version_number})"
+        )
+        updated += 1
+
+    print()
+    print(f"Refreshed: {updated} updated, {up_to_date} already current.")
+    if failed:
+        print()
+        print(f"Could not refresh {len(failed)}:")
+        for name, reason in failed:
+            print(f"  ! {name}: {reason}")
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Server wrapper deploy + approval (Phase B + C)
+# ---------------------------------------------------------------------------
+
+
+def cmd_server_deploy_wrapper(args: argparse.Namespace) -> int:
+    """SFTP-push wrapper/{start.sh, approve-update.sh, bootstrap.jar} to BloomHost.
+
+    Reads [packwiz_server.deploy].wrapper_push (relative paths) and pushes
+    each one to the remote, mirroring the path layout under remote_dir.
+    Shell scripts get chmod +x. Idempotent — re-run any time wrapper/* changes.
+    """
+    config = load_config(args.config_dir)
+    deploy = config.packwiz_server.deploy
+    if not deploy.configured:
+        raise SftpError(
+            "SFTP not configured. Set host + user in [packwiz_server.deploy] "
+            "and password_env (or key_path) in config.local.toml."
+        )
+    if not deploy.wrapper_push:
+        raise SftpError(
+            "[packwiz_server.deploy].wrapper_push is empty. Add at least one "
+            'local path (e.g. "wrapper/start.sh").'
+        )
+
+    repo_root = _find_git_root(config.config_dir)
+    if repo_root is None:
+        # Fall back to config_dir.parent (workspace root for this project).
+        repo_root = config.config_dir.parent
+
+    # Validate local files exist BEFORE opening SFTP so we fail fast.
+    missing: list[str] = []
+    for rel in deploy.wrapper_push:
+        if not (repo_root / rel).is_file():
+            missing.append(rel)
+    if missing:
+        raise SftpError(
+            f"Wrapper files not found under {repo_root}: {', '.join(missing)}"
+        )
+
+    print(
+        f"SFTP {deploy.user}@{deploy.host}:{deploy.remote_dir} -> "
+        f"deploying {len(deploy.wrapper_push)} file(s)"
+    )
+    results = sftp_deploy_wrapper(deploy, repo_root)
+    print()
+    print("Upload summary:")
+    total = 0
+    for rel, byte_count in results.items():
+        print(f"  + {rel}: {byte_count} bytes")
+        total += byte_count
+    print()
+    print(f"Total: {total} bytes uploaded across {len(results)} file(s).")
+    print()
+    print("Next steps:")
+    print("  1. Take a backup snapshot: SFTP-copy /home/container/mods/ to mods.bak-YYYY-MM-DD/")
+    print("  2. In the BloomHost panel, set Startup Command to:")
+    print("       bash /home/container/wrapper/start.sh")
+    print("  3. Restart the server. Watch the console for `[wrapper]` lines.")
+    return 0
+
+
+def cmd_server_approve(args: argparse.Namespace) -> int:
+    """SFTP-write approved-version.txt so the next restart applies that version.
+
+    Equivalent to running wrapper/approve-update.sh on the server, but
+    runnable from your local shell so you don't have to open the BloomHost
+    panel console.
+    """
+    config = load_config(args.config_dir)
+    deploy = config.packwiz_server.deploy
+    if not deploy.configured:
+        raise SftpError(
+            "SFTP not configured. Set host + user in [packwiz_server.deploy] "
+            "and password_env (or key_path) in config.local.toml."
+        )
+
+    remote_path = sftp_approve_version(deploy, args.version)
+    print(f"Wrote {args.version!r} to {remote_path}.")
+    print("Restart the server to apply.")
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="sync",
@@ -733,6 +1330,103 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_pw_publish.set_defaults(func=cmd_packwiz_publish)
 
+    # --- Server subcommands ---
+
+    p_srv_bootstrap = sub.add_parser(
+        "server-bootstrap-from-sftp",
+        help="One-time: pull current BloomHost server tree into Custom Mods/server/.",
+    )
+    p_srv_bootstrap.add_argument(
+        "--clean",
+        action="store_true",
+        help="Wipe each [packwiz_server.deploy].bootstrap_pull target subdir "
+        "before downloading. Use for a clean re-bootstrap.",
+    )
+    p_srv_bootstrap.set_defaults(func=cmd_server_bootstrap_from_sftp)
+
+    p_srv_build = sub.add_parser(
+        "server-build",
+        help="Generate the server Packwiz tree under [packwiz_server].output_dir.",
+    )
+    p_srv_build.add_argument("--version", type=str, default=None)
+    p_srv_build.set_defaults(func=cmd_server_build)
+
+    p_srv_check = sub.add_parser(
+        "server-check",
+        help="Build the server tree and diff against the server state file.",
+    )
+    p_srv_check.add_argument("--version", type=str, default=None)
+    p_srv_check.add_argument(
+        "--changelog",
+        action="store_true",
+        help="Also print the generated markdown changelog if there are changes.",
+    )
+    p_srv_check.set_defaults(func=cmd_server_check)
+
+    p_srv_publish = sub.add_parser(
+        "server-publish",
+        help="Build, update state, optionally commit+push the server Packwiz tree.",
+    )
+    p_srv_publish.add_argument("--version", type=str, default=None)
+    p_srv_publish.add_argument(
+        "--allow-no-changes",
+        action="store_true",
+        help="Publish even when the diff vs last state is empty.",
+    )
+    p_srv_publish.add_argument(
+        "--push",
+        action="store_true",
+        help="After build, append to CHANGELOG.md, stage state + "
+        "docs/packwiz-server + changelog at the repo root, commit, and push.",
+    )
+    p_srv_publish.add_argument(
+        "--notify",
+        action="store_true",
+        help="Post a changelog summary to the Discord webhook configured in "
+        "[packwiz_server.notify]. (Phase C; not yet wired in.)",
+    )
+    p_srv_publish.add_argument(
+        "--message",
+        "-m",
+        type=str,
+        default=None,
+        help="Override the auto-generated git commit message (only used with --push).",
+    )
+    p_srv_publish.set_defaults(func=cmd_server_publish)
+
+    p_srv_attach = sub.add_parser(
+        "server-attach-metafiles",
+        help="Hash-lookup server-only jars against Modrinth; attach .pw.toml "
+        "for each match so subsequent builds use CDN delivery (auto-update).",
+    )
+    p_srv_attach.set_defaults(func=cmd_server_attach_metafiles)
+
+    p_srv_refresh = sub.add_parser(
+        "server-refresh-metafiles",
+        help="Bump every .pw.toml in Custom Mods/server/mods/ to the latest "
+        "compatible Modrinth version. Use to update server-only Modrinth mods.",
+    )
+    p_srv_refresh.set_defaults(func=cmd_server_refresh_metafiles)
+
+    p_srv_deploy = sub.add_parser(
+        "server-deploy-wrapper",
+        help="One-time (or on wrapper edits): SFTP-push wrapper/* to BloomHost.",
+    )
+    p_srv_deploy.set_defaults(func=cmd_server_deploy_wrapper)
+
+    p_srv_approve = sub.add_parser(
+        "server-approve",
+        help="SFTP-write approved-version.txt so the next server restart "
+        "applies that version.",
+    )
+    p_srv_approve.add_argument(
+        "version",
+        type=str,
+        help="The pack version to approve (e.g. 2026.05.18). Must match the "
+        "currently-published pack.toml version.",
+    )
+    p_srv_approve.set_defaults(func=cmd_server_approve)
+
     return parser
 
 
@@ -742,7 +1436,15 @@ def main(argv: list[str] | None = None) -> int:
     _setup_logging(args.verbose)
     try:
         return args.func(args)
-    except (ConfigError, InstanceError, GitError, PackwizError, RuntimeError) as exc:
+    except (
+        ConfigError,
+        InstanceError,
+        GitError,
+        PackwizError,
+        ServerBuildError,
+        SftpError,
+        RuntimeError,
+    ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     except requests.HTTPError as exc:

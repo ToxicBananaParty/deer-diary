@@ -983,8 +983,8 @@ file = "mods/deer-diary-commands-0.3.0-1.21+1.21.1.jar"
 hash = "d1094615cc69aeb0854ec3bf146062d469778b29363e911970f708c666dafb5d"
 
 [[files]]
-file = "mods/deer-diary-patches-0.2.0-1.21+1.21.1.jar"
-hash = "7d97d6bbd9dd5385e9a0ae0aea5fb66a22ee681ef40fc8c1028df9398de5a1f4"
+file = "mods/deer-diary-patches-0.3.0-1.21+1.21.1.jar"
+hash = "b85d817ee94ca8481df1d4aa2c035ba1d9186a969aed7ecdd0d3cb843eb7cf86"
 
 [[files]]
 file = "mods/diagonal-fences.pw.toml"

@@ -5,8 +5,8 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .customs import CustomModConfig
-from .packwiz_settings import PackwizSettings
+from .customs import CustomModConfig, VALID_SIDES
+from .packwiz_settings import PackwizServerSettings, PackwizSettings
 
 
 PAT_ENV_VAR = "MODRINTH_PAT"
@@ -27,6 +27,7 @@ class Config:
     custom_mods: list[CustomModConfig]
     modrinth_pat: str | None
     packwiz: PackwizSettings
+    packwiz_server: PackwizServerSettings
 
     @property
     def minecraft_dir(self) -> Path:
@@ -35,6 +36,10 @@ class Config:
     @property
     def state_file(self) -> Path:
         return self.config_dir / ".last-published-state.json"
+
+    @property
+    def server_state_file(self) -> Path:
+        return self.config_dir / ".last-published-state-server.json"
 
     def require_pat(self) -> str:
         if not self.modrinth_pat:
@@ -63,6 +68,29 @@ def _load_toml(path: Path) -> dict:
         return tomllib.load(fh)
 
 
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge ``override`` into ``base``, returning a new dict.
+
+    Tables merge key-by-key; non-table values in ``override`` replace those in
+    ``base``. Lists are NOT merged (override wins) — TOML arrays are usually
+    whole-value choices (e.g. ``include_paths``) where partial-override would
+    surprise.
+
+    Used so that ``config.local.toml`` can supply just the secrets for a
+    nested table like ``[packwiz_server.deploy]`` (host/user/password_env)
+    without having to repeat the public-config fields (``remote_dir``,
+    ``bootstrap_pull``, ``wrapper_push``).
+    """
+    out = dict(base)
+    for key, value in override.items():
+        existing = out.get(key)
+        if isinstance(existing, dict) and isinstance(value, dict):
+            out[key] = _deep_merge(existing, value)
+        else:
+            out[key] = value
+    return out
+
+
 def load_config(config_dir: Path | None = None) -> Config:
     config_dir = (config_dir or Path.cwd()).resolve()
 
@@ -75,7 +103,7 @@ def load_config(config_dir: Path | None = None) -> Config:
             "Copy config.example.toml to config.toml to get started."
         )
 
-    merged: dict = {**base, **local}
+    merged: dict = _deep_merge(base, local)
 
     instance_path_raw = merged.get("instance_path")
     if not instance_path_raw:
@@ -98,12 +126,19 @@ def load_config(config_dir: Path | None = None) -> Config:
             raise ConfigError(
                 "Each [[custom_mods]] entry needs `name` and `source_dir`."
             )
+        side = entry.get("side", "both")
+        if side not in VALID_SIDES:
+            raise ConfigError(
+                f"[[custom_mods]] entry {name!r}: invalid `side` value "
+                f"{side!r}. Must be one of: {', '.join(VALID_SIDES)}."
+            )
         custom_mods.append(
             CustomModConfig(
                 name=name,
                 source_dir=Path(source_dir),
                 target_dir=entry.get("target_dir", "mods"),
                 source_pattern=entry.get("source_pattern", ""),
+                side=side,
             )
         )
 
@@ -121,4 +156,7 @@ def load_config(config_dir: Path | None = None) -> Config:
         custom_mods=custom_mods,
         modrinth_pat=pat,
         packwiz=PackwizSettings.from_dict(merged.get("packwiz"), config_dir),
+        packwiz_server=PackwizServerSettings.from_dict(
+            merged.get("packwiz_server"), config_dir
+        ),
     )

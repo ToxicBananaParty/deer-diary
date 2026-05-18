@@ -1,12 +1,12 @@
 name = "Deer Diary"
 author = "ToxicBananaParty"
-version = "2026.05.17"
+version = "2026.05.18"
 pack-format = "packwiz:1.1.0"
 
 [index]
 file = "index.toml"
 hash-format = "sha256"
-hash = "acbf2056014029c52a944f3200a8c6a09a59a7964e75ce0d012d8663ad34d1f9"
+hash = "40adf1bc0fcd944528e82419ea55909d7c173f446f7323647a14d7f005e58746"
 
 [versions]
 minecraft = "1.21.1"
