@@ -1349,6 +1349,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Generate the server Packwiz tree under [packwiz_server].output_dir.",
     )
     p_srv_build.add_argument("--version", type=str, default=None)
+    p_srv_build.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Print the per-mod classification table (mod ID + resolution path).",
+    )
     p_srv_build.set_defaults(func=cmd_server_build)
 
     p_srv_check = sub.add_parser(
@@ -1361,6 +1367,12 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Also print the generated markdown changelog if there are changes.",
     )
+    p_srv_check.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Print the per-mod classification table (mod ID + resolution path).",
+    )
     p_srv_check.set_defaults(func=cmd_server_check)
 
     p_srv_publish = sub.add_parser(
@@ -1372,6 +1384,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "--allow-no-changes",
         action="store_true",
         help="Publish even when the diff vs last state is empty.",
+    )
+    p_srv_publish.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Print the per-mod classification table (mod ID + resolution path).",
     )
     p_srv_publish.add_argument(
         "--push",
@@ -1398,6 +1416,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "server-attach-metafiles",
         help="Hash-lookup server-only jars against Modrinth; attach .pw.toml "
         "for each match so subsequent builds use CDN delivery (auto-update).",
+    )
+    p_srv_attach.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Also list every jar that didn't match a Modrinth release.",
     )
     p_srv_attach.set_defaults(func=cmd_server_attach_metafiles)
 

@@ -216,7 +216,7 @@ allowed_globs = [
 #     that metafile verbatim. Use for explicit per-mod version pins.
 
 [packwiz_server]
-enabled = false                          # flip to true when ready to publish
+enabled = true                          # flip to true when ready to publish
 
 output_dir = "../docs/packwiz-server"
 base_url = "https://toxicbananaparty.github.io/deer-diary/packwiz-server"
