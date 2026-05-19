@@ -1,11 +1,6 @@
 hash-format = "sha256"
 
 [[files]]
-file = "config/Discord-Integration.toml"
-hash = "15bcd4aabe659c0111b197712c97d82e52d8b27d2bcd7f675fa3483487ca6b11"
-preserve = true
-
-[[files]]
 file = "config/DistantHorizons.toml"
 hash = "4157f5600dbdc3fad88fef4d3f5f27ee51258d1f5aca6b57ca184cd566a36c21"
 preserve = true
@@ -1499,7 +1494,7 @@ hash = "166624c4a978fd1c8f4ad68b07a19d89c1496911450faed4df137c67e1676611"
 
 [[files]]
 file = "mods/almanac.pw.toml"
-hash = "ded0148ec6eb3c81dbdde8cc5d6d62a0526e90449df28106faba86cf90e2f488"
+hash = "ecabf136d8d908929d991e80d7b1240b46199bae999a483ceb49afd3510afcac"
 metafile = true
 
 [[files]]
@@ -1528,7 +1523,7 @@ hash = "a1b9dceb863ade295892be5f2faa9402804b3d8e909330a0a48aa83985c2fdbf"
 
 [[files]]
 file = "mods/bluemap.pw.toml"
-hash = "27b141d3c09bb8f66a6e6e10e7074a56689c85438299f35cb96d550162bde0cf"
+hash = "a67be6b5dec4d0ad10eb41ab75ee9957ec2410d7c4cc2c706de8b265fd7d77c5"
 metafile = true
 
 [[files]]
@@ -1558,7 +1553,7 @@ metafile = true
 
 [[files]]
 file = "mods/chunky.pw.toml"
-hash = "5e3391f02bcdb65f9658a9a7da111b528764e8a6a966a8d127946d8c9b4407c5"
+hash = "93914c236f22bae0aa5b9a9852b7ad1c27a9b57be41f659484df2ed660249f6d"
 metafile = true
 
 [[files]]
@@ -1588,7 +1583,7 @@ metafile = true
 
 [[files]]
 file = "mods/connector-2.0.0-beta.14+1.21.1-full.pw.toml"
-hash = "d4e4ed31bcf9025c28099d2d85fc54412183b2ac3d2aa1430cddb9bcc2ec16e7"
+hash = "e77cfb68a2fcad1b823c3398ea3ca5bd7af6932e000d0b9e0fc2ad40747f986f"
 metafile = true
 
 [[files]]
@@ -1633,7 +1628,7 @@ metafile = true
 
 [[files]]
 file = "mods/dcintegration.pw.toml"
-hash = "9362be09e71dc73cc0116882d97150627a77a7538cc3b1199ce43cf4c4212443"
+hash = "2014b82f9a8a4bc2f8609287dc682c685b6e65de15bd1b0690b8bc08a9236552"
 metafile = true
 
 [[files]]
@@ -1793,7 +1788,7 @@ metafile = true
 
 [[files]]
 file = "mods/kotlinforforge-5.11.0-all.pw.toml"
-hash = "00d05c5f098c5e4bc80bf846c27d41cc269113ecd3bee334a161b9a584f3c846"
+hash = "6256649fbb41418d63ad88961e0565002c04049dead6d98b886d91c6e3d9090d"
 metafile = true
 
 [[files]]
@@ -1803,7 +1798,7 @@ metafile = true
 
 [[files]]
 file = "mods/letmedespawn.pw.toml"
-hash = "86e1a242a4a1ca4202f7683913399412761b5b98cda1274277ac9f0225105513"
+hash = "cd58625a30f3643e16e91a4b684d1c0379dd676a4c76d70f204c7b53444ce669"
 metafile = true
 
 [[files]]
@@ -1813,7 +1808,7 @@ metafile = true
 
 [[files]]
 file = "mods/luckperms.pw.toml"
-hash = "49e1decc293ef7e3bb831bc73c14590a1bebcaba7a729032f6024772a5d661eb"
+hash = "74f1f99759a1597e7e325b336d360c4b422fbfc5de61fcb909ade77f6ef549dd"
 metafile = true
 
 [[files]]
@@ -1932,7 +1927,7 @@ metafile = true
 
 [[files]]
 file = "mods/spark.pw.toml"
-hash = "5564df50874f520f81b21d60140d6035da33c064d73e5b2c36fdad1d78210160"
+hash = "56b2d6315b2136f6df2f69cbf8e1e5571e03adf7f7aff87f185f585293456e28"
 metafile = true
 
 [[files]]
@@ -1976,7 +1971,7 @@ hash = "6c1848326d1418c08cd004ae7eec34ce8509c2a7f0cfb7b6a59a313f9a4642d9"
 
 [[files]]
 file = "mods/veinminermod.pw.toml"
-hash = "504a5303e2698320d6388f1a2260ebcd31965286cc940e42678e6575cba01c5e"
+hash = "9262d516ca952af5a1c2a9d3f463bbaede8fe84d6a9bdb25c69cb3731149a12c"
 metafile = true
 
 [[files]]

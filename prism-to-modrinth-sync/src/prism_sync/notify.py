@@ -50,6 +50,10 @@ def post_discord_changelog(
 
     header = f"**Deer Diary server pack `{version}` published**"
     footer = f"\n\n> {approve_command_hint}" if approve_command_hint else ""
+    # NB: the `approve_command_hint` kwarg name is historical; callers now
+    # pass the deploy-command hint here (e.g. "To apply: prism_sync
+    # server-deploy-to-bloomhost"). We keep the kwarg name to avoid a churn
+    # at every call site.
 
     # Compute how much room the changelog body gets.
     fixed_overhead = len(header) + len(footer) + 2  # the \n\n joiner

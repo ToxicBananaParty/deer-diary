@@ -103,9 +103,9 @@ class SftpDeploy:
 
     Secrets (password, key path) are read from ``password_env`` /
     ``key_path_env`` so they can live in ``config.local.toml`` or as
-    environment variables, never in tracked config. ``bootstrap_pull`` and
-    ``wrapper_push`` declare which remote paths the bootstrap and deploy
-    commands operate on, so the CLI doesn't hardcode "/home/container/mods".
+    environment variables, never in tracked config. ``bootstrap_pull``
+    declares which remote paths the bootstrap command mirrors; the deploy
+    command always operates on ``mods/`` (config stays under user control).
     """
 
     host: str = ""
@@ -116,7 +116,6 @@ class SftpDeploy:
     remote_dir: str = "/home/container"
     bootstrap_pull: list[str] = field(default_factory=list)
     bootstrap_deny_paths: list[str] = field(default_factory=list)
-    wrapper_push: list[str] = field(default_factory=list)
 
     @property
     def configured(self) -> bool:
@@ -141,7 +140,6 @@ class SftpDeploy:
             remote_dir=str(raw.get("remote_dir", "/home/container")),
             bootstrap_pull=list(raw.get("bootstrap_pull", []) or []),
             bootstrap_deny_paths=list(raw.get("bootstrap_deny_paths", []) or []),
-            wrapper_push=list(raw.get("wrapper_push", []) or []),
         )
 
 

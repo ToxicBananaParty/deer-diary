@@ -298,14 +298,6 @@ bootstrap_deny_paths = [
     # "*-rcon.conf",               # any RCON password file
 ]
 
-# Paths SFTP-pushed by `server-deploy-wrapper`. Run once after credentials
-# are set, then once whenever wrapper/* changes.
-wrapper_push = [
-    "wrapper/start.sh",
-    "wrapper/approve-update.sh",
-    "wrapper/packwiz-installer-bootstrap.jar",
-]
-
 [packwiz_server.notify]
 # Discord webhook for changelog notifications. URL goes in config.local.toml
 # (gitignored). Leave empty in config.toml.

@@ -143,6 +143,10 @@ def normalize_metafile_bytes(
     """Fix Prism quirks, optionally inject options, optionally force side.
 
     Normalizations always applied:
+    - Line endings normalized to LF (input may be CRLF if the source
+      .pw.toml was written by ``Path.write_text`` on Windows; the regex
+      below expects LF-terminated lines and would otherwise miss the
+      ``side =`` line and incorrectly insert a duplicate).
     - ``side = ''`` -> ``side = 'both'`` (Prism writes empty when Modrinth
       doesn't expose a side; packwiz-installer rejects empty as "Invalid
       side name").
@@ -158,6 +162,12 @@ def normalize_metafile_bytes(
     (used by the client emit for packwiz_installer GUI checkboxes).
     """
     text = data.decode("utf-8")
+    # Normalize line endings BEFORE pattern matching. Files written via
+    # Path.write_text on Windows get CRLF; the _SIDE_LINE_RE pattern only
+    # tolerates [ \t]* between the closing quote and end-of-line, so a
+    # stray \r would prevent the match and force the "insert before first
+    # [section]" branch — producing duplicate `side =` lines (broken TOML).
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
     # Always-applied: empty -> both.
     text = text.replace("side = ''", "side = 'both'")
     text = text.replace('side = ""', 'side = "both"')

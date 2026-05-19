@@ -42,11 +42,10 @@ from .server import (
     build_server_pack,
     print_build_summary as print_server_summary,
 )
+from .deploy import DeployError, run_deploy
 from .sftp import (
     SftpError,
-    approve_version as sftp_approve_version,
     bootstrap_pull as sftp_bootstrap_pull,
-    deploy_wrapper as sftp_deploy_wrapper,
 )
 from .state import PublishedState, load_state, save_state, utc_now_iso
 
@@ -838,7 +837,7 @@ def cmd_server_publish(args: argparse.Namespace) -> int:
                     webhook,
                     version=version,
                     changelog_md=changelog_text,
-                    approve_command_hint=f"To apply: `prism_sync server-approve {version}` then restart.",
+                    approve_command_hint=f"To apply: `prism_sync server-deploy-to-bloomhost` then restart the server via panel.",
                 )
                 print("Posted notification to Discord.")
             except NotifyError as exc:
@@ -850,7 +849,7 @@ def cmd_server_publish(args: argparse.Namespace) -> int:
                     webhook,
                     version=version,
                     changelog_md=changelog_text,
-                    approve_command_hint=f"To apply: `prism_sync server-approve {version}` then restart.",
+                    approve_command_hint=f"To apply: `prism_sync server-deploy-to-bloomhost` then restart the server via panel.",
                 )
                 print("Posted notification to Discord.")
             except NotifyError as exc:
@@ -1121,85 +1120,34 @@ def cmd_server_refresh_metafiles(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Server wrapper deploy + approval (Phase B + C)
+# Server deploy: SFTP-push the resolved pack to BloomHost
 # ---------------------------------------------------------------------------
 
 
-def cmd_server_deploy_wrapper(args: argparse.Namespace) -> int:
-    """SFTP-push wrapper/{start.sh, approve-update.sh, bootstrap.jar} to BloomHost.
+def cmd_server_deploy_to_bloomhost(args: argparse.Namespace) -> int:
+    """Materialize docs/packwiz-server/ locally + SFTP-sync to BloomHost /mods/.
 
-    Reads [packwiz_server.deploy].wrapper_push (relative paths) and pushes
-    each one to the remote, mirroring the path layout under remote_dir.
-    Shell scripts get chmod +x. Idempotent — re-run any time wrapper/* changes.
+    BloomHost's Pterodactyl egg doesn't let us customize the Startup Command,
+    so we can't run packwiz-installer on the server itself. Instead we do
+    the resolution locally (download CDN-referenced jars, copy self-hosted
+    ones) and then SFTP-push the resulting tree, adding/replacing/removing
+    files as needed to make /mods/ match the published pack.
+
+    Config dirs are never touched — they're the server admin's domain.
     """
     config = load_config(args.config_dir)
-    deploy = config.packwiz_server.deploy
-    if not deploy.configured:
-        raise SftpError(
-            "SFTP not configured. Set host + user in [packwiz_server.deploy] "
-            "and password_env (or key_path) in config.local.toml."
+    server_settings = config.packwiz_server
+    if not server_settings.enabled:
+        raise PackwizError(
+            "Server pipeline is not enabled. Set [packwiz_server].enabled = true."
         )
-    if not deploy.wrapper_push:
-        raise SftpError(
-            "[packwiz_server.deploy].wrapper_push is empty. Add at least one "
-            'local path (e.g. "wrapper/start.sh").'
-        )
-
-    repo_root = _find_git_root(config.config_dir)
-    if repo_root is None:
-        # Fall back to config_dir.parent (workspace root for this project).
-        repo_root = config.config_dir.parent
-
-    # Validate local files exist BEFORE opening SFTP so we fail fast.
-    missing: list[str] = []
-    for rel in deploy.wrapper_push:
-        if not (repo_root / rel).is_file():
-            missing.append(rel)
-    if missing:
-        raise SftpError(
-            f"Wrapper files not found under {repo_root}: {', '.join(missing)}"
-        )
-
-    print(
-        f"SFTP {deploy.user}@{deploy.host}:{deploy.remote_dir} -> "
-        f"deploying {len(deploy.wrapper_push)} file(s)"
+    cache_dir = config.config_dir / ".cache" / "server-resolved"
+    run_deploy(
+        server_settings=server_settings,
+        cache_dir=cache_dir,
+        user_agent=config.user_agent,
+        confirm=not args.yes,
     )
-    results = sftp_deploy_wrapper(deploy, repo_root)
-    print()
-    print("Upload summary:")
-    total = 0
-    for rel, byte_count in results.items():
-        print(f"  + {rel}: {byte_count} bytes")
-        total += byte_count
-    print()
-    print(f"Total: {total} bytes uploaded across {len(results)} file(s).")
-    print()
-    print("Next steps:")
-    print("  1. Take a backup snapshot: SFTP-copy /home/container/mods/ to mods.bak-YYYY-MM-DD/")
-    print("  2. In the BloomHost panel, set Startup Command to:")
-    print("       bash /home/container/wrapper/start.sh")
-    print("  3. Restart the server. Watch the console for `[wrapper]` lines.")
-    return 0
-
-
-def cmd_server_approve(args: argparse.Namespace) -> int:
-    """SFTP-write approved-version.txt so the next restart applies that version.
-
-    Equivalent to running wrapper/approve-update.sh on the server, but
-    runnable from your local shell so you don't have to open the BloomHost
-    panel console.
-    """
-    config = load_config(args.config_dir)
-    deploy = config.packwiz_server.deploy
-    if not deploy.configured:
-        raise SftpError(
-            "SFTP not configured. Set host + user in [packwiz_server.deploy] "
-            "and password_env (or key_path) in config.local.toml."
-        )
-
-    remote_path = sftp_approve_version(deploy, args.version)
-    print(f"Wrote {args.version!r} to {remote_path}.")
-    print("Restart the server to apply.")
     return 0
 
 
@@ -1446,23 +1394,18 @@ def _build_parser() -> argparse.ArgumentParser:
     p_srv_refresh.set_defaults(func=cmd_server_refresh_metafiles)
 
     p_srv_deploy = sub.add_parser(
-        "server-deploy-wrapper",
-        help="One-time (or on wrapper edits): SFTP-push wrapper/* to BloomHost.",
+        "server-deploy-to-bloomhost",
+        help="Materialize the published server pack locally + SFTP-sync mods/ "
+        "to BloomHost. Prompts for confirmation by default; pass --yes for "
+        "batch use.",
     )
-    p_srv_deploy.set_defaults(func=cmd_server_deploy_wrapper)
-
-    p_srv_approve = sub.add_parser(
-        "server-approve",
-        help="SFTP-write approved-version.txt so the next server restart "
-        "applies that version.",
+    p_srv_deploy.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Skip the y/N confirmation; apply the plan immediately.",
     )
-    p_srv_approve.add_argument(
-        "version",
-        type=str,
-        help="The pack version to approve (e.g. 2026.05.18). Must match the "
-        "currently-published pack.toml version.",
-    )
-    p_srv_approve.set_defaults(func=cmd_server_approve)
+    p_srv_deploy.set_defaults(func=cmd_server_deploy_to_bloomhost)
 
     return parser
 
@@ -1479,6 +1422,7 @@ def main(argv: list[str] | None = None) -> int:
         GitError,
         PackwizError,
         ServerBuildError,
+        DeployError,
         SftpError,
         RuntimeError,
     ) as exc:

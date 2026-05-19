@@ -1,13 +1,12 @@
 """Thin paramiko wrapper for the BloomHost (or any SFTP-accessible) server.
 
-Used by three CLI commands:
+Used by two CLI commands:
 
 * ``server-bootstrap-from-sftp`` — recursively download the remote
   ``mods/``, ``config/``, ``defaultconfigs/`` into ``Custom Mods/server/``.
-* ``server-deploy-wrapper`` — upload ``wrapper/{start.sh,approve-update.sh,
-  packwiz-installer-bootstrap.jar}`` to ``/home/container/wrapper/``.
-* ``server-approve`` — upload a one-line ``approved-version.txt`` to
-  ``/home/container/``.
+* ``server-deploy-to-bloomhost`` — resolve the published server pack
+  locally, then SFTP-sync the resolved ``mods/`` into BloomHost's
+  ``/mods/``. See :mod:`deploy` for the orchestrator.
 
 Authentication: prefer key-file when ``SftpDeploy.key_path`` is set,
 otherwise read the password from the env var named by ``password_env``.
@@ -286,6 +285,41 @@ def _ensure_remote_dir(sftp: paramiko.SFTPClient, remote_dir: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Flat listing (deploy-side)
+# ---------------------------------------------------------------------------
+
+
+def sftp_walk(
+    sftp: paramiko.SFTPClient,
+    remote_root: str,
+    rel_prefix: str = "",
+) -> dict[str, int]:
+    """Recursive walk; returns ``{posix_rel_path: size_bytes}``.
+
+    Used by deploy to enumerate what's currently on BloomHost so we can
+    diff against the locally-resolved pack. Tolerates a missing root
+    (returns empty dict) so a brand-new server (no /mods/ yet) doesn't
+    blow up the first deploy.
+    """
+    out: dict[str, int] = {}
+    try:
+        entries = sftp.listdir_attr(remote_root)
+    except FileNotFoundError:
+        return out
+    for attr in entries:
+        name = attr.filename
+        if name.startswith("."):
+            continue
+        remote = posixpath.join(remote_root, name)
+        rel = posixpath.join(rel_prefix, name) if rel_prefix else name
+        if stat.S_ISDIR(attr.st_mode or 0):
+            out.update(sftp_walk(sftp, remote, rel))
+        else:
+            out[rel] = attr.st_size or 0
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Convenience: top-level bootstrap orchestrator
 # ---------------------------------------------------------------------------
 
@@ -346,46 +380,3 @@ def bootstrap_pull(
     return out
 
 
-def deploy_wrapper(
-    deploy: SftpDeploy,
-    repo_root: Path,
-) -> dict[str, int]:
-    """Upload every path in ``deploy.wrapper_push`` to the remote.
-
-    The local path is resolved relative to ``repo_root`` (workspace root,
-    where ``wrapper/`` lives). The remote layout mirrors the local layout
-    under ``deploy.remote_dir``. Returns ``{local_rel: bytes_uploaded}``.
-    """
-    if not deploy.wrapper_push:
-        raise SftpError(
-            "[packwiz_server.deploy].wrapper_push is empty. Add at least one "
-            "local path (e.g. \"wrapper/start.sh\")."
-        )
-
-    out: dict[str, int] = {}
-    with open_sftp(deploy) as sftp:
-        for rel in deploy.wrapper_push:
-            local = repo_root / rel
-            remote = _resolve_remote(deploy, rel)
-            log.info("Uploading %s -> %s", local, remote)
-            out[rel] = upload_file(sftp, local, remote)
-            # Best-effort chmod for shell scripts — Pterodactyl needs +x.
-            if rel.endswith(".sh"):
-                try:
-                    sftp.chmod(remote, 0o755)
-                except OSError as exc:
-                    log.warning("Could not chmod +x %s: %s", remote, exc)
-    return out
-
-
-def approve_version(
-    deploy: SftpDeploy,
-    version: str,
-    *,
-    filename: str = "approved-version.txt",
-) -> str:
-    """Write the approval marker into ``deploy.remote_dir``. Returns the remote path."""
-    remote = _resolve_remote(deploy, filename)
-    with open_sftp(deploy) as sftp:
-        upload_bytes(sftp, (version + "\n").encode("utf-8"), remote)
-    return remote

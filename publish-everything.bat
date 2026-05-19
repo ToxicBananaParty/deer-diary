@@ -48,6 +48,13 @@ echo.
 echo ============================================================
 echo Packwiz:  exit=%PACKWIZ_EXIT%  (live on GitHub Pages ~1-2 min)
 echo Modrinth: exit=%MODRINTH_EXIT%  (queued for 3-4 day review)
-echo Server:   exit=%SERVER_EXIT%  (live on GH Pages ~1-2 min; restart to apply)
+echo Server:   exit=%SERVER_EXIT%  (published, NOT yet deployed to BloomHost)
+echo ============================================================
+echo.
+echo The server pack is published to GitHub Pages, but BloomHost's mods/
+echo directory still has whatever it had before. To deploy the new pack
+echo to BloomHost, run deploy-server.bat (or `prism_sync server-deploy-to-bloomhost`).
+echo BloomHost's locked Startup Command means we do the apply via SFTP
+echo push from your local machine, not via a server-side update hook.
 echo ============================================================
 pause
