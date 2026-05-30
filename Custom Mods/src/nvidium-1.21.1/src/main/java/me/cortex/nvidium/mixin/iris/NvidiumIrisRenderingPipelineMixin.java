@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import me.cortex.nvidium.compat.iris.NvidiumIrisRenderingPipelineAccessor;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramFallbackResolver;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.irisshaders.iris.targets.RenderTargets;
@@ -33,6 +34,9 @@ public abstract class NvidiumIrisRenderingPipelineMixin implements NvidiumIrisRe
     @Shadow @Final
     private ProgramFallbackResolver resolver;
 
+    @Shadow @Final
+    private PackDirectives packDirectives;
+
     @Override
     public RenderTargets nvidium$getRenderTargets() {
         return renderTargets;
@@ -57,5 +61,10 @@ public abstract class NvidiumIrisRenderingPipelineMixin implements NvidiumIrisRe
     @Override
     public ProgramFallbackResolver nvidium$getResolver() {
         return resolver;
+    }
+
+    @Override
+    public PackDirectives nvidium$getPackDirectives() {
+        return packDirectives;
     }
 }

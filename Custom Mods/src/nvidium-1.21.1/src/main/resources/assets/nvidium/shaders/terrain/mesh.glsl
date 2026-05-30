@@ -98,13 +98,21 @@ vec4 pV;
 
 void putVertex(uint id, Vertex V) {
 #ifdef IRIS_PASS
-    // Drive the shaderpack varyings. Face normal is derived from the current triangle's two
-    // common edges (best-effort; Nvidium's compact vertex format stores no per-vertex normal).
-    vec3 nvWorldPos = decodeVertexPosition(V) + origin;
+    // Drive the shaderpack varyings.
+    //  - nvFaceNormal: WORLD-space face normal from the triangle's two common edges (best-effort;
+    //    Nvidium's compact vertex format stores no per-vertex normal). Computed from region-local
+    //    positions; a face normal is translation-invariant so the offset below is irrelevant to it.
+    //  - nvEyeWorldPos: EYE-RELATIVE WORLD position (world coords with the camera at the origin),
+    //    matching the pack's `playerPos`. We apply the region transform (transformMat) to lift the
+    //    region-local position into chunk-origin space, then add subchunkOffset (= chunkOrigin -
+    //    cameraPos) to make it camera-relative -- exactly the `pos + subchunkOffset` Nvidium's own
+    //    fog path uses for the eye-relative world position.
+    vec3 nvLocalPos = decodeVertexPosition(V) + origin;
     vec3 p0 = decodeVertexPosition(V0) + origin;
     vec3 p2 = decodeVertexPosition(V2) + origin;
-    vec3 nvFaceNormal = normalize(cross(p2 - p0, nvWorldPos - p0));
-    nvidium_writeIrisVaryings(id, V, nvWorldPos, nvFaceNormal);
+    vec3 nvFaceNormal = normalize(cross(p2 - p0, nvLocalPos - p0));
+    vec3 nvEyeWorldPos = (transformMat * vec4(nvLocalPos, 1.0)).xyz + subchunkOffset.xyz;
+    nvidium_writeIrisVaryings(id, V, nvEyeWorldPos, nvFaceNormal);
 #else
 #ifndef USE_NV_FRAGMENT_SHADER_BARYCENTRIC
     #ifdef RENDER_FOG

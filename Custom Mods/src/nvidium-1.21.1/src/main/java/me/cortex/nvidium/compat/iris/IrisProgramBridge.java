@@ -19,7 +19,10 @@ import net.irisshaders.iris.samplers.IrisSamplers;
 import net.irisshaders.iris.shaderpack.loading.ProgramId;
 import net.irisshaders.iris.shaderpack.programs.ProgramFallbackResolver;
 import net.irisshaders.iris.shaderpack.programs.ProgramSource;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
+import net.irisshaders.iris.uniforms.CelestialUniforms;
 import net.irisshaders.iris.uniforms.CommonUniforms;
+import net.irisshaders.iris.uniforms.MatrixUniforms;
 import net.irisshaders.iris.uniforms.builtin.BuiltinReplacementUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.resources.ResourceLocation;
@@ -199,6 +202,17 @@ public final class IrisProgramBridge {
         ProgramImages.Builder imageBuilder = ProgramImages.builder(programId);
 
         CommonUniforms.addDynamicUniforms(uniformBuilder, FogMode.PER_VERTEX);
+        // Register the shaderpack-facing gbuffer matrix + celestial uniforms the mesh stage reads
+        // (gbufferModelView, sunPosition; and, for the fragment, gbufferProjection / dhProjection /
+        // their inverses). IrisLodRenderProgram doesn't need these because the DH *vertex* shader is
+        // patched to the iris_* aliases that addDynamicUniforms covers; our mesh shader references the
+        // pack names directly, so without this they would stay at the GL default (a zero matrix) and
+        // the basis vectors / view-space normal would collapse -- the near-terrain darkness we are
+        // fixing. MatrixUniforms / CelestialUniforms take a UniformHolder, which the builder is.
+        PackDirectives packDirectives =
+                ((NvidiumIrisRenderingPipelineAccessor) pipeline).nvidium$getPackDirectives();
+        MatrixUniforms.addMatrixUniforms(uniformBuilder, packDirectives);
+        new CelestialUniforms(pipeline.getSunPathRotation()).addCelestialUniforms(uniformBuilder);
         customUniforms.assignTo(uniformBuilder);
         BuiltinReplacementUniforms.addBuiltinReplacementUniforms(uniformBuilder);
 

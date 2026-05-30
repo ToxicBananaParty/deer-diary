@@ -2,6 +2,7 @@ package me.cortex.nvidium.compat.iris;
 
 import com.google.common.collect.ImmutableSet;
 import net.irisshaders.iris.shaderpack.programs.ProgramFallbackResolver;
+import net.irisshaders.iris.shaderpack.properties.PackDirectives;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
 import net.irisshaders.iris.targets.RenderTargets;
 
@@ -26,4 +27,11 @@ public interface NvidiumIrisRenderingPipelineAccessor {
     ShadowRenderTargets nvidium$getShadowRenderTargets();
 
     ProgramFallbackResolver nvidium$getResolver();
+
+    /**
+     * The pack directives, needed to register the shaderpack-facing matrix uniforms
+     * ({@code gbufferModelView} etc.) on the mesh-shader program via {@code MatrixUniforms}. Private
+     * field on {@code IrisRenderingPipeline} with no public getter, hence exposed here.
+     */
+    PackDirectives nvidium$getPackDirectives();
 }

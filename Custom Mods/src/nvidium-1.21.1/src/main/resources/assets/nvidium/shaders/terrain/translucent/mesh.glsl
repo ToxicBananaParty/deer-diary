@@ -71,11 +71,15 @@ void emitVertex(uint vertexBaseId, uint innerId) {
 
 #ifdef IRIS_PASS
     // Face normal from the quad's first three vertices (best-effort; no per-vertex normal stored).
+    // The translucent path applies no per-region transform (positions go straight through MVP), so
+    // the eye-relative WORLD position (the pack's `playerPos`) is just pos + subchunkOffset
+    // (subchunkOffset = chunkOrigin - cameraPos). The face normal is translation-invariant.
     vec3 q0 = decodeVertexPosition(terrainData[vertexBaseId + 0]) + originAndBaseData.xyz;
     vec3 q1 = decodeVertexPosition(terrainData[vertexBaseId + 1]) + originAndBaseData.xyz;
     vec3 q2 = decodeVertexPosition(terrainData[vertexBaseId + 2]) + originAndBaseData.xyz;
     vec3 nvFaceNormal = normalize(cross(q1 - q0, q2 - q0));
-    nvidium_writeIrisVaryings(outId, V, pos, nvFaceNormal);
+    vec3 nvEyeWorldPos = pos + subchunkOffset.xyz;
+    nvidium_writeIrisVaryings(outId, V, nvEyeWorldPos, nvFaceNormal);
 #else
 #ifndef USE_NV_FRAGMENT_SHADER_BARYCENTRIC
     #ifdef RENDER_FOG

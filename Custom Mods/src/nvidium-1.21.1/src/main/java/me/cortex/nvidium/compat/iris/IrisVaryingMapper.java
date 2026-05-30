@@ -28,16 +28,22 @@ import java.util.regex.Pattern;
  *   <li>UV / texcoord (vec2/vec4): {@code decodeVertexUV(V)} (zw =&gt; 0,1)</li>
  *   <li>lightmap / lmcoord (vec2/vec4): {@code decodeLightUV(V)} (zw =&gt; 0,1)</li>
  *   <li>vertex colour / glcolor / glColorRaw (vec3/vec4): {@code decodeVertexColour(V)}</li>
- *   <li>normal (vec3/vec4): face normal derived from the triangle (best-effort; see notes)</li>
- *   <li>vertexPos / position (vec3/vec4): the {@code origin}-based world-space position</li>
+ *   <li>normal (vec3/vec4): view-space normal = {@code normalize(mat3(gbufferModelView) * nvFaceNormal)}
+ *       (Nvidium's world-space face normal rotated into view space, matching the pack)</li>
+ *   <li>upVec/eastVec/northVec (vec3): view-space world-axis basis = the columns of
+ *       {@code gbufferModelView} (rows 1/0/2), exactly as Complementary's dh_terrain derives them</li>
+ *   <li>sunVec (vec3): {@code normalize(sunPosition)} (view-space sun direction)</li>
+ *   <li>vertexPos / playerPos / position (vec3/vec4): the eye-relative world position
+ *       ({@code nvWorldPos}, supplied camera-relative by the mesh call site)</li>
  * </ul>
  *
  * <h2>Defaulted varyings (Nvidium cannot supply; safe constants)</h2>
  * Everything else the fragment declares is written as a type-appropriate / name-appropriate
- * zero/identity default so the program still LINKS and renders. A few well-known Iris terrain
- * names get nicer-than-zero defaults so basic lighting math does not blow up
- * ({@code upVec}/{@code eastVec}/{@code northVec}/{@code sunVec} basis vectors). Runtime visual
- * correctness for those is a later refinement pass, not this compile-gate task.
+ * zero/identity default so the program still LINKS and renders. Intentionally still defaulted this
+ * pass (no Nvidium source): POM data ({@code mat}, {@code signMidCoordPos}, {@code absMidCoordPos},
+ * {@code midCoord}) and water tangent-space ({@code tangent}, {@code binormal}, {@code viewVector}).
+ * The basis vectors / normal / position are now COMPUTED from the gbuffer uniforms (above), no
+ * longer placeholder constants.
  *
  * <p>This class performs NO GL calls and touches NO Iris symbols, so it is always safe to load.
  */
@@ -150,6 +156,18 @@ final class IrisVaryingMapper {
         StringBuilder decls = new StringBuilder();
         StringBuilder body = new StringBuilder();
 
+        // Shaderpack-facing uniforms the computed varyings read. These are the conventional Iris
+        // names (NOT the iris_* aliases the Sodium fragment patcher rewrites); IrisProgramBridge
+        // registers them on the program's ProgramUniforms via MatrixUniforms / CelestialUniforms so
+        // they are actually fed each frame (gbufferModelView from CapturedRenderingState, sunPosition
+        // from the celestial model). They are declared here, inside the spliced IRIS_PASS block, so
+        // they exist exactly when the writer needs them and never collide with Nvidium's own globals.
+        // NOTE on normal winding: nvFaceNormal is whatever Nvidium's per-call-site cross product
+        // yields (world space); we transform it into view space but do NOT flip it. If the gate shows
+        // inverted lighting on near faces, the winding at the mesh call sites is the lever to flip.
+        decls.append("uniform mat4 gbufferModelView;\n");
+        decls.append("uniform vec3 sunPosition;\n");
+
         body.append("void ").append(WRITER_FN)
                 .append("(uint nvOutId, Vertex nvV, vec3 nvWorldPos, vec3 nvFaceNormal) {\n");
 
@@ -227,13 +245,38 @@ final class IrisVaryingMapper {
             if (vec4) return "vec4(decodeVertexColour(nvV).rgb, 1.0)";
             if (vec3) return "decodeVertexColour(nvV).rgb";
         }
-        // Normal (face normal; per-vertex normals are not stored by Nvidium's compact format).
-        if (n.equals("normal") || n.equals("vnormal") || n.equals("worldnormal") || n.equals("viewnormal")) {
-            if (vec3) return "nvFaceNormal";
-            if (vec4) return "vec4(nvFaceNormal, 0.0)";
+        // World-basis vectors. Complementary's dh_terrain (the analogous external-terrain handler)
+        // derives these straight from the gbuffer model-view: upVec/eastVec/northVec are the
+        // (normalized) VIEW-space images of the world +Y/+X/+Z axes, i.e. the columns of
+        // gbufferModelView; sunVec is the view-space sun direction. We supply GetSunVector's
+        // equivalent with normalize(sunPosition) (Iris' sunPosition is the sun position transformed
+        // into VIEW space, same basis as the upVec/eastVec/northVec here, so the lighting dot
+        // products SdotU = dot(sunVec, upVec) etc. stay in the right frame).
+        if (vec3) {
+            if (n.equals("upvec")) return "normalize(gbufferModelView[1].xyz)";
+            if (n.equals("eastvec")) return "normalize(gbufferModelView[0].xyz)";
+            if (n.equals("northvec")) return "normalize(gbufferModelView[2].xyz)";
+            if (n.equals("sunvec")) return "normalize(sunPosition)";
+            // Moon vector is antiparallel to the sun in Iris' celestial model.
+            if (n.equals("moonvec")) return "normalize(-sunPosition)";
         }
-        // World/eye-space position varyings some packs interpolate. Complementary uses vertexPos
-        // (the origin-based world/scene position), which is exactly nvWorldPos here.
+        // Normal. Nvidium hands us a WORLD-space face normal (nvFaceNormal); the pack's terrain
+        // fragment expects the conventional Iris VIEW-space normal (Complementary's dh_terrain does
+        // `normal = normalize(gl_NormalMatrix * gl_Normal)`). For terrain gl_NormalMatrix is the
+        // inverse-transpose of the model-view; since a face normal is unit-length and the model-view
+        // is (near-)orthonormal, transforming by mat3(gbufferModelView) matches it. The winding of
+        // nvFaceNormal is whatever Nvidium's cross product yields at the call site; it is preserved
+        // here (no negation) -- see NOTE in generateMeshVaryingGlsl for the winding caveat.
+        if (n.equals("normal") || n.equals("vnormal") || n.equals("worldnormal") || n.equals("viewnormal")) {
+            if (vec3) return "normalize(mat3(gbufferModelView) * nvFaceNormal)";
+            if (vec4) return "vec4(normalize(mat3(gbufferModelView) * nvFaceNormal), 0.0)";
+        }
+        // World/eye-space position varyings packs interpolate. Complementary's dh_terrain uses
+        // `playerPos = (gbufferModelViewInverse * gl_ModelViewMatrix * gl_Vertex).xyz`, i.e. the
+        // EYE-RELATIVE WORLD position (world coordinates with the camera at the origin; the fragment
+        // reconstructs absolute world as playerPos + cameraPosition and uses length(playerPos) for
+        // distance). nvWorldPos is already that eye-relative world position (the call site applies
+        // the region transform and the subchunk/camera offset before passing it in).
         if (n.equals("worldpos") || n.equals("vertexpos") || n.equals("vposition") || n.equals("position")
                 || n.equals("ftvertex") || n.equals("scenepos") || n.equals("playerpos")) {
             if (vec3) return "nvWorldPos";
@@ -244,21 +287,20 @@ final class IrisVaryingMapper {
 
     /**
      * Name- then type-appropriate safe default literal for a varying we can't supply from Nvidium
-     * data. A handful of well-known Iris terrain names get nicer-than-zero defaults so the
-     * fragment's lighting math doesn't degenerate (e.g. a zero basis vector / zero normal). These
-     * are placeholders, not correct values -- see TODO refine.
+     * data. The world-basis vectors (upVec/eastVec/northVec/sunVec) and the normal/position are now
+     * computed in {@link #assignmentFor} from the gbuffer uniforms, so they no longer reach here.
+     * What remains genuinely unavailable from Nvidium's compact vertex format and is intentionally
+     * left defaulted this pass: POM data ({@code mat}, {@code signMidCoordPos}, {@code absMidCoordPos},
+     * {@code midCoord}) and water tangent-space ({@code tangent}, {@code binormal}, {@code viewVector}).
+     * {@code lightVec} (used by some packs as the sun-or-moon direction) is a reasonable view-space
+     * up default; everything else falls back to a type-appropriate zero/identity.
      */
     private static String defaultFor(String name, String type) {
         String n = name.toLowerCase();
-        // Iris/OptiFine world-basis vectors. Correct values come from the gbuffer model-view
-        // matrix; until the mesh stage supplies them we hand back the canonical world axes so
-        // dot(normal, upVec) etc. stay finite and roughly sane.
-        // TODO refine: derive the true up/east/north/sun vectors from the active view state.
         if (type.equals("vec3")) {
-            if (n.equals("upvec")) return "vec3(0.0, 1.0, 0.0)";
-            if (n.equals("eastvec")) return "vec3(1.0, 0.0, 0.0)";
-            if (n.equals("northvec")) return "vec3(0.0, 0.0, -1.0)";
-            if (n.equals("sunvec") || n.equals("moonvec") || n.equals("lightvec")) return "vec3(0.0, 1.0, 0.0)";
+            // Day/night light direction; absent the time-of-day branch, the view-space up axis keeps
+            // dot(lightVec, upVec) finite and roughly sane.
+            if (n.equals("lightvec")) return "normalize(gbufferModelView[1].xyz)";
         }
         return zeroFor(type);
     }
