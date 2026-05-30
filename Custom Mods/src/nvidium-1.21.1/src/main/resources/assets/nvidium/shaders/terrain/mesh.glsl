@@ -95,6 +95,9 @@ Vertex V2;
 vec4 pV2;
 Vertex V;
 vec4 pV;
+#ifdef IRIS_PASS
+vec3 gFaceNormal; // flat face normal computed once per quad in main(), used by putVertex
+#endif
 
 void putVertex(uint id, Vertex V) {
 #ifdef IRIS_PASS
@@ -108,11 +111,8 @@ void putVertex(uint id, Vertex V) {
     //    cameraPos) to make it camera-relative -- exactly the `pos + subchunkOffset` Nvidium's own
     //    fog path uses for the eye-relative world position.
     vec3 nvLocalPos = decodeVertexPosition(V) + origin;
-    vec3 p0 = decodeVertexPosition(V0) + origin;
-    vec3 p2 = decodeVertexPosition(V2) + origin;
-    vec3 nvFaceNormal = normalize(cross(p2 - p0, nvLocalPos - p0));
     vec3 nvEyeWorldPos = (transformMat * vec4(nvLocalPos, 1.0)).xyz + subchunkOffset.xyz;
-    nvidium_writeIrisVaryings(id, V, nvEyeWorldPos, nvFaceNormal);
+    nvidium_writeIrisVaryings(id, V, nvEyeWorldPos, gFaceNormal);
 #else
 #ifndef USE_NV_FRAGMENT_SHADER_BARYCENTRIC
     #ifdef RENDER_FOG
@@ -139,6 +139,20 @@ void main() {
         return;
     }
     transformMat = transformationArray[transformationId];
+
+#ifdef IRIS_PASS
+    // Compute a single flat face normal for this quad from three distinct corners.
+    // Mirrors the pattern used by translucent/mesh.glsl. Using three fixed quad corners
+    // (indices 0, 1, 2) guarantees the cross operands are never collinear; a zero-length
+    // guard falls back to up (+Y) for degenerate geometry.
+    {
+        vec3 q0 = decodeVertexPosition(terrainData[(quadId<<2)+0]) + origin;
+        vec3 q1 = decodeVertexPosition(terrainData[(quadId<<2)+1]) + origin;
+        vec3 q2 = decodeVertexPosition(terrainData[(quadId<<2)+2]) + origin;
+        vec3 nvN = cross(q1 - q0, q2 - q0);
+        gFaceNormal = (nvN == vec3(0.0)) ? vec3(0.0, 1.0, 0.0) : normalize(nvN);
+    }
+#endif
 
     bool triangle0 = (gl_LocalInvocationIndex & uint(1)) == 0;
 
