@@ -18,6 +18,9 @@ license = "LGPL-3.0"
 [[mixins]]
     config = "nvidium.mixins.json"
 
+[[mixins]]
+    config = "nvidium.iris.mixins.json"
+
 [[dependencies.nvidium]]
     modId = "neoforge"
     type = "required"

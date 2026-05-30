@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "package": "me.cortex.nvidium.mixin.iris",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "NvidiumIrisRenderingPipelineMixin",
+    "NvidiumShadowRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
