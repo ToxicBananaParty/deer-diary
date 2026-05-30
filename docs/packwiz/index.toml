@@ -2,7 +2,7 @@ hash-format = "sha256"
 
 [[files]]
 file = "config/DistantHorizons.toml"
-hash = "9f1d8d04455b48663a17ce7dcec03e0248c791054d803904e22b7905f76d35d6"
+hash = "5d8d42897db8aa2fbb35261ba34063b63da8a875d2c25c59dfb95b6467dafd6a"
 preserve = true
 
 [[files]]
@@ -38,6 +38,11 @@ preserve = true
 [[files]]
 file = "config/advancementplaques.toml"
 hash = "fccc5bab6156c4c38bcdebf4b21c22488536da5631ba8d8d94e41fd5baaa7cad"
+preserve = true
+
+[[files]]
+file = "config/aeronautics-server.toml"
+hash = "a9302b0253e494e7d80f0a2785bf4514b0b67da85796437ca032482db62be514"
 preserve = true
 
 [[files]]
@@ -121,6 +126,11 @@ hash = "1bd89e753b05ca51f7260596b5e8e8d53b6510eb39eb05c315a2e4f0d789461b"
 preserve = true
 
 [[files]]
+file = "config/collective/area_names.json"
+hash = "fc2b70a468cce6c096cd3bd2b19305af9613362ba40cd0ab5c031a17dd4b5f06"
+preserve = true
+
+[[files]]
 file = "config/colorwheel-client.toml"
 hash = "a7d87ab03d61fecad6d297bcad9976c9e48765ca67f90b3c388419c2a70b452e"
 preserve = true
@@ -148,6 +158,11 @@ preserve = true
 [[files]]
 file = "config/copycats-common.toml"
 hash = "4554d0df9a25e4f58c07df938806bb435fa2556263b60537bcd8f3f3cd28f1c3"
+preserve = true
+
+[[files]]
+file = "config/copycats-server.toml"
+hash = "3a2e328d298b0ef379673beffa566eda2d92b4f1d0e00425573b59f0ea66e646"
 preserve = true
 
 [[files]]
@@ -181,8 +196,18 @@ hash = "2e77b1d93b40ce3f381ad7eb2a9e6d7148de917518be5c2616939a4369c4b140"
 preserve = true
 
 [[files]]
+file = "config/create-server.toml"
+hash = "36216a05f3ed63106ba587c8c24ed6315385829e7f3dae695dcf545aba41a270"
+preserve = true
+
+[[files]]
 file = "config/creativecore-client.json"
 hash = "acb6c8c1394d4d6f2d0c98d5c314c5ef8ad34b8a76f0a420fc596733bcbc51ac"
+preserve = true
+
+[[files]]
+file = "config/creativecore.json"
+hash = "5f08d0878d7f89c6b4c947a49dce368d7738255d44fecf9aad59ec6ae8a4fcef"
 preserve = true
 
 [[files]]
@@ -203,6 +228,11 @@ preserve = true
 [[files]]
 file = "config/curios-common.toml"
 hash = "9f00a6b9904cf63a36c0c72f8346642962d538aaa78b59943b9de60dda82e6d0"
+preserve = true
+
+[[files]]
+file = "config/curios-server.toml"
+hash = "1a3bee95a96f082b8e97cccbce30c1efe1352b616c78e06d5884fd4475668add"
 preserve = true
 
 [[files]]
@@ -236,6 +266,11 @@ hash = "f447750708cb0c1773477734490a287ec21161610edac38cf7551ce486702b83"
 preserve = true
 
 [[files]]
+file = "config/easyanvils-server.toml"
+hash = "a5ccc7c1080a0f8a33d45ebb941b38dc607597ade1d128cba504a9cc1a873766"
+preserve = true
+
+[[files]]
 file = "config/easymagic-client.toml"
 hash = "2ad457c78882a34057f2fb5748398e9614a7fb5e491e8a868534de40cd2c1c6d"
 preserve = true
@@ -243,6 +278,11 @@ preserve = true
 [[files]]
 file = "config/easymagic-common.toml"
 hash = "7a98b95d82e470d071fd0f51d97f4fceb59f7de4af3129e9447f7241f8cac700"
+preserve = true
+
+[[files]]
+file = "config/easymagic-server.toml"
+hash = "b2860a71cdc35a6f3cee847622a7085c35d3691f26ca7b4c84098e14bc4369dc"
 preserve = true
 
 [[files]]
@@ -371,6 +411,11 @@ hash = "80f13c2608d62c6906c2689dfc6cfb7d353ee88cd4eac11f4fac1c29e7d09539"
 preserve = true
 
 [[files]]
+file = "config/jei-server.toml"
+hash = "702acd04d99445bce659d04fcc488e1a98c8a803983c31ae262b0f3a47fdc8d3"
+preserve = true
+
+[[files]]
 file = "config/jei/blacklist.json"
 hash = "b4174dc6e985aa90be5002c14e94b956d8d586683c44b7b6710c44d08fb13648"
 preserve = true
@@ -428,6 +473,11 @@ preserve = true
 [[files]]
 file = "config/midnightlib.json"
 hash = "b14c45c6447f9ee5474d70784a2ef96731abbeca1e92485b7599e76e9dce1444"
+preserve = true
+
+[[files]]
+file = "config/moblassos-server.toml"
+hash = "8f98948d3267bd75dae7a09c788cc731adb6f3ffe9fd3565c63186e8c76691cc"
 preserve = true
 
 [[files]]
@@ -491,8 +541,23 @@ hash = "fe878a2717a145cd890621eac5b3be1e1fd656f7ff9abc6e8d53f670d37474c4"
 preserve = true
 
 [[files]]
+file = "config/neoforge-server.toml"
+hash = "b1e3b38d612295f8d9dfa0fbdb538a992b7a1a3b7a766c491b4e9fdf3823396f"
+preserve = true
+
+[[files]]
 file = "config/notenoughanimations.json"
 hash = "45121987f8bbbb948bd5096ffb02b1361c762b3e34836b3f9097a9a4ef7222d4"
+preserve = true
+
+[[files]]
+file = "config/offroad-server.toml"
+hash = "d5f0ed8390618c769d9cb40a77df04779b7bbe636343b753c1ed6f92d325ae2b"
+preserve = true
+
+[[files]]
+file = "config/openpartiesandclaims-server.toml"
+hash = "1a1c63da454df2892901aafd7e38e1d47dafaa88017def469f09eba832a80c51"
 preserve = true
 
 [[files]]
@@ -541,18 +606,28 @@ hash = "e2c5da39dfcd7d6ef46f8792be3b1a2e5ea7ec9f82511ab8cb35a2bd3ca809b8"
 preserve = true
 
 [[files]]
-file = "config/sable-client.toml"
+file = "config/sable-client-1.toml.bak"
 hash = "0abc8a8f2ce730e440521d4d3d2cb45ec475e9d5a0e01e17e74cfbd63a0bd26b"
 preserve = true
 
 [[files]]
+file = "config/sable-client.toml"
+hash = "c3d01c66d3b1de25d79cac53b9554865ce55d264dd60b99d4e16a4101738b118"
+preserve = true
+
+[[files]]
 file = "config/sable-common-1.toml.bak"
+hash = "eb7884d0f2cc559b63600f96a9b429511b2db9590d41533380cadb7c41cf2f31"
+preserve = true
+
+[[files]]
+file = "config/sable-common-2.toml.bak"
 hash = "5d10408ecdb80544b66bafb2c50a92c7aff961040d60e007c36258fb274b79cb"
 preserve = true
 
 [[files]]
 file = "config/sable-common.toml"
-hash = "eb7884d0f2cc559b63600f96a9b429511b2db9590d41533380cadb7c41cf2f31"
+hash = "481ca4fe8b3e84111a145add7521cb21a5e1cce6330d32645d0c02a7a7d4c9db"
 preserve = true
 
 [[files]]
@@ -573,6 +648,11 @@ preserve = true
 [[files]]
 file = "config/simulated-client.toml"
 hash = "ae2634e6d32c7fb2e3cfe195f0d5c3a4bd2a1e073890d0abcc982065b41e8219"
+preserve = true
+
+[[files]]
+file = "config/simulated-server.toml"
+hash = "43f69b72502cfeb43e4b8584a1a8955120fcd25b31217ce199525127fd76e587"
 preserve = true
 
 [[files]]
@@ -638,6 +718,11 @@ preserve = true
 [[files]]
 file = "config/toms_storage-common.toml"
 hash = "a7ff87dbfa4587eda3e1aa9f8e05102bdf0e6f7961fde07a360e86c6cd69da1f"
+preserve = true
+
+[[files]]
+file = "config/toms_storage-server.toml"
+hash = "a880e3220dd5051ed2901cfcba028d59bccfef4af8775232037ed8a2c2e81cf7"
 preserve = true
 
 [[files]]
@@ -905,6 +990,11 @@ hash = "734b7b5711725558f33d4fd138e75435f4b64cb541e52d4fd43499843c673673"
 metafile = true
 
 [[files]]
+file = "mods/colorwheel-patcher.pw.toml"
+hash = "08ac88388e1e8b15c5072898bf555863c8b7e16ca94e837485acaeed10213896"
+metafile = true
+
+[[files]]
 file = "mods/colorwheel.pw.toml"
 hash = "1dbe0e128db0c8be95e68ee7b2890ef8bb2f79ab7be4773366aae38b85996cdc"
 metafile = true
@@ -1101,8 +1191,8 @@ hash = "7c0b3e48815305b368e18f9f1646e82763ec9354e4a17042c3d0abe77bf5aef5"
 metafile = true
 
 [[files]]
-file = "mods/iris.pw.toml"
-hash = "c1a01fd5fa4ade76216d067bcd9a6e894ec97582fb9da4fd7a803fa781b35c00"
+file = "mods/iris-neoforge.pw.toml"
+hash = "7628a05653ba5c29d27c5bd7956eb73766267417bebcf882df395419a3ac054a"
 metafile = true
 
 [[files]]
@@ -1195,11 +1285,6 @@ hash = "a1224147691ad8a2aea930cc0e87c31ff72042a953575ad6778074d0e5d6ea07"
 metafile = true
 
 [[files]]
-file = "mods/moreculling.pw.toml"
-hash = "bbea92d8e42f5bbe9a8011c0f2dc89c4f0d3ca5e53395ddb4f3e76f8797f0cfc"
-metafile = true
-
-[[files]]
 file = "mods/mouse-tweaks.pw.toml"
 hash = "b1140d4ae2de37565ffd603c1e018b7efeacb53142014bfcf702b567490d31cf"
 metafile = true
@@ -1260,19 +1345,13 @@ hash = "2ee5b032557a8816f321a3a9eced8d55ae5615a0b5f62e9fa53a456f6bedb628"
 metafile = true
 
 [[files]]
-file = "mods/reeses-sodium-options.pw.toml"
-hash = "b7108d11b2aadb3b0f5beb05cfaaad7219f7ce145cb5ca72c4caa51641bed7cd"
-metafile = true
-
-[[files]]
 file = "mods/rightclickharvest.pw.toml"
 hash = "de0ad583aa9db402d80b01f87ebe8be708c9a572efcb35db431b8524e11f947a"
 metafile = true
 
 [[files]]
-file = "mods/sable.pw.toml"
-hash = "1fa6414162abf1a89e5e29f91e0931ec088ac1941975dbb475c55196d1e8e12d"
-metafile = true
+file = "mods/sable-neoforge-1.21.1-1.2.2.jar"
+hash = "a6daa323c8119c2d461199b80bd825a50e462f9a47deb81622577d044b03db5d"
 
 [[files]]
 file = "mods/searchables.pw.toml"
@@ -1295,19 +1374,8 @@ hash = "5b552e531a3f3ed424a5d41cf09c0052c261b352bb1f904f7b67dc4a03a06b33"
 metafile = true
 
 [[files]]
-file = "mods/sodium-dynamic-lights.pw.toml"
-hash = "146adcba09a4c3f81ad9af28e7a5b676f47f117bb5a0e21d63cf78c78a0b1734"
-metafile = true
-
-[[files]]
-file = "mods/sodium-options-api.pw.toml"
-hash = "14126369586431608dac16dfe764d8abb49f345dab7cf87387e480ac738b20a9"
-metafile = true
-
-[[files]]
-file = "mods/sodium.pw.toml"
-hash = "97e4a76823d8342d421c4fe521452a6ceaabdbcf13482df8212d5318c3a2dd08"
-metafile = true
+file = "mods/sodium-neoforge-0.8.12-SNAPSHOT+mc1.21.1-local.jar"
+hash = "7142a9fe2733cce08ebc829dd1061f22f6955052d6fffaa60559a941ca653ce9"
 
 [[files]]
 file = "mods/sodiumfpscapfix.pw.toml"
@@ -1335,9 +1403,8 @@ hash = "671eb7124d30647f9375e899e1d712d1a81c0988518309aa9e4efaf841ab4573"
 metafile = true
 
 [[files]]
-file = "mods/supplementaries.pw.toml"
-hash = "fbd1b8d15626ca1f5e302aea652930bb1b67d4de89fbf6ba075802b7266e82b0"
-metafile = true
+file = "mods/supplementaries-neoforge-1.21.1-3.6.2.jar"
+hash = "23c9ed4c9bad0e6a521cd1529dc54334f54223a826e1eb968192dec4e1ca4e2f"
 
 [[files]]
 file = "mods/swingthrough.pw.toml"
@@ -1437,5 +1504,17 @@ hash = "7fe17913887111487e32e1f4c44e47ed36c85f497083090a7673a8608dcc148a"
 preserve = true
 
 [[files]]
+file = "shaderpacks/BSL_v10.1.3 + Clrwl_1.0.5.zip"
+hash = "8af88d39bd913c24f408f999fd0b8ad3b986e64edf59ed5f39d28fd22dfe1256"
+
+[[files]]
+file = "shaderpacks/BSL_v10.1.3.zip"
+hash = "185774628b5259c36255183fc1adeb0f64f89235f7ea2c826fa327d1112687a8"
+
+[[files]]
 file = "shaderpacks/ComplementaryReimagined_r5.7.1.zip"
 hash = "24a20634a7832d422d3cd5023be16829f26840e25c69404dd418306ea79f63f0"
+
+[[files]]
+file = "shaderpacks/VanillaPlus_v3.3.zip"
+hash = "d14c6f0331a33d3dd16e613f3c98fc8e77b8707fc4f2544231b2468a69f51d2b"

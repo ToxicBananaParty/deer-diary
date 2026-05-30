@@ -1,5 +1,62 @@
 # Changelog
 
+## 2026.05.30 (packwiz) — 2026-05-30
+
+Changes since `2026.05.17`:
+
+### Added
+**Mods**
+- `mods/colorwheel_patcher-neoforge-1.0.5+mc1.21.1.jar`
+- `mods/deer-diary-patches-0.3.0-1.21+1.21.1.jar`
+- `mods/iris-neoforge-1.8.13-snapshot+mc1.21.1-local.jar`
+- `mods/sable-neoforge-1.21.1-1.2.2.jar`
+- `mods/sodium-neoforge-0.8.12-SNAPSHOT+mc1.21.1-local.jar`
+
+**Config**
+- `config/aeronautics-server.toml`
+- `config/collective/area_names.json`
+- `config/copycats-server.toml`
+- `config/create-server.toml`
+- `config/creativecore.json`
+- `config/curios-server.toml`
+- `config/easyanvils-server.toml`
+- `config/easymagic-server.toml`
+- `config/jei-server.toml`
+- `config/moblassos-server.toml`
+- `config/neoforge-server.toml`
+- `config/offroad-server.toml`
+- `config/openpartiesandclaims-server.toml`
+- `config/sable-client-1.toml.bak`
+- `config/sable-common-2.toml.bak`
+- `config/simulated-server.toml`
+- `config/toms_storage-server.toml`
+
+**Shaders**
+- `shaderpacks/BSL_v10.1.3 + Clrwl_1.0.5.zip`
+- `shaderpacks/BSL_v10.1.3.zip`
+- `shaderpacks/VanillaPlus_v3.3.zip`
+
+### Updated
+**Mods**
+- `mods/supplementaries-neoforge-1.21.1-3.6.2.jar`
+
+**Config**
+- `config/DistantHorizons.toml`
+- `config/sable-client.toml`
+- `config/sable-common-1.toml.bak`
+- `config/sable-common.toml`
+
+### Removed
+**Mods**
+- `mods/deer-diary-patches-0.2.0-1.21+1.21.1.jar`
+- `mods/iris-neoforge-1.8.12+mc1.21.1.jar`
+- `mods/moreculling-neoforge-1.21.1-1.0.7.jar`
+- `mods/reeses-sodium-options-neoforge-1.8.3+mc1.21.4.jar`
+- `mods/sable-neoforge-1.21.1-1.2.1.jar`
+- `mods/sodium-neoforge-0.6.13+mc1.21.1.jar`
+- `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar`
+- `mods/sodiumoptionsapi-neoforge-1.0.10-1.21.1.jar`
+
 ## 2026.05.18 (server) — 2026-05-18
 
 No content changes since 2026.05.18.

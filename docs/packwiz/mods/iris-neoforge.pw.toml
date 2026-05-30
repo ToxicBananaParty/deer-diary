@@ -1,0 +1,14 @@
+name = "iris-neoforge"
+filename = "iris-neoforge-1.8.13-snapshot+mc1.21.1-local.jar"
+side = "client"
+
+[download]
+hash-format = "sha512"
+hash = "aa78dc17481d7709a60960867dc156b32a61e1d636dadf0d39ec4dda381e61346723ac3b9e94d7b4ae7901c293dd42b49eaeffe8243964eea411ee3a20958ab7"
+mode = "url"
+url = "https://toxicbananaparty.github.io/deer-diary/packwiz/mods/iris-neoforge-1.8.13-snapshot%2Bmc1.21.1-local.jar"
+
+[option]
+optional = true
+default = true
+description = "Iris shader support (custom 1.8.13 build paired with the Sodium 0.8 backport). PAIR THIS CHECKBOX WITH COLORWHEEL: if you uncheck Iris, also uncheck Colorwheel - Colorwheel has Iris as a hard dependency, so NeoForge will refuse to launch with one but not the other. Disable both for vanilla rendering / FPS gains on weaker GPUs."
