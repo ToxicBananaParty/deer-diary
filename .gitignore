@@ -71,6 +71,10 @@ Custom Mods/src/FTB-Library-*/
 # Tom's Simple Storage — cloned only as reference while authoring Mixin
 # patches in deer-diary-patches. Upstream MIT, but we don't republish.
 Custom Mods/src/Toms-Storage/
+# Per-mod "claude-reference/" dumps — full upstream repos dropped in for the
+# agent to read while porting/patching (e.g. Sodium source under nvidium).
+# Reference only, never redistributed.
+Custom Mods/src/*/claude-reference/
 
 # --- OS noise ---
 .DS_Store
