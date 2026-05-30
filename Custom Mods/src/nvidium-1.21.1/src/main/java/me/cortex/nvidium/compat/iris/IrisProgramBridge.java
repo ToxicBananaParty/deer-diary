@@ -161,6 +161,19 @@ public final class IrisProgramBridge {
                 IrisVaryingMapper.parseFragmentIn(patchedFragment);
         String varyingGlsl = IrisVaryingMapper.generateMeshVaryingGlsl(varyings);
 
+        // 3b. Constant-varying injection. The mesh shader now emits ONLY the per-vertex varyings;
+        //     the draw-constant ones (uniform-derived basis vectors + literal/identity defaults) are
+        //     removed from the fragment's `in` interface and reconstructed locally (global const for
+        //     literals, uniform-fed global + main() prologue for uniform-derived). This keeps shading
+        //     identical while dropping the mesh per-meshlet output footprint under the NV 16 KB limit
+        //     (GL_MAX_MESH_TOTAL_MEMORY_SIZE_NV). The injected fragment's remaining `in` set lines up
+        //     exactly with the mesh `out` set generated above (both are the PER_VERTEX subset).
+        patchedFragment = IrisVaryingMapper.injectConstantVaryings(patchedFragment, varyings);
+        if (patchedFragment == null) {
+            Nvidium.LOGGER.warn("Nvidium-Iris: constant-varying injection produced null for {}; pack unsupported", pass);
+            return null;
+        }
+
         // 4. Load Nvidium's task + mesh GLSL in IRIS_PASS mode and splice in the generated block.
         String taskSrc;
         String meshSrc;
@@ -284,11 +297,17 @@ public final class IrisProgramBridge {
             int maxOutputVerts  = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.NVMeshShader.GL_MAX_MESH_OUTPUT_VERTICES_NV);        // 0x9539
             int maxOutputPrims  = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.NVMeshShader.GL_MAX_MESH_OUTPUT_PRIMITIVES_NV);      // 0x953A
 
-            // Compute component counts.
-            int numVaryings = varyings.size();
+            // Compute component counts over ONLY the varyings the mesh shader actually emits as
+            // per-vertex outputs (the PER_VERTEX bucket). The draw-constant varyings are now injected
+            // into the fragment and never occupy mesh output memory, so they must not be counted here
+            // or the footprint diagnostic would overstate the budget and never reflect the fix.
+            java.util.List<IrisVaryingMapper.Classified> classified = IrisVaryingMapper.classify(varyings);
+            int numVaryings = 0;
             int sumComponents = 0;
-            for (IrisVaryingMapper.Varying v : varyings) {
-                sumComponents += IrisVaryingMapper.componentCount(v.type());
+            for (IrisVaryingMapper.Classified c : classified) {
+                if (c.bucket() != IrisVaryingMapper.Bucket.PER_VERTEX) continue;
+                numVaryings++;
+                sumComponents += IrisVaryingMapper.componentCount(c.varying().type());
             }
 
             final int MAX_VERTICES = 64;

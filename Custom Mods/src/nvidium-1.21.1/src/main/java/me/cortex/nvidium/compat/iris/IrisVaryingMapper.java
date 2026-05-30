@@ -58,6 +58,35 @@ final class IrisVaryingMapper {
      */
     record Varying(String qualifier, String type, String name) {}
 
+    /**
+     * How a varying gets its value, which decides whether it must travel as a per-vertex mesh
+     * {@code out} or can be reconstructed cheaply inside the fragment.
+     *
+     * <ul>
+     *   <li>{@link #PER_VERTEX} — the value genuinely varies per vertex (it is built from Nvidium's
+     *       per-vertex inputs {@code nvV} / {@code nvWorldPos} / {@code nvFaceNormal}). MUST be a mesh
+     *       {@code out} and written in {@link #WRITER_FN}; nothing else can supply it.</li>
+     *   <li>{@link #CONSTANT_UNIFORM} — the value is the same for every vertex in the draw and is
+     *       derived from a draw-constant uniform (the world-basis vectors, from {@code gbufferModelView}
+     *       / {@code sunPosition}). Does NOT belong in the mesh output; it is reconstructed in the
+     *       fragment from a uniform in an injected {@code main()} prologue (global initializers that
+     *       reference uniforms are illegal GLSL).</li>
+     *   <li>{@link #CONSTANT_LITERAL} — the value is a compile-time literal/identity default
+     *       (zero/identity, e.g. {@code mat = 0}, {@code midCoord = vec2(0.0)}). Does NOT belong in
+     *       the mesh output; it is reconstructed in the fragment as a global {@code const}.</li>
+     * </ul>
+     */
+    enum Bucket { PER_VERTEX, CONSTANT_UNIFORM, CONSTANT_LITERAL }
+
+    /**
+     * A varying together with the GLSL r-value it should receive and which {@link Bucket} that
+     * r-value puts it in. {@code expr} is the right-hand side as it would appear in the writer (for
+     * {@link Bucket#PER_VERTEX}) or in the fragment-side reconstruction (for the two CONSTANT
+     * buckets). For CONSTANT_UNIFORM the {@code expr} references the conventional Iris uniforms; for
+     * CONSTANT_LITERAL it is a constant expression suitable for a global {@code const} initializer.
+     */
+    record Classified(Varying varying, Bucket bucket, String expr) {}
+
     // Match a top-level varying-input declaration:
     //   [interp...] in TYPE name[, name2, name3...] ;
     // Anchored at line start (multiline). The leading word MUST be exactly `in` (the `\b` after
@@ -106,6 +135,91 @@ final class IrisVaryingMapper {
         return new ArrayList<>(byName.values());
     }
 
+    /** The per-vertex Nvidium inputs the writer receives; an assignment that references any of these
+     *  genuinely varies per vertex and so must travel as a mesh {@code out}. */
+    private static final String[] PER_VERTEX_INPUTS = {"nvV", "nvWorldPos", "nvFaceNormal"};
+
+    /** The shaderpack uniforms a draw-constant (per-draw) varying expression may read. An expression
+     *  that references one of these (and no per-vertex input) is reconstructed in the fragment from
+     *  that uniform in an injected {@code main()} prologue (a global initializer reading a uniform is
+     *  illegal GLSL). Order matters only for the emitted declaration list. */
+    static final String[] CONSTANT_UNIFORMS = {"gbufferModelView", "sunPosition"};
+
+    /**
+     * Classify every parsed fragment {@code in} into its {@link Bucket} and attach the GLSL r-value
+     * it should receive. The classification is driven off the assignment expression the mapper
+     * already produces (NOT a hardcoded name list):
+     *
+     * <ul>
+     *   <li>If the expression references any of {@link #PER_VERTEX_INPUTS}
+     *       ({@code nvV}/{@code nvWorldPos}/{@code nvFaceNormal}), it is {@link Bucket#PER_VERTEX} —
+     *       it must be a mesh output.</li>
+     *   <li>Else, if the expression references any of {@link #CONSTANT_UNIFORMS}, it is draw-constant
+     *       and uniform-derived ({@link Bucket#CONSTANT_UNIFORM}) — reconstructed in the fragment
+     *       from the uniform it reads, in a {@code main()} prologue.</li>
+     *   <li>Otherwise the expression is a compile-time literal/identity default
+     *       ({@link Bucket#CONSTANT_LITERAL}) — reconstructed in the fragment as a global
+     *       {@code const}.</li>
+     * </ul>
+     *
+     * <p>Note the expression is the unified source of truth: even a name that falls through
+     * {@link #assignmentFor} to {@link #defaultFor} (e.g. {@code lightVec}, whose default reads
+     * {@code gbufferModelView}) is correctly routed to CONSTANT_UNIFORM here rather than mis-emitted
+     * as a {@code const} with an illegal uniform initializer.
+     */
+    static List<Classified> classify(List<Varying> varyings) {
+        List<Classified> out = new ArrayList<>();
+        for (Varying v : varyings) {
+            String assigned = assignmentFor(v);
+            String expr = assigned != null ? assigned : defaultFor(v.name(), v.type());
+            Bucket bucket;
+            if (referencesPerVertexInput(expr)) {
+                bucket = Bucket.PER_VERTEX;
+            } else if (referencesConstantUniform(expr)) {
+                bucket = Bucket.CONSTANT_UNIFORM;
+            } else {
+                bucket = Bucket.CONSTANT_LITERAL;
+            }
+            out.add(new Classified(v, bucket, expr));
+        }
+        return out;
+    }
+
+    /** True iff the GLSL expression references one of Nvidium's per-vertex writer inputs as a
+     *  whole identifier (word-boundary match, so a substring like {@code nvVx} would not falsely hit). */
+    private static boolean referencesPerVertexInput(String expr) {
+        for (String input : PER_VERTEX_INPUTS) {
+            if (containsIdentifier(expr, input)) return true;
+        }
+        return false;
+    }
+
+    /** True iff the GLSL expression references one of the draw-constant shaderpack uniforms. */
+    private static boolean referencesConstantUniform(String expr) {
+        for (String u : CONSTANT_UNIFORMS) {
+            if (containsIdentifier(expr, u)) return true;
+        }
+        return false;
+    }
+
+    /** Whole-identifier containment test: {@code needle} surrounded by non-identifier chars. */
+    private static boolean containsIdentifier(String haystack, String needle) {
+        int from = 0;
+        while (true) {
+            int idx = haystack.indexOf(needle, from);
+            if (idx < 0) return false;
+            char before = idx == 0 ? ' ' : haystack.charAt(idx - 1);
+            int after = idx + needle.length();
+            char afterCh = after >= haystack.length() ? ' ' : haystack.charAt(after);
+            if (!isIdentifierChar(before) && !isIdentifierChar(afterCh)) return true;
+            from = idx + needle.length();
+        }
+    }
+
+    private static boolean isIdentifierChar(char c) {
+        return isAsciiAlphaOrUnderscore(c) || (c >= '0' && c <= '9');
+    }
+
     /** Collapse the captured interpolation prefix to a single canonical token (or ""). */
     private static String normalizeInterp(String raw) {
         if (raw == null) return "";
@@ -151,65 +265,284 @@ final class IrisVaryingMapper {
      * declarations plus a {@link #WRITER_FN} function that the mesh main loop calls per emitted
      * vertex. The function takes the output vertex id, the {@code Vertex}, the per-vertex
      * world-space position {@code vec3}, and a best-effort face-normal {@code vec3}.
+     *
+     * <p>Only {@link Bucket#PER_VERTEX} varyings are emitted as mesh outputs (and written in the
+     * writer). Draw-constant varyings (uniform-derived basis vectors, literal/identity defaults) are
+     * deliberately NOT emitted here: keeping them out of the per-meshlet output memory is exactly the
+     * fix for blowing past {@code GL_MAX_MESH_TOTAL_MEMORY_SIZE_NV} (16 KB on NV). They are instead
+     * reconstructed inside the fragment by
+     * {@link #injectConstantVaryings(String, List)} so shading is identical.
      */
     static String generateMeshVaryingGlsl(List<Varying> varyings) {
+        List<Classified> classified = classify(varyings);
         StringBuilder decls = new StringBuilder();
         StringBuilder body = new StringBuilder();
 
-        // Shaderpack-facing uniforms the computed varyings read. These are the conventional Iris
-        // names (NOT the iris_* aliases the Sodium fragment patcher rewrites); IrisProgramBridge
+        // Only PER_VERTEX varyings cross the mesh->fragment boundary now.
+        List<Classified> perVertex = new ArrayList<>();
+        for (Classified c : classified) {
+            if (c.bucket() == Bucket.PER_VERTEX) perVertex.add(c);
+        }
+
+        // Shaderpack-facing uniforms the per-vertex assignments read. These are the conventional
+        // Iris names (NOT the iris_* aliases the Sodium fragment patcher rewrites); IrisProgramBridge
         // registers them on the program's ProgramUniforms via MatrixUniforms / CelestialUniforms so
-        // they are actually fed each frame (gbufferModelView from CapturedRenderingState, sunPosition
-        // from the celestial model). They are declared here, inside the spliced IRIS_PASS block, so
-        // they exist exactly when the writer needs them and never collide with Nvidium's own globals.
+        // they are actually fed each frame. We now declare ONLY the uniforms a PER_VERTEX assignment
+        // actually references: with the basis vectors moved into the fragment, the mesh shader keeps
+        // gbufferModelView (the view-space `normal` still needs mat3(gbufferModelView)) but no longer
+        // needs sunPosition (only sunVec used it, and sunVec is now CONSTANT_UNIFORM -> fragment).
+        // We emit a uniform only if some PER_VERTEX expr references it, so an unused uniform never
+        // lingers.
         // NOTE on normal winding: nvFaceNormal is whatever Nvidium's per-call-site cross product
         // yields (world space); we transform it into view space but do NOT flip it. If the gate shows
         // inverted lighting on near faces, the winding at the mesh call sites is the lever to flip.
-        decls.append("uniform mat4 gbufferModelView;\n");
-        decls.append("uniform vec3 sunPosition;\n");
+        boolean needsModelView = false;
+        boolean needsSunPosition = false;
+        for (Classified c : perVertex) {
+            if (containsIdentifier(c.expr(), "gbufferModelView")) needsModelView = true;
+            if (containsIdentifier(c.expr(), "sunPosition")) needsSunPosition = true;
+        }
+        if (needsModelView) decls.append("uniform mat4 gbufferModelView;\n");
+        if (needsSunPosition) decls.append("uniform vec3 sunPosition;\n");
 
         body.append("void ").append(WRITER_FN)
                 .append("(uint nvOutId, Vertex nvV, vec3 nvWorldPos, vec3 nvFaceNormal) {\n");
 
-        int mapped = 0;
-        List<String> defaulted = new ArrayList<>();
         // For the post-gen diagnostic: the full out interface, name:type:qualifier.
         List<String> outInterface = new ArrayList<>();
 
-        // Declare each varying WITHOUT an explicit location so the GLSL linker auto-assigns; the
-        // mesh outputs link to the fragment's matching `in` declarations by name + type +
-        // interpolation qualifier. Mesh per-vertex outputs are unsized arrays indexed by the
+        // Declare each PER_VERTEX varying WITHOUT an explicit location so the GLSL linker
+        // auto-assigns; the mesh outputs link to the fragment's matching `in` declarations by name +
+        // type + interpolation qualifier. Mesh per-vertex outputs are unsized arrays indexed by the
         // output vertex id. The interpolation qualifier MUST match the fragment `in` exactly --
         // notably `flat` on integer varyings (an int varying without `flat` is itself an error).
-        for (Varying v : varyings) {
+        for (Classified c : perVertex) {
+            Varying v = c.varying();
             String q = v.qualifier().isEmpty() ? "" : v.qualifier() + " ";
             decls.append(q).append("out ").append(v.type()).append(" ").append(v.name()).append("[];\n");
             outInterface.add(v.name() + ":" + v.type()
                     + ":" + (v.qualifier().isEmpty() ? "(none)" : v.qualifier()));
         }
 
-        for (Varying v : varyings) {
-            String assigned = assignmentFor(v);
-            if (assigned != null) {
-                body.append("    ").append(v.name()).append("[nvOutId] = ").append(assigned).append(";\n");
-                mapped++;
-            } else {
-                body.append("    ").append(v.name()).append("[nvOutId] = ").append(defaultFor(v.name(), v.type()))
-                        .append("; // nvidium: no source data, safe default\n");
-                defaulted.add(v.type() + " " + v.name());
-            }
+        for (Classified c : perVertex) {
+            body.append("    ").append(c.varying().name()).append("[nvOutId] = ").append(c.expr()).append(";\n");
         }
         body.append("}\n");
 
-        Nvidium.LOGGER.info("Nvidium-Iris: {} fragment in varyings mapped, {} defaulted{}",
-                mapped, defaulted.size(),
-                defaulted.isEmpty() ? "" : (": " + String.join(", ", defaulted)));
+        // Tally the constant buckets for the diagnostic (these are now injected into the fragment).
+        List<String> injectedUniform = new ArrayList<>();
+        List<String> injectedLiteral = new ArrayList<>();
+        for (Classified c : classified) {
+            if (c.bucket() == Bucket.CONSTANT_UNIFORM) injectedUniform.add(c.varying().type() + " " + c.varying().name());
+            else if (c.bucket() == Bucket.CONSTANT_LITERAL) injectedLiteral.add(c.varying().type() + " " + c.varying().name());
+        }
+
+        Nvidium.LOGGER.info("Nvidium-Iris: {} per-vertex varyings kept as mesh out; {} uniform-derived + {} literal-default varyings injected into fragment{}{}",
+                perVertex.size(), injectedUniform.size(), injectedLiteral.size(),
+                injectedUniform.isEmpty() ? "" : (" [uniform: " + String.join(", ", injectedUniform) + "]"),
+                injectedLiteral.isEmpty() ? "" : (" [literal: " + String.join(", ", injectedLiteral) + "]"));
         // Always log the full generated out interface so the next (link) gate can diff it directly
         // against any "not declared as input from previous stage" error.
         Nvidium.LOGGER.info("Nvidium-Iris: generated mesh out interface ({} varyings): {}",
                 outInterface.size(), String.join(", ", outInterface));
 
         return decls.append(body).toString();
+    }
+
+    /**
+     * Transform the patched shaderpack FRAGMENT so the draw-constant varyings no longer arrive as
+     * stage inputs (they are no longer emitted by the mesh shader) but are instead reconstructed
+     * locally, producing identical shading at a fraction of the per-meshlet output memory.
+     *
+     * <p>For each {@link Bucket#CONSTANT_UNIFORM} / {@link Bucket#CONSTANT_LITERAL} varying:
+     * <ol>
+     *   <li>Its {@code in} declaration is removed from the fragment. Multi-variable declarations
+     *       ({@code flat in vec3 upVec, sunVec, northVec, eastVec;}) are handled: if every name on the
+     *       line is constant the whole declaration is dropped; if the line mixes buckets it is rewritten
+     *       to keep only the names that remain mesh outputs (the PER_VERTEX ones).</li>
+     *   <li>It is re-introduced as a fragment-scope value:
+     *     <ul>
+     *       <li>LITERAL: a global {@code const TYPE name = <constexpr>;} (valid — the initializer is a
+     *           constant expression).</li>
+     *       <li>UNIFORM-derived: a plain global {@code TYPE name;} (a global initializer that reads a
+     *           uniform is illegal GLSL), assigned at the top of {@code main()} via an injected
+     *           prologue ({@code name = <expr>;}).</li>
+     *     </ul></li>
+     *   <li>Any {@link #CONSTANT_UNIFORMS} actually referenced by an injected expression is declared
+     *       as a {@code uniform} if the fragment does not already declare it (duplicate-guarded).</li>
+     * </ol>
+     *
+     * <p>The PER_VERTEX varyings are left untouched as {@code in} declarations, so the mesh {@code out}
+     * interface and the fragment {@code in} interface still match exactly. Returns the original source
+     * unchanged if there is nothing to inject.
+     */
+    static String injectConstantVaryings(String fragmentSource, List<Varying> varyings) {
+        if (fragmentSource == null) return null;
+        List<Classified> classified = classify(varyings);
+
+        // Partition.
+        Map<String, Classified> constantByName = new LinkedHashMap<>();
+        for (Classified c : classified) {
+            if (c.bucket() != Bucket.PER_VERTEX) {
+                constantByName.put(c.varying().name(), c);
+            }
+        }
+        if (constantByName.isEmpty()) return fragmentSource;
+
+        // 1. Remove (or rewrite) the `in` declarations of the constant varyings. We operate on the
+        //    real source (comments preserved); we only need to recognize declarations, and the
+        //    IN_DECL regex is anchored to line starts so it will not match inside a // comment unless
+        //    that comment leads the line, which is harmless (commented-out decls are inert either way).
+        StringBuilder sb = new StringBuilder();
+        Matcher m = IN_DECL.matcher(fragmentSource);
+        int last = 0;
+        while (m.find()) {
+            sb.append(fragmentSource, last, m.start());
+            String interp = m.group("interp");      // may be null
+            String type = m.group("type");
+            String namesGroup = m.group("names");
+
+            List<String> kept = new ArrayList<>();   // names NOT constant -> stay as `in`
+            for (String raw : namesGroup.split(",")) {
+                String name = raw.trim();
+                if (!constantByName.containsKey(name)) {
+                    kept.add(name);
+                }
+            }
+            if (kept.isEmpty()) {
+                // Whole declaration is constant -> drop it entirely (replace with nothing).
+                // (Leaves the surrounding newline structure intact: m.start()..m.end() spanned only
+                // the declaration text, not the trailing newline.)
+            } else if (kept.size() == namesGroup.split(",").length) {
+                // No constant names on this line -> keep verbatim.
+                sb.append(m.group());
+            } else {
+                // Mixed line -> re-emit only the kept (PER_VERTEX) names with the same qualifier+type.
+                String q = (interp == null || interp.trim().isEmpty()) ? "" : interp.trim() + " ";
+                sb.append(q).append("in ").append(type).append(" ").append(String.join(", ", kept)).append(";");
+            }
+            last = m.end();
+        }
+        sb.append(fragmentSource, last, fragmentSource.length());
+        String stripped = sb.toString();
+
+        // 2. Build the injected declarations: uniforms (deduped), literal consts, uniform-derived
+        //    globals, and the main() prologue assignments.
+        StringBuilder topInject = new StringBuilder();
+
+        // 2a. Uniform declarations, only for uniforms actually referenced by an injected expression
+        //     and not already declared in the fragment (duplicate guard).
+        for (String u : CONSTANT_UNIFORMS) {
+            boolean referenced = false;
+            for (Classified c : constantByName.values()) {
+                if (c.bucket() == Bucket.CONSTANT_UNIFORM && containsIdentifier(c.expr(), u)) {
+                    referenced = true;
+                    break;
+                }
+            }
+            if (referenced && !declaresUniform(stripped, u)) {
+                topInject.append("uniform ").append(uniformTypeFor(u)).append(" ").append(u).append(";\n");
+            }
+        }
+
+        // 2b. Literal-default consts and uniform-derived plain globals.
+        StringBuilder prologue = new StringBuilder();
+        for (Classified c : constantByName.values()) {
+            Varying v = c.varying();
+            if (c.bucket() == Bucket.CONSTANT_LITERAL) {
+                topInject.append("const ").append(v.type()).append(" ").append(v.name())
+                        .append(" = ").append(c.expr()).append(";\n");
+            } else { // CONSTANT_UNIFORM
+                topInject.append(v.type()).append(" ").append(v.name()).append(";\n");
+                prologue.append("    ").append(v.name()).append(" = ").append(c.expr()).append(";\n");
+            }
+        }
+
+        // 3. Splice: the top-injection goes right after the leading preprocessor preamble (the
+        //    #version / #extension / #define block). It MUST land after the last #extension directive
+        //    (GLSL requires all #extension directives to precede any non-preprocessor token) but
+        //    before the first helper function, since those helpers reference the now-global varyings
+        //    (a global must be declared before its first textual use) -- exactly where the original
+        //    `in` declarations sat. The prologue goes right after `main(){`.
+        String withTop = insertAfterPreprocessorPreamble(stripped, topInject.toString());
+        String result = prologue.length() == 0 ? withTop : insertMainPrologue(withTop, prologue.toString());
+
+        Nvidium.LOGGER.info("Nvidium-Iris: injected {} constant varyings into fragment ({} as const, {} as uniform-derived globals)",
+                constantByName.size(),
+                constantByName.values().stream().filter(c -> c.bucket() == Bucket.CONSTANT_LITERAL).count(),
+                constantByName.values().stream().filter(c -> c.bucket() == Bucket.CONSTANT_UNIFORM).count());
+        return result;
+    }
+
+    /** GLSL type of a known constant-uniform name (used to declare it in the fragment if absent). */
+    private static String uniformTypeFor(String uniformName) {
+        switch (uniformName) {
+            case "gbufferModelView": return "mat4";
+            case "sunPosition": return "vec3";
+            default: return "vec4"; // unreachable for the known set
+        }
+    }
+
+    /** True iff the source already declares {@code uniform <type> <name>} (any type) at top level,
+     *  so we never emit a duplicate declaration. Matches a leading {@code uniform} line declaring the
+     *  exact name (single- or multi-variable). */
+    private static boolean declaresUniform(String src, String name) {
+        // (?m) line mode; allow leading whitespace, the `uniform` keyword, a type word, then a
+        // name list that contains `name` as a whole identifier, up to the `;`.
+        Pattern p = Pattern.compile("(?m)^\\s*uniform\\s+\\w+\\s+[^;]*\\b"
+                + Pattern.quote(name) + "\\b[^;]*;");
+        return p.matcher(src).find();
+    }
+
+    /**
+     * Insert {@code block} immediately after the fragment's leading preprocessor preamble: the
+     * {@code #version} directive followed by any run of blank lines and preprocessor directives
+     * ({@code #extension}, {@code #define}, {@code #include}, {@code #pragma}, ...). This is the
+     * earliest point at which a real declaration is legal (all {@code #extension} directives must
+     * precede any non-preprocessor token) while still being before every helper function that uses
+     * the injected globals. If no {@code #version} is found the block is prepended (defensive; a
+     * patched fragment always has one).
+     */
+    private static String insertAfterPreprocessorPreamble(String src, String block) {
+        if (block == null || block.isEmpty()) return src;
+        Matcher mv = Pattern.compile("(?m)^[ \\t]*#version[^\\n]*\\n").matcher(src);
+        if (!mv.find()) {
+            return block + src;
+        }
+        int at = mv.end();
+        // Advance past any contiguous blank lines and preprocessor-directive lines. A directive line
+        // begins (after optional leading whitespace) with '#'. Stop at the first line that is neither
+        // blank nor a directive -- that is the start of the declaration section.
+        while (at < src.length()) {
+            int lineEnd = src.indexOf('\n', at);
+            if (lineEnd < 0) lineEnd = src.length(); else lineEnd += 1; // include the newline
+            String line = src.substring(at, lineEnd);
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                at = lineEnd;
+            } else {
+                break;
+            }
+        }
+        return src.substring(0, at) + block + src.substring(at);
+    }
+
+    /** Insert {@code prologue} immediately after the opening brace of {@code main()}. Robust to
+     *  spacing variants ({@code void main() {}, {@code void main(){}, {@code void main( void ) {}). */
+    private static String insertMainPrologue(String src, String prologue) {
+        if (prologue == null || prologue.isEmpty()) return src;
+        // Match `main` then `(...)` then the opening `{`, tolerating arbitrary whitespace and an
+        // optional `void` parameter. Capture up to and including the brace so we can splice after it.
+        Matcher m = Pattern.compile("\\bmain\\s*\\([^)]*\\)\\s*\\{").matcher(src);
+        if (m.find()) {
+            int at = m.end();
+            return src.substring(0, at) + "\n" + prologue + src.substring(at);
+        }
+        // Could not find main() -> return unchanged; the prologue assignments are then missing and
+        // the fragment will fail to compile referencing unassigned globals, which surfaces clearly at
+        // the compile gate. (A patched terrain fragment always has a main().)
+        Nvidium.LOGGER.warn("Nvidium-Iris: could not locate main() to inject constant-varying prologue; fragment left unmodified for prologue");
+        return src;
     }
 
     /**
@@ -318,10 +651,17 @@ final class IrisVaryingMapper {
      * in vec2 texCoord;
      * ...
      * }</pre>
+     *
+     * <p>Only the {@link Bucket#PER_VERTEX} varyings are declared, because those are the only ones
+     * the mesh shader still emits as {@code out}; declaring a constant varying here that the mesh no
+     * longer outputs would be a hard link error. The debug modes (normal/pos/uv/lm) all reference
+     * per-vertex varyings, so they remain functional.
      */
     static String generateDebugFragmentInDecls(List<Varying> varyings) {
         StringBuilder sb = new StringBuilder();
-        for (Varying v : varyings) {
+        for (Classified c : classify(varyings)) {
+            if (c.bucket() != Bucket.PER_VERTEX) continue;
+            Varying v = c.varying();
             String q = v.qualifier().isEmpty() ? "" : v.qualifier() + " ";
             sb.append(q).append("in ").append(v.type()).append(" ").append(v.name()).append(";\n");
         }
