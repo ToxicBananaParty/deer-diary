@@ -11,7 +11,7 @@ license = "LGPL-3.0"
     credits = "Contributor: Drouarb"
     logoFile = "assets/nvidium/nvidium.png"
 
-# Preserves Nvidium's "<version>-<commit>" string read in Nvidium.java's static init.
+# Preserves Nvidium's "<version>-<commit>" string read by Nvidium.getModVersion().
 [modproperties.nvidium]
     commit = "${commit}"
 

@@ -52,7 +52,7 @@ dependencies {
 }
 
 // Short git commit baked into mods.toml's [modproperties.nvidium].commit so
-// Nvidium.MOD_VERSION can stay "<version>-<commit>" as on Fabric.
+// Nvidium.getModVersion() can return "<version>-<commit>" as on Fabric.
 def gitCommitHash = providers.exec {
     commandLine 'git', 'rev-parse', '--short', 'HEAD'
 }.standardOutput.asText.map { it.trim() }
