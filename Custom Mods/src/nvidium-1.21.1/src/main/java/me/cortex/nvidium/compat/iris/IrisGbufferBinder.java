@@ -11,8 +11,11 @@ import net.irisshaders.iris.gl.program.ProgramUniforms;
 import net.irisshaders.iris.gl.texture.TextureType;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.samplers.IrisSamplers;
+import net.irisshaders.iris.targets.RenderTargets;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import org.lwjgl.opengl.GL11C;
+import org.lwjgl.opengl.GL30C;
 
 /**
  * Per-pass FBO bind / program setup / restore for the Nvidium &harr; Iris terrain integration.
@@ -32,6 +35,9 @@ import net.minecraft.resources.ResourceLocation;
  */
 public final class IrisGbufferBinder {
     private IrisGbufferBinder() {}
+
+    /** Fires once on the first beginPass call, then never again. */
+    private static volatile boolean DIAG_LOGGED = false;
 
     /**
      * Bind the pass's gbuffer FBO + program and prime all uniforms/samplers for the draw.
@@ -81,6 +87,75 @@ public final class IrisGbufferBinder {
             // Matrices first (some custom uniforms may depend on them), then dynamic push.
             program.setMatrices(matrices.modelView(), matrices.projection());
             program.updateUniformsAndSamplers();
+
+            // -------------------------------------------------------------------------
+            // ONE-TIME DEPTH DIAGNOSTIC — fires only on the very first pass that binds.
+            // Reads GL state + attachment info; NEVER changes any rendering state.
+            // -------------------------------------------------------------------------
+            if (!DIAG_LOGGED) {
+                DIAG_LOGGED = true;
+                try {
+                    // 1. Bound draw FBO id (should match fbo's id while still bound).
+                    int drawFboId = GL11C.glGetInteger(GL30C.GL_DRAW_FRAMEBUFFER_BINDING); // 0x8CA6
+
+                    // 2. Depth attachment type and object id on the currently-bound FBO.
+                    int attachType = GL30C.glGetFramebufferAttachmentParameteri(
+                            GL30C.GL_DRAW_FRAMEBUFFER,
+                            GL30C.GL_DEPTH_ATTACHMENT,
+                            GL30C.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE);
+                    int attachId = GL30C.glGetFramebufferAttachmentParameteri(
+                            GL30C.GL_DRAW_FRAMEBUFFER,
+                            GL30C.GL_DEPTH_ATTACHMENT,
+                            GL30C.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME);
+
+                    String attachTypeName;
+                    if (attachType == GL11C.GL_NONE) {           // 0
+                        attachTypeName = "NONE";
+                    } else if (attachType == GL11C.GL_TEXTURE) { // 0x1702
+                        attachTypeName = "TEXTURE";
+                    } else if (attachType == 0x8D41) {           // GL_RENDERBUFFER
+                        attachTypeName = "RENDERBUFFER";
+                    } else {
+                        attachTypeName = "raw(0x" + Integer.toHexString(attachType) + ")";
+                    }
+
+                    // 3. MC main render target depth texture id (for cross-reference).
+                    int mcMainDepthTex = Minecraft.getInstance().getMainRenderTarget().getDepthTextureId();
+
+                    // 4. Iris RenderTargets depth texture id (the one Iris routes through its FBOs).
+                    int irisDepthTex = -1;
+                    try {
+                        RenderTargets rt = ((NvidiumIrisRenderingPipelineAccessor) pipeline).nvidium$getRenderTargets();
+                        if (rt != null) {
+                            irisDepthTex = rt.getDepthTexture();
+                        }
+                    } catch (Throwable ignored) {
+                        // Not critical; -1 means "unreachable"
+                    }
+
+                    // 5. Depth state that the draw will use.
+                    boolean depthTestEnabled = GL11C.glGetBoolean(GL11C.GL_DEPTH_TEST);
+                    boolean depthMaskEnabled = GL11C.glGetBoolean(GL11C.GL_DEPTH_WRITEMASK);
+                    int depthFunc = GL11C.glGetInteger(GL11C.GL_DEPTH_FUNC);
+
+                    Nvidium.LOGGER.info(
+                            "Nvidium-Iris DEPTH-DIAG[{}]: drawFBO={} depthAttachType={} depthAttachId={}" +
+                            " mcMainDepthTex={} irisRenderTargetsDepthTex={}" +
+                            " depthTest={} depthMask={} depthFunc=0x{}",
+                            pass,
+                            drawFboId,
+                            attachTypeName,
+                            attachId,
+                            mcMainDepthTex,
+                            irisDepthTex,
+                            depthTestEnabled,
+                            depthMaskEnabled,
+                            Integer.toHexString(depthFunc));
+                } catch (Throwable t) {
+                    Nvidium.LOGGER.warn("Nvidium-Iris: depth diagnostic failed (non-fatal)", t);
+                }
+            }
+            // -------------------------------------------------------------------------
 
             return program;
         } catch (Throwable t) {
