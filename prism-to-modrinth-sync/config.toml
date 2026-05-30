@@ -105,6 +105,11 @@ name = "deer-diary-patches"
 source_dir = "../Custom Mods/dist/deer-diary-patches"
 side = "both"
 
+[[custom_mods]]
+name = "nvidium"
+source_dir = "../Custom Mods/dist/nvidium"
+side = "client"
+
 # Datapack ships through the Packwiz pipeline as a self-hosted direct file.
 # Versionless filename → the custom-mod sync falls back to byte compare.
 [[custom_mods]]
@@ -174,6 +179,7 @@ iris = { default = true, description = "Iris shader support. PAIR THIS CHECKBOX 
 colorwheel = { default = true, description = "Flywheel/Iris compatibility - makes Create contraptions render correctly under Iris shaders. REQUIRES IRIS (above). Keep this checkbox in sync with Iris: both on or both off. Useless without Iris, mandatory with it." }
 distanthorizons = { default = true, description = "Distant Horizons - extreme render distance via LODs. Disable if you have <8GB RAM allocated." }
 sodium-dynamic-lights = { default = false, description = "Dynamic torchlight from held / dropped torches. Recommended for players NOT using Iris+Colorwheel (the shaders already do this)." }
+nvidium = { default = false, side = "client", description = "Nvidium - NVIDIA mesh-shader terrain renderer for Sodium. Large FPS gains at high render distances, but ONLY works on NVIDIA Turing+ GPUs (GTX 1600-series / RTX 2000-series or newer). Safe to leave off: it self-disables on unsupported hardware and under Iris shaders. Leave unchecked unless you have a supported NVIDIA card." }
 
 [packwiz.self_host]
 # Allowlist for mod jars we'll copy into the published tree as direct files
@@ -189,6 +195,7 @@ allowed_globs = [
     "mods/trmt-*.jar",
     "mods/deer-diary-commands-*.jar",
     "mods/deer-diary-patches-*.jar",
+    "mods/nvidium-*.jar",
     "moonlight-global-datapacks/key-to-necklace.zip",
     # CurseForge-only mods, redistribution permitted by upstream authors:
     "mods/alltheleaks-*.jar",
