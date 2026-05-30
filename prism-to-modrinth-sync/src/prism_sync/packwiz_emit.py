@@ -206,3 +206,38 @@ def build_optional_block(default: bool, description: str) -> str:
         f"default = {'true' if default else 'false'}\n"
         f"description = {toml_str(description)}\n"
     )
+
+
+def render_selfhost_mod_metafile(
+    *,
+    name: str,
+    filename: str,
+    side: str,
+    url: str,
+    hash_format: str,
+    hash_value: str,
+    optional_block: str,
+) -> bytes:
+    """Render a Packwiz mod ``.pw.toml`` for a self-hosted custom jar.
+
+    Modrinth-backed metafiles are copied from Prism's ``.index`` and merely
+    normalized. A locally-built custom jar has no upstream metafile, so to
+    expose it as a packwiz-installer optional checkbox we synthesize one: a
+    ``[download]`` pointing at our own GitHub-Pages-served copy of the jar
+    plus the ``[option]`` block. ``url`` must already be percent-encoded.
+    """
+    lines = [
+        f"name = {toml_str(name)}",
+        f"filename = {toml_str(filename)}",
+        f"side = {toml_str(side)}",
+        "",
+        "[download]",
+        f"hash-format = {toml_str(hash_format)}",
+        f"hash = {toml_str(hash_value)}",
+        'mode = "url"',
+        f"url = {toml_str(url)}",
+        "",
+        optional_block.rstrip(),
+        "",
+    ]
+    return ("\n".join(lines)).encode("utf-8")

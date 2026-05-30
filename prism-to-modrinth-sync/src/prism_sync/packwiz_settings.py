@@ -33,6 +33,9 @@ class OptionalMod:
 
     default: bool
     description: str
+    # Only consulted for self-hosted custom mods (Modrinth-backed optional
+    # mods take their side from the source .pw.toml). Defaults to client.
+    side: str = "client"
 
 
 @dataclass
@@ -73,6 +76,7 @@ class PackwizSettings:
             optional_mods[str(slug)] = OptionalMod(
                 default=bool(entry.get("default", True)),
                 description=str(entry.get("description", "")),
+                side=str(entry.get("side", "client")),
             )
         return cls(
             enabled=bool(raw.get("enabled", False)),

@@ -38,10 +38,12 @@ from __future__ import annotations
 
 import fnmatch
 import logging
+import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import quote
 
 from .config import Config
 from .customs import sync_custom_mods, print_summary as print_custom_summary
@@ -61,6 +63,7 @@ from .packwiz_emit import (
     normalize_metafile_bytes,
     render_index_toml as _render_index_toml,
     render_pack_toml as _render_pack_toml,
+    render_selfhost_mod_metafile,
     toml_str as _toml_str,
 )
 from .packwiz_settings import OptionalMod, PackwizSettings
@@ -125,6 +128,25 @@ class _SelfHostMatcher:
 
 def _is_mod_jar(path: str) -> bool:
     return path.startswith("mods/") and path.lower().endswith(".jar")
+
+
+def _slug_for_selfhosted_jar(rel: str) -> str:
+    """Derive an optional-mods slug from a self-hosted jar path.
+
+    ``mods/nvidium-0.4.1-beta10-1.21+1.21.1.jar`` -> ``nvidium``;
+    ``mods/deer-diary-commands-0.3.0-1.21+1.21.1.jar`` -> ``deer-diary-commands``.
+    Strip the directory, the ``.jar`` suffix, and the version tail (first
+    ``-`` immediately followed by a digit). Only jars whose derived slug
+    appears in ``[packwiz.optional_mods]`` get special treatment, so a loose
+    heuristic here is safe.
+    """
+    name = rel.rsplit("/", 1)[-1]
+    if name.lower().endswith(".jar"):
+        name = name[:-4]
+    m = re.search(r"-\d", name)
+    if m:
+        name = name[: m.start()]
+    return name
 
 
 # ---------------------------------------------------------------------------
@@ -216,12 +238,45 @@ def build_packwiz(
 
         # 2. Explicit self-host allowlist wins over any metafile. Use case:
         #    a CurseForge-only mod whose author granted us redistribution
-        #    permission — we'd rather ship the jar directly than make every
-        #    player configure a CurseForge API key in packwiz-installer.
+        #    permission, or one of our own locally-built custom jars — we'd
+        #    rather ship the jar directly than make every player configure a
+        #    CurseForge API key in packwiz-installer.
         if self_host.matches(rel):
             self_hosted_paths.append(rel)
             _copy_direct(entry.absolute_path, tmp_dir / rel)
             hashes = hash_file(tmp_dir / rel)
+            slug = _slug_for_selfhosted_jar(rel)
+            option = packwiz.optional_mods.get(slug)
+            if option is not None:
+                # Optional self-hosted custom mod: a locally-built jar has no
+                # Prism .pw.toml to carry an [option] block, so synthesize a
+                # metafile pointing at our own GH-Pages-served copy. The jar is
+                # still copied into the tree above (and served at that URL) but
+                # is referenced via the metafile, NOT as a direct index entry.
+                sub = rel.split("/", 1)[0]
+                meta_rel = f"{sub}/{slug}.pw.toml"
+                url = f"{packwiz.base_url}/{quote(rel, safe='/')}"
+                meta_bytes = render_selfhost_mod_metafile(
+                    name=slug,
+                    filename=rel.rsplit("/", 1)[-1],
+                    side=option.side,
+                    url=url,
+                    hash_format="sha512",
+                    hash_value=hashes.sha512,
+                    optional_block=build_optional_block(
+                        option.default, option.description
+                    ),
+                )
+                meta_dest = tmp_dir / meta_rel
+                meta_dest.parent.mkdir(parents=True, exist_ok=True)
+                meta_dest.write_bytes(meta_bytes)
+                meta_hashes = hash_bytes(meta_bytes)
+                metafile_entries.append(
+                    IndexFile(file=meta_rel, hash=meta_hashes.sha256, metafile=True)
+                )
+                fingerprint[rel] = hashes.sha512
+                seen_optional_slugs.add(slug)
+                continue
             direct_entries.append(IndexFile(file=rel, hash=hashes.sha256))
             fingerprint[rel] = hashes.sha512
             continue
