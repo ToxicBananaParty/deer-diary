@@ -43,12 +43,18 @@ repositories {
 }
 
 dependencies {
-    // Required: Nvidium is an alternate rendering backend for Sodium. NeoForge build.
-    implementation "maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge"
+    // Required, compile + dev runtime.
+    implementation "maven.modrinth:sodium:${project.sodium_version}"
 
-    // Soft-compat: Iris API for shader-pack detection. compileOnly so the mod
-    // loads fine without Iris present.
-    compileOnly "maven.modrinth:iris:1.8.8+1.21.1-neoforge"
+    // Soft-compat deps. compileOnly for build; clientAdditionalRuntimeClasspath puts
+    // them on the runClient classpath only (ModDevGradle equivalent of localRuntime).
+    compileOnly "maven.modrinth:iris:${project.iris_version}"
+    compileOnly "maven.modrinth:distanthorizons:${project.distanthorizons_version}"
+    compileOnly "maven.modrinth:colorwheel:${project.colorwheel_version}"
+
+    clientAdditionalRuntimeClasspath "maven.modrinth:iris:${project.iris_version}"
+    clientAdditionalRuntimeClasspath "maven.modrinth:distanthorizons:${project.distanthorizons_version}"
+    clientAdditionalRuntimeClasspath "maven.modrinth:colorwheel:${project.colorwheel_version}"
 }
 
 // Short git commit baked into mods.toml's [modproperties.nvidium].commit so
