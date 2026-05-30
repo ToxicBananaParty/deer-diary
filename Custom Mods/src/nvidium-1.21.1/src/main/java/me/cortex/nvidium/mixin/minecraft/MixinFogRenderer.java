@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 public class MixinFogRenderer {
     @ModifyConstant(method = "setupFog", constant = @Constant(floatValue = 192.0F))
     private static float changeFog(float fog) {
-        if (Nvidium.IS_ENABLED) {
+        if (Nvidium.IS_ENABLED && !me.cortex.nvidium.compat.dh.NvidiumDhCompat.ACTIVE) {
             return 9999999f;
         } else {
             return fog;
