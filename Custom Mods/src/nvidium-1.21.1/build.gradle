@@ -1,86 +1,82 @@
 plugins {
-    id 'fabric-loom' version '1.8-SNAPSHOT'
-    id 'maven-publish'
+    id 'java'
+    id 'net.neoforged.moddev' version '0.1.96'
 }
-
-def gitCommitHash = { ->
-    def stdout = new ByteArrayOutputStream()
-    exec {
-        commandLine 'git', 'rev-parse', '--short', 'HEAD'
-        standardOutput = stdout
-    }
-    return stdout.toString().trim()
-}
-def buildtime = System.currentTimeSeconds()
 
 version = project.mod_version
 group = project.maven_group
 
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
-
-apply plugin: "fabric-loom"
-
-loom {
-    mixin.defaultRefmapName = "nvidium.refmap.json"
-    runs {
-        it.configureEach {
-            vmArgs("-Xmx8G", "-XX:+UseZGC")
-        }
-    }
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
+    withSourcesJar()
 }
 
+neoForge {
+    version = project.neoforge_version
 
-processResources {
-    inputs.properties("version": project.version, "commit": gitCommitHash, "buildtime":buildtime)
+    parchment {
+        minecraftVersion = project.parchment_minecraft_version
+        mappingsVersion = project.parchment_mappings_version
+    }
 
-    archivesBaseName = "nvidium"
-    filesMatching("fabric.mod.json") {
-        expand "commit": gitCommitHash, "version": project.version, "buildtime": buildtime
+    runs {
+        client {
+            client()
+            // Nvidium is memory-hungry; mirror the loom build's run args.
+            jvmArguments.addAll("-Xmx8G", "-XX:+UseZGC")
+        }
+    }
+
+    mods {
+        nvidium {
+            sourceSet sourceSets.main
+        }
     }
 }
 
 repositories {
-    exclusiveContent {
-        forRepository {
-            maven {
-                name = "Modrinth"
-                url = "https://api.modrinth.com/maven"
-            }
-        }
-        filter {
-            includeGroup "maven.modrinth"
-        }
-    }
+    // Sodium (required) and Iris (soft-compat) come from Modrinth's maven.
     maven {
-        name = 'ParchmentMC'
-        url = 'https://maven.parchmentmc.org/'
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
     }
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.layered() {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchmentmc_mappings}@zip")
-    }
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    // Required: Nvidium is an alternate rendering backend for Sodium. NeoForge build.
+    implementation "maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge"
 
-    // Fabric API
-    modImplementation(fabricApi.module("fabric-api-base", project.fabric_version))
-    modImplementation(fabricApi.module("fabric-block-view-api-v2", project.fabric_version))
-    modImplementation(fabricApi.module("fabric-rendering-fluids-v1", project.fabric_version))
-    modImplementation(fabricApi.module("fabric-renderer-api-v1", project.fabric_version))
-
-    modImplementation("net.fabricmc.fabric-api:fabric-rendering-data-attachment-v1:0.3.40+73761d2e3b")
-    modImplementation(fabricApi.module("fabric-resource-loader-v0", project.fabric_version))
-
-    modImplementation "maven.modrinth:sodium:mc1.21.1-0.6.13-fabric"
-
-    //modImplementation "maven.modrinth:c2me-fabric:0.2.0+alpha.10.49+1.19.4"
-    //modImplementation "maven.modrinth:chunks-fade-in:v1.0.3-1.19.4"
-    //modImplementation "maven.modrinth:immersiveportals:v2.7.3-mc1.19.4"
-    modCompileOnly "maven.modrinth:iris:1.8.8+1.21.1-fabric"
+    // Soft-compat: Iris API for shader-pack detection. compileOnly so the mod
+    // loads fine without Iris present.
+    compileOnly "maven.modrinth:iris:1.8.8+1.21.1-neoforge"
 }
 
+// Short git commit baked into mods.toml's [modproperties.nvidium].commit so
+// Nvidium.MOD_VERSION can stay "<version>-<commit>" as on Fabric.
+def gitCommitHash = providers.exec {
+    commandLine 'git', 'rev-parse', '--short', 'HEAD'
+}.standardOutput.asText.map { it.trim() }
+
+processResources {
+    var replaceProperties = [
+        version          : version,
+        commit           : gitCommitHash.get(),
+        loader_version   : project.hasProperty('loader_version') ? project.loader_version : '[4,)',
+        neoforge_version : project.neoforge_version,
+        minecraft_version: project.minecraft_version,
+        mod_id           : project.mod_id,
+    ]
+    inputs.properties(replaceProperties)
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+// Mirror the built jar into Custom Mods/dist/nvidium/ so the publish pipeline
+// (prism-to-modrinth-sync) picks it up as a [[custom_mods]] source.
+tasks.register('copyJarToDist', Copy) {
+    dependsOn jar
+    from jar.archiveFile
+    into rootProject.file('../../dist/nvidium')
+}
+build.finalizedBy(copyJarToDist)
