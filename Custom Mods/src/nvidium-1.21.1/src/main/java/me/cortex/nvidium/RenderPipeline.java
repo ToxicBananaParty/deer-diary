@@ -3,6 +3,7 @@ package me.cortex.nvidium;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.ints.*;
+import me.cortex.nvidium.compat.iris.IrisRenderBridge;
 import me.cortex.nvidium.config.StatisticsLoggingLevel;
 import me.cortex.nvidium.config.TranslucencySortingLevel;
 import me.cortex.nvidium.gl.RenderDevice;
@@ -189,6 +190,10 @@ public class RenderPipeline {
     private int prevRegionCount;
     private int frameId;
     private boolean compiledForFog = false;
+
+    // Cached this frame in renderFrame() so renderTranslucent() (which takes no matrices) can reuse
+    // them for the Iris SHADERS path. Only read when Nvidium.MODE == RenderMode.SHADERS.
+    private ChunkRenderMatrices lastMatrices;
 
     //TODO FIXME: regions that where in frustum but are now out of frustum must have the visibility data cleared
     // this is due to funny issue of pain where the section was "visible" last frame cause it didnt get ticked
@@ -389,9 +394,19 @@ public class RenderPipeline {
         //Bind the uniform, it doesnt get wiped between shader changes
         glBufferAddressRangeNV(GL_UNIFORM_BUFFER_ADDRESS_NV, 0, sceneUniform.getDeviceAddress(), SCENE_SIZE);
 
+        this.lastMatrices = crm;
+
         if (prevRegionCount != 0) {
             glEnable(GL_DEPTH_TEST);
+            // SHADERS mode: render the primary (opaque + cutout) terrain through the active Iris
+            // shaderpack's terrain program, into Iris's gbuffers. Falls back to Nvidium's own
+            // shader if the bridge can't bind this frame. VANILLA mode skips all of this entirely.
+            boolean iris = Nvidium.MODE == RenderMode.SHADERS
+                    && IrisRenderBridge.beginPrimary(terrainRasterizer, crm);
             terrainRasterizer.raster(prevRegionCount, terrainCommandBuffer.getDeviceAddress(), primaryFrameTimeProfiler);
+            if (iris) {
+                IrisRenderBridge.endPrimary(terrainRasterizer);
+            }
             glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT);
         }
 
@@ -511,7 +526,14 @@ public class RenderPipeline {
             glEnable(GL_DEPTH_TEST);
             RenderSystem.enableBlend();
             RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+            // SHADERS mode: render translucent terrain through the shaderpack's water/translucent
+            // program into Iris's gbuffers. Falls back to Nvidium's own shader on any failure.
+            boolean iris = Nvidium.MODE == RenderMode.SHADERS && lastMatrices != null
+                    && IrisRenderBridge.beginTranslucent(translucencyTerrainRasterizer, lastMatrices);
             translucencyTerrainRasterizer.raster(prevRegionCount, translucencyCommandBuffer.getDeviceAddress(), transluscentFrameTimeProfiler);
+            if (iris) {
+                IrisRenderBridge.endTranslucent(translucencyTerrainRasterizer);
+            }
             RenderSystem.disableBlend();
             RenderSystem.defaultBlendFunc();
             glDisable(GL_DEPTH_TEST);

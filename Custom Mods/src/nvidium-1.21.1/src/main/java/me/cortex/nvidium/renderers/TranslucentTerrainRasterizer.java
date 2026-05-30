@@ -1,6 +1,7 @@
 package me.cortex.nvidium.renderers;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import me.cortex.nvidium.compat.iris.IrisTerrainProgram;
 import me.cortex.nvidium.gl.shader.Shader;
 import me.cortex.nvidium.sodiumCompat.ShaderLoader;
 import net.minecraft.client.Minecraft;
@@ -41,6 +42,18 @@ public class TranslucentTerrainRasterizer extends Phase {
     }
 
 
+    // See PrimaryTerrainRasterizer: when set (SHADERS mode), draw through the Iris program; the
+    // binder owns FBO/program/texture binding. Null in VANILLA mode (original behavior unchanged).
+    private IrisTerrainProgram irisProgram = null;
+
+    public void setIrisProgram(IrisTerrainProgram program) {
+        this.irisProgram = program;
+    }
+
+    public void clearIrisProgram() {
+        this.irisProgram = null;
+    }
+
     private static void setTexture(int textureId, int bindingPoint) {
         GlStateManager._activeTexture(33984 + bindingPoint);
         GlStateManager._bindTexture(textureId);
@@ -49,6 +62,15 @@ public class TranslucentTerrainRasterizer extends Phase {
     //Translucency is rendered in a very cursed and incorrect way
     // it hijacks the unassigned indirect command dispatch and uses that to dispatch the translucent chunks as well
     public void raster(int regionCount, long commandAddr, FrameTimeProfiler frameTimeProfiler) {
+        if (irisProgram != null) {
+            // SHADERS path: program + textures already bound by IrisGbufferBinder.beginPass.
+            glBufferAddressRangeNV(GL_DRAW_INDIRECT_ADDRESS_NV, 0, commandAddr, regionCount*8L);
+            frameTimeProfiler.startQuery();
+            glMultiDrawMeshTasksIndirectNV(0, regionCount, 0);
+            frameTimeProfiler.endQuery();
+            return;
+        }
+
         shader.bind();
 
         int blockId = Minecraft.getInstance().getTextureManager().getTexture(ResourceLocation.fromNamespaceAndPath("minecraft", "textures/atlas/blocks.png")).getId();

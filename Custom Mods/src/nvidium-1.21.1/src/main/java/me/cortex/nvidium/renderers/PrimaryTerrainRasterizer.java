@@ -1,6 +1,7 @@
 package me.cortex.nvidium.renderers;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import me.cortex.nvidium.compat.iris.IrisTerrainProgram;
 import me.cortex.nvidium.gl.shader.Shader;
 import me.cortex.nvidium.sodiumCompat.ShaderLoader;
 import net.minecraft.client.Minecraft;
@@ -37,12 +38,35 @@ public class PrimaryTerrainRasterizer extends Phase {
         GL45C.glSamplerParameteri(lightSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
 
+    // When set (SHADERS mode), the terrain raster is issued through the Iris shaderpack's terrain
+    // program instead of Nvidium's own `shader`. The IrisGbufferBinder has already bound the FBO,
+    // the program, and the block-atlas/lightmap texture units, so this path does NOT bind Nvidium's
+    // own shader or samplers. Null in VANILLA mode, which is byte-for-byte the original behavior.
+    private IrisTerrainProgram irisProgram = null;
+
+    public void setIrisProgram(IrisTerrainProgram program) {
+        this.irisProgram = program;
+    }
+
+    public void clearIrisProgram() {
+        this.irisProgram = null;
+    }
+
     private static void setTexture(int textureId, int bindingPoint) {
         GlStateManager._activeTexture(33984 + bindingPoint);
         GlStateManager._bindTexture(textureId);
     }
 
     public void raster(int regionCount, long commandAddr, FrameTimeProfiler frameTimeProfiler) {
+        if (irisProgram != null) {
+            // SHADERS path: program + textures already bound by IrisGbufferBinder.beginPass.
+            glBufferAddressRangeNV(GL_DRAW_INDIRECT_ADDRESS_NV, 0, commandAddr, regionCount*8L);
+            frameTimeProfiler.startQuery();
+            glMultiDrawMeshTasksIndirectNV(0, regionCount, 0);
+            frameTimeProfiler.endQuery();
+            return;
+        }
+
         shader.bind();
 
         int blockId = Minecraft.getInstance().getTextureManager().getTexture(ResourceLocation.fromNamespaceAndPath("minecraft", "textures/atlas/blocks.png")).getId();

@@ -36,6 +36,11 @@ taskNV in Task {
     int translucencyIndex;
 };
 
+#ifdef IRIS_PASS
+// Iris terrain integration: emit the shaderpack's named varyings (generated per-pack by
+// IrisVaryingMapper, spliced in at this marker by IrisProgramBridge).
+//__NVIDIUM_IRIS_VARYINGS__
+#else
 #ifndef USE_NV_FRAGMENT_SHADER_BARYCENTRIC
 layout(location=1) out Interpolants {
 #ifdef RENDER_FOG
@@ -44,6 +49,7 @@ layout(location=1) out Interpolants {
     vec2 uv;
     vec3 v_colour;
 } OUT[];
+#endif
 #endif
 
 void emitQuadIndicies() {
@@ -63,6 +69,14 @@ void emitVertex(uint vertexBaseId, uint innerId) {
     vec3 pos = decodeVertexPosition(V)+originAndBaseData.xyz;
     gl_MeshVerticesNV[outId].gl_Position = MVP*vec4(pos,1.0);
 
+#ifdef IRIS_PASS
+    // Face normal from the quad's first three vertices (best-effort; no per-vertex normal stored).
+    vec3 q0 = decodeVertexPosition(terrainData[vertexBaseId + 0]) + originAndBaseData.xyz;
+    vec3 q1 = decodeVertexPosition(terrainData[vertexBaseId + 1]) + originAndBaseData.xyz;
+    vec3 q2 = decodeVertexPosition(terrainData[vertexBaseId + 2]) + originAndBaseData.xyz;
+    vec3 nvFaceNormal = normalize(cross(q1 - q0, q2 - q0));
+    nvidium$writeIrisVaryings(outId, V, pos, nvFaceNormal);
+#else
 #ifndef USE_NV_FRAGMENT_SHADER_BARYCENTRIC
     #ifdef RENDER_FOG
     float fogLerp = clamp(computeFogLerp(pos+subchunkOffset.xyz, isCylindricalFog, fogStart, fogEnd) * fogColour.a, 0, 1);
@@ -75,6 +89,7 @@ void emitVertex(uint vertexBaseId, uint innerId) {
     tint *= sampleLight(decodeLightUV(V));
     tint *= tint.w;
     OUT[outId].v_colour = tint.rgb;
+#endif
 #endif
 }
 

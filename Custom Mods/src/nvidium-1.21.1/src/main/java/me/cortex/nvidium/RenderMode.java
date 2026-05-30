@@ -1,5 +1,6 @@
 package me.cortex.nvidium;
 
+import me.cortex.nvidium.compat.iris.NvidiumIrisCompat;
 import me.cortex.nvidium.sodiumCompat.IrisCheck;
 
 /**
@@ -26,8 +27,10 @@ public enum RenderMode {
             return DISABLED;
         }
         if (IrisCheck.isShaderPackActive()) {
-            // Replaced in the Iris phase with a supported-pack check.
-            return DISABLED;
+            // Render terrain through the shaderpack only if a usable Iris terrain program has
+            // actually been built for the active pack; otherwise yield to Sodium+Iris. This is
+            // the fallback floor: any uncertainty resolves to DISABLED, never a crash.
+            return NvidiumIrisCompat.supportsActivePack() ? SHADERS : DISABLED;
         }
         return VANILLA;
     }

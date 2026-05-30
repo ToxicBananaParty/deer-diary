@@ -23,6 +23,13 @@ layout(binding = 1) uniform sampler2D tex_light;
 layout(local_size_x = 32) in;
 layout(triangles, max_vertices=64, max_primitives=32) out;
 
+#ifdef IRIS_PASS
+// Iris terrain integration: the mesh shader emits the named varyings the active shaderpack's
+// patched fragment expects, instead of Nvidium's own Interpolants block. The declarations and the
+// nvidium$writeIrisVaryings(...) function are generated per-pack by IrisVaryingMapper and spliced
+// in at this marker by IrisProgramBridge.
+//__NVIDIUM_IRIS_VARYINGS__
+#else
 #ifndef USE_NV_FRAGMENT_SHADER_BARYCENTRIC
 layout(location=1) out Interpolants {
 #ifdef RENDER_FOG
@@ -31,6 +38,7 @@ layout(location=1) out Interpolants {
     vec2 uv;
     vec3 v_colour;
 } OUT[];
+#endif
 #endif
 
 taskNV in Task {
@@ -89,6 +97,15 @@ Vertex V;
 vec4 pV;
 
 void putVertex(uint id, Vertex V) {
+#ifdef IRIS_PASS
+    // Drive the shaderpack varyings. Face normal is derived from the current triangle's two
+    // common edges (best-effort; Nvidium's compact vertex format stores no per-vertex normal).
+    vec3 nvWorldPos = decodeVertexPosition(V) + origin;
+    vec3 p0 = decodeVertexPosition(V0) + origin;
+    vec3 p2 = decodeVertexPosition(V2) + origin;
+    vec3 nvFaceNormal = normalize(cross(p2 - p0, nvWorldPos - p0));
+    nvidium$writeIrisVaryings(id, V, nvWorldPos, nvFaceNormal);
+#else
 #ifndef USE_NV_FRAGMENT_SHADER_BARYCENTRIC
     #ifdef RENDER_FOG
     vec3 pos = decodeVertexPosition(V)+origin;
@@ -98,6 +115,7 @@ void putVertex(uint id, Vertex V) {
 
     OUT[id].uv = decodeVertexUV(V);
     OUT[id].v_colour = computeMultiplier(V);
+#endif
 #endif
 }
 
