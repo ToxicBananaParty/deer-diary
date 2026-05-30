@@ -30,12 +30,10 @@ import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
  * throws to the caller; the worst case is a yield to Nvidium's own terrain shader for that phase.
  *
  * <h2>Pass mapping</h2>
- * Nvidium issues a single primary mesh draw covering opaque + cutout geometry. The primary phase
- * binds the shaderpack's CUTOUT terrain program / gbuffer so that the shaderpack's alpha-discard
- * runs for transparent texels (leaves, grass). Opaque texels have alpha ~1.0 and pass the cutout
- * alpha test trivially, so routing solid geometry through CUTOUT is safe. SOLID is still built by
- * {@link IrisProgramBridge} (the pack is only considered supported when all three pass programs
- * link), but the combined opaque+cutout draw maps to CUTOUT.
+ * Nvidium issues a single primary mesh draw covering opaque + cutout geometry, so the primary phase
+ * binds the shaderpack's SOLID terrain program / gbuffer. CUTOUT is built by
+ * {@link IrisProgramBridge} (so the pack is only considered supported when it links too) and is
+ * available for a future opaque/cutout split, but the single primary draw maps to SOLID here.
  * Translucent maps to the pack's water/translucent program.
  *
  * <h2>Safety</h2>
@@ -46,15 +44,12 @@ public final class IrisRenderBridge {
     private IrisRenderBridge() {}
 
     /**
-     * Arm the primary (opaque + cutout) terrain draw to go through the shaderpack's CUTOUT program
-     * into Iris's gbuffer. Using CUTOUT ensures the shaderpack's alpha-discard runs so transparent
-     * texels (leaves, grass) are discarded rather than rendered as dark fragments. Opaque texels
-     * have alpha ~1.0 and pass the cutout alpha test trivially, so this is safe for the combined
-     * draw. Returns {@code true} on success (caller must pair with {@link #endPrimary});
-     * {@code false} means yield to Nvidium's own shader for this phase.
+     * Arm the primary (opaque + cutout) terrain draw to go through the shaderpack's SOLID program
+     * into Iris's gbuffer. Returns {@code true} on success (caller must pair with
+     * {@link #endPrimary}); {@code false} means yield to Nvidium's own shader for this phase.
      */
     public static boolean beginPrimary(PrimaryTerrainRasterizer rasterizer, ChunkRenderMatrices matrices) {
-        return begin(DefaultTerrainRenderPasses.CUTOUT, matrices, rasterizer::setIrisProgram);
+        return begin(DefaultTerrainRenderPasses.SOLID, matrices, rasterizer::setIrisProgram);
     }
 
     /** Restore after a primary Iris draw. Always safe; never throws. */
