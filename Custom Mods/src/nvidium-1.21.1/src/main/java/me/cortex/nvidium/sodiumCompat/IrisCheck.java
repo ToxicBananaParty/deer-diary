@@ -6,11 +6,13 @@ import net.neoforged.fml.ModList;
 public class IrisCheck {
     public static final boolean IRIS_LOADED = ModList.get().isLoaded("iris");
 
-    private static boolean checkIrisShaders() {
-        return IrisApi.getInstance().isShaderPackInUse();
+    /** True when Iris is present AND a shaderpack is currently in use. */
+    public static boolean isShaderPackActive() {
+        return IRIS_LOADED && IrisApi.getInstance().isShaderPackInUse();
     }
 
-    public static boolean checkIrisShouldDisable() {
-        return !(IRIS_LOADED && checkIrisShaders());
+    /** True while Iris is rendering its shadow pass (used by the Iris phase). */
+    public static boolean isRenderingShadowPass() {
+        return IRIS_LOADED && IrisApi.getInstance().isRenderingShadowPass();
     }
 }
