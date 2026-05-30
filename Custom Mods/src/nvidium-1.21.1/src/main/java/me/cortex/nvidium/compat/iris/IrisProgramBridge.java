@@ -206,6 +206,11 @@ public final class IrisProgramBridge {
             return null;
         }
 
+        // Mesh output footprint diagnostic: query NV mesh-shader limits and compare against our
+        // per-meshlet output budget. This runs once per pass at program-build time; it is INFO-level,
+        // cheap (a handful of glGetInteger calls), and needs no property gate.
+        logMeshOutputFootprint(pass, varyings);
+
         // Success-dump (-Dnvidium.iris.dump=true):
         //   Writes the exact GLSL fed to the compiler for each stage to run/nvidium-iris-dump/ so
         //   an offline agent can inspect them without re-launching.  Off by default (no property set).
@@ -256,6 +261,67 @@ public final class IrisProgramBridge {
                 imageBuilder.build());
 
         return program;
+    }
+
+    /**
+     * Query the NV mesh-shader hardware limits via GL and log how our per-meshlet output footprint
+     * compares to {@code GL_MAX_MESH_TOTAL_MEMORY_SIZE_NV}.
+     *
+     * <p>The mesh shader is declared {@code layout(triangles, max_vertices=64, max_primitives=32) out;}.
+     * Each per-vertex output slot is vec4-aligned on NV hardware (16 bytes), so the padded footprint is
+     * {@code (numVaryings + 1) * 16 * 64} (the +1 accounts for gl_Position). The tight estimate uses the exact component
+     * sum. If either estimate meets or exceeds the hardware limit, a WARN is emitted to flag the likely
+     * cause of meshlet geometry corruption.
+     *
+     * <p>Fully defensive: any GL error or unexpected exception is caught and logged as a warning, never
+     * propagated.
+     */
+    private static void logMeshOutputFootprint(TerrainRenderPass pass, java.util.List<IrisVaryingMapper.Varying> varyings) {
+        try {
+            // Query the three NV mesh-shader limits. Use NVMeshShader constants where available;
+            // raw hex literals are spelled out in comments for auditability.
+            int maxTotalMem     = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.NVMeshShader.GL_MAX_MESH_TOTAL_MEMORY_SIZE_NV);     // 0x9536
+            int maxOutputVerts  = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.NVMeshShader.GL_MAX_MESH_OUTPUT_VERTICES_NV);        // 0x9539
+            int maxOutputPrims  = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.NVMeshShader.GL_MAX_MESH_OUTPUT_PRIMITIVES_NV);      // 0x953A
+
+            // Compute component counts.
+            int numVaryings = varyings.size();
+            int sumComponents = 0;
+            for (IrisVaryingMapper.Varying v : varyings) {
+                sumComponents += IrisVaryingMapper.componentCount(v.type());
+            }
+
+            final int MAX_VERTICES = 64;
+
+            // Tight estimate: each component is 4 bytes; gl_Position contributes 4 components.
+            int tightBytesPerVertex = (sumComponents + 4 /*gl_Position components*/) * 4;
+            int tightTotal = tightBytesPerVertex * MAX_VERTICES;
+
+            // Padded (vec4-aligned) estimate: each varying occupies one 16-byte slot; gl_Position
+            // adds one more slot. This is the pessimistic / hardware-budget estimate.
+            int paddedBytesPerVertex = (numVaryings + 1 /*gl_Position slot*/) * 16;
+            int paddedTotal = paddedBytesPerVertex * MAX_VERTICES;
+
+            String passLabel = pass.toString();
+            Nvidium.LOGGER.info(
+                    "Nvidium-Iris[{}]: mesh output = {} varyings, ~{}B/vert tight / ~{}B/vert padded;" +
+                    " x{} verts = ~{}B tight / ~{}B padded;" +
+                    " NV limits: totalMem={}, maxVerts={}, maxPrims={}",
+                    passLabel, numVaryings,
+                    tightBytesPerVertex, paddedBytesPerVertex,
+                    MAX_VERTICES, tightTotal, paddedTotal,
+                    maxTotalMem, maxOutputVerts, maxOutputPrims);
+
+            // Warn if either footprint estimate is at or over the hardware limit.
+            if (paddedTotal >= maxTotalMem || tightTotal >= maxTotalMem) {
+                Nvidium.LOGGER.warn(
+                        "Nvidium-Iris[{}]: WARNING mesh output footprint (~{}B padded / ~{}B tight)" +
+                        " is at/over NV total-memory limit ({}B) -- likely cause of meshlet corruption",
+                        passLabel, paddedTotal, tightTotal, maxTotalMem);
+            }
+        } catch (Throwable t) {
+            Nvidium.LOGGER.warn("Nvidium-Iris: failed to query NV mesh-shader limits for footprint diagnostic", t);
+        }
     }
 
     /**

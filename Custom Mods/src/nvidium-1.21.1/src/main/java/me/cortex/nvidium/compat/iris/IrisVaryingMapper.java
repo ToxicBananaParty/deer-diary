@@ -360,6 +360,24 @@ final class IrisVaryingMapper {
         return null;
     }
 
+    /**
+     * Return the number of scalar components in a GLSL type used by terrain varyings.
+     * Used by {@link IrisProgramBridge} to estimate per-vertex output memory footprint.
+     * Returns 1 for unknown types (conservative single-component estimate).
+     */
+    static int componentCount(String type) {
+        if (type == null) return 1;
+        switch (type) {
+            case "float": case "int": case "uint": case "bool": return 1;
+            case "vec2": case "ivec2": case "uvec2": return 2;
+            case "vec3": case "ivec3": case "uvec3": return 3;
+            case "vec4": case "ivec4": case "uvec4": return 4;
+            case "mat3": return 9;
+            case "mat4": return 16;
+            default: return 1;
+        }
+    }
+
     /** Type-appropriate zero/identity literal. */
     private static String zeroFor(String type) {
         switch (type) {
