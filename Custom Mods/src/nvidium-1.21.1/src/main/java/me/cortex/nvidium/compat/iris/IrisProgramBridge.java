@@ -23,6 +23,7 @@ import net.irisshaders.iris.uniforms.CommonUniforms;
 import net.irisshaders.iris.uniforms.builtin.BuiltinReplacementUniforms;
 import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.util.Collections;
 import java.util.List;
@@ -146,11 +147,15 @@ public final class IrisProgramBridge {
             return null;
         }
 
-        // 3. Varying matching: parse the pack's VERTEX out declarations and generate the matching
-        //    mesh-shader output block + writer function (findings Q4). Vertex source may be absent
-        //    (composite fallbacks) -> empty list -> standard defaults only.
+        // 3. Varying matching: parse the PATCHED FRAGMENT's `in` declarations and generate the
+        //    matching mesh-shader output block + writer function (findings Q4). The fragment is the
+        //    authoritative consumer contract -- the mesh `out` interface must cover exactly its
+        //    `in` set (every name, with identical type + interpolation qualifier), or the program
+        //    fails to link with "<name> not declared as input from previous stage". Driving off the
+        //    vertex `out` set is wrong: it can miss Iris-injected inputs (e.g. iris_FogFragCoord)
+        //    and multi-variable declarations the vertex stage never wrote.
         List<IrisVaryingMapper.Varying> varyings =
-                IrisVaryingMapper.parseVertexOut(source.getVertexSource().orElse(null));
+                IrisVaryingMapper.parseFragmentIn(patchedFragment);
         String varyingGlsl = IrisVaryingMapper.generateMeshVaryingGlsl(varyings);
 
         // 4. Load Nvidium's task + mesh GLSL in IRIS_PASS mode and splice in the generated block.
@@ -218,13 +223,16 @@ public final class IrisProgramBridge {
 
     /**
      * On a compile/link failure, write the full generated source of each stage to
-     * {@code run/nvidium-iris-dump/<pass>-<stage>.glsl} so the next gate can inspect exactly what
-     * was generated. Fully defensive: any IO error is swallowed and never changes control flow.
+     * {@code <gamedir>/nvidium-iris-dump/<pass>-<stage>.glsl} so the next gate can inspect exactly
+     * what was generated. Anchored at {@link FMLPaths#GAMEDIR} (the {@code run/} directory) rather
+     * than a CWD-relative {@code run/...} path, which previously doubled to {@code run/run/...}
+     * because the process CWD is already {@code run/}. Fully defensive: any IO error is swallowed
+     * and never changes control flow (including a missing/unready FMLPaths).
      */
     private static void dumpGeneratedSources(TerrainRenderPass pass, String taskSrc,
                                              String meshSrc, String fragmentSrc) {
         try {
-            java.nio.file.Path dir = java.nio.file.Paths.get("run", "nvidium-iris-dump");
+            java.nio.file.Path dir = FMLPaths.GAMEDIR.get().resolve("nvidium-iris-dump");
             java.nio.file.Files.createDirectories(dir);
             String label = sanitizePassLabel(pass);
             writeDumpFile(dir.resolve(label + "-task.glsl"), taskSrc);
