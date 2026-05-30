@@ -1,0 +1,8 @@
+# Upstream Complementary GLSL + binaries + raw captures stay LOCAL until the
+# license review (Task 6) clears redistribution. Track only our own docs.
+stock/
+work/
+measurements/**/*.png
+measurements/**/*.jpg
+measurements/**/*.jpeg
+measurements/**/*.zip
