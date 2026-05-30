@@ -2,6 +2,7 @@ package me.cortex.nvidium.mixin.sodium;
 
 import it.unimi.dsi.fastutil.longs.Long2ReferenceMap;
 import me.cortex.nvidium.Nvidium;
+import me.cortex.nvidium.RenderMode;
 import me.cortex.nvidium.NvidiumWorldRenderer;
 import me.cortex.nvidium.config.TranslucencySortingLevel;
 import me.cortex.nvidium.managers.AsyncOcclusionTracker;
@@ -50,7 +51,8 @@ public class MixinRenderSectionManager implements INvidiumWorldRendererGetter {
 
     @Unique
     private static void updateNvidiumIsEnabled() {
-        Nvidium.IS_ENABLED = (!Nvidium.FORCE_DISABLE) && Nvidium.IS_COMPATIBLE && IrisCheck.checkIrisShouldDisable();
+        Nvidium.MODE = RenderMode.resolve();
+        Nvidium.IS_ENABLED = Nvidium.MODE != RenderMode.DISABLED;
 
         // Disable sodium translucency sorting since nvidium is doing it
         if (Nvidium.IS_ENABLED && Nvidium.config.translucency_sorting_level == TranslucencySortingLevel.SODIUM) {
