@@ -1,0 +1,49 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version}"
+license = "LGPL-3.0"
+
+[[mods]]
+    modId = "nvidium"
+    version = "${version}"
+    displayName = "Nvidium"
+    description = "Alternate rendering backend for Sodium that uses NVIDIA mesh shaders to render huge amounts of terrain at high framerates. Requires an NVIDIA Turing+ GPU (GTX 1600-series / RTX 2000-series or newer)."
+    authors = "Cortex"
+    credits = "Contributor: Drouarb"
+    logoFile = "assets/nvidium/nvidium.png"
+
+# Preserves Nvidium's "<version>-<commit>" string read in Nvidium.java's static init.
+[modproperties.nvidium]
+    commit = "${commit}"
+
+[[mixins]]
+    config = "nvidium.mixins.json"
+
+[[dependencies.nvidium]]
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[${neoforge_version},)"
+    ordering = "NONE"
+    side = "CLIENT"
+
+[[dependencies.nvidium]]
+    modId = "minecraft"
+    type = "required"
+    versionRange = "[${minecraft_version},1.21.2)"
+    ordering = "NONE"
+    side = "CLIENT"
+
+# Required: Nvidium hooks Sodium internals via mixins; it must load AFTER Sodium.
+[[dependencies.nvidium]]
+    modId = "sodium"
+    type = "required"
+    versionRange = "[0.6.13,0.7)"
+    ordering = "AFTER"
+    side = "CLIENT"
+
+# Soft-compat: Iris shader detection (compileOnly at build time).
+[[dependencies.nvidium]]
+    modId = "iris"
+    type = "optional"
+    versionRange = "[1.8.0,)"
+    ordering = "AFTER"
+    side = "CLIENT"
