@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Nvidium {
-    public static final String MOD_VERSION;
+    private static String modVersion;
     public static final Logger LOGGER = LoggerFactory.getLogger("Nvidium");
     public static boolean IS_COMPATIBLE = false;
     public static boolean IS_ENABLED = false;
@@ -18,13 +18,20 @@ public class Nvidium {
 
     public static NvidiumConfig config = NvidiumConfig.loadOrCreate();
 
-    static {
-        var mod = ModList.get().getModContainerById("nvidium")
-                .orElseThrow(NullPointerException::new)
-                .getModInfo();
-        var version = mod.getVersion().toString();
-        var commit = String.valueOf(mod.getModProperties().get("commit"));
-        MOD_VERSION = version+"-"+commit;
+    // Computed lazily on first access (the debug HUD), NOT in a static
+    // initializer: Nvidium is class-loaded during Window.<init>, which runs
+    // before NeoForge populates ModList.get(). Touching ModList that early
+    // NPEs. By the time the HUD reads the version, mod loading is complete.
+    public static String getModVersion() {
+        if (modVersion == null) {
+            var mod = ModList.get().getModContainerById("nvidium")
+                    .orElseThrow(NullPointerException::new)
+                    .getModInfo();
+            var version = mod.getVersion().toString();
+            var commit = String.valueOf(mod.getModProperties().get("commit"));
+            modVersion = version + "-" + commit;
+        }
+        return modVersion;
     }
 
     public static void checkSystemIsCapable() {
