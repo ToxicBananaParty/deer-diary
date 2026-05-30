@@ -173,21 +173,44 @@ public final class IrisProgramBridge {
         }
         meshSrc = spliceVaryings(meshSrc, varyingGlsl);
 
-        // 5. Link the mesh-shader program (TASK + MESH + patched FRAGMENT) via Nvidium's builder.
+        // 5. Link the mesh-shader program (TASK + MESH + patched or debug FRAGMENT) via Nvidium's builder.
+        //
+        // Debug-fragment isolation mode (-Dnvidium.iris.debug=<mode>):
+        //   When set, replaces the shaderpack fragment with a minimal GLSL shader that declares the
+        //   SAME 'in' interface as the mesh 'out' (so it links) and writes a solid diagnostic color
+        //   to draw-buffer 0.  Complementary Unbound is a DEFERRED pack, so the debug color lands in
+        //   a gbuffer attachment (colortex0 / albedo) and IS re-processed by composite passes — but
+        //   gross geometry / depth shredding will still be visible, and varying visualization remains
+        //   indicative.  To see the raw output, disable post-processing or use a forward-only pack.
+        //   Supported modes: flat, normal, pos, uv, lm.  Unknown mode → magenta (1,0,1,1).
+        String debugMode = System.getProperty("nvidium.iris.debug");
+        String activeFragmentSrc = patchedFragment;
+        if (debugMode != null && !debugMode.isEmpty()) {
+            Nvidium.LOGGER.info("Nvidium-Iris: DEBUG fragment mode '{}' active", debugMode);
+            activeFragmentSrc = buildDebugFragment(varyings, debugMode);
+        }
+
         Shader shader;
         try {
             shader = Shader.make()
                     .addSource(TASK, taskSrc)
                     .addSource(MESH, meshSrc)
-                    .addSource(FRAGMENT, patchedFragment)
+                    .addSource(FRAGMENT, activeFragmentSrc)
                     .compile();
         } catch (RuntimeException e) {
             // Dump the full generated source of each stage so the next gate can inspect exactly
             // what we fed the GLSL compiler. Best-effort: IO failures here must not mask the
             // original compile failure or change control flow.
-            dumpGeneratedSources(pass, taskSrc, meshSrc, patchedFragment);
+            dumpGeneratedSources(pass, taskSrc, meshSrc, activeFragmentSrc, false);
             Nvidium.LOGGER.warn("Nvidium-Iris: compile/link failed for {} terrain program; pack unsupported", pass, e);
             return null;
+        }
+
+        // Success-dump (-Dnvidium.iris.dump=true):
+        //   Writes the exact GLSL fed to the compiler for each stage to run/nvidium-iris-dump/ so
+        //   an offline agent can inspect them without re-launching.  Off by default (no property set).
+        if (Boolean.getBoolean("nvidium.iris.dump")) {
+            dumpGeneratedSources(pass, taskSrc, meshSrc, activeFragmentSrc, true);
         }
 
         int programId = shaderHandle(shader);
@@ -236,15 +259,19 @@ public final class IrisProgramBridge {
     }
 
     /**
-     * On a compile/link failure, write the full generated source of each stage to
+     * Write the full generated source of each stage to
      * {@code <gamedir>/nvidium-iris-dump/<pass>-<stage>.glsl} so the next gate can inspect exactly
      * what was generated. Anchored at {@link FMLPaths#GAMEDIR} (the {@code run/} directory) rather
      * than a CWD-relative {@code run/...} path, which previously doubled to {@code run/run/...}
      * because the process CWD is already {@code run/}. Fully defensive: any IO error is swallowed
      * and never changes control flow (including a missing/unready FMLPaths).
+     *
+     * @param isSuccess {@code true} when called on a successful compile (gated by
+     *                  {@code -Dnvidium.iris.dump=true}); {@code false} on failure (always dumped).
+     *                  Affects only the log level (info vs warn).
      */
     private static void dumpGeneratedSources(TerrainRenderPass pass, String taskSrc,
-                                             String meshSrc, String fragmentSrc) {
+                                             String meshSrc, String fragmentSrc, boolean isSuccess) {
         try {
             java.nio.file.Path dir = FMLPaths.GAMEDIR.get().resolve("nvidium-iris-dump");
             java.nio.file.Files.createDirectories(dir);
@@ -252,10 +279,16 @@ public final class IrisProgramBridge {
             writeDumpFile(dir.resolve(label + "-task.glsl"), taskSrc);
             writeDumpFile(dir.resolve(label + "-mesh.glsl"), meshSrc);
             writeDumpFile(dir.resolve(label + "-fragment.glsl"), fragmentSrc);
-            Nvidium.LOGGER.warn("Nvidium-Iris: dumped generated shader source for {} to {}",
-                    pass, dir.toAbsolutePath());
+            if (isSuccess) {
+                Nvidium.LOGGER.info("Nvidium-Iris: dumped generated shader source (success) for {} to {}",
+                        pass, dir.toAbsolutePath());
+            } else {
+                Nvidium.LOGGER.warn("Nvidium-Iris: dumped generated shader source (failure) for {} to {}",
+                        pass, dir.toAbsolutePath());
+            }
         } catch (Throwable ignored) {
-            // Best-effort only; never let a dump failure mask the real compile error.
+            // Best-effort only; never let a dump failure mask the real compile error or the
+            // successful program being returned.
         }
     }
 
@@ -265,6 +298,133 @@ public final class IrisProgramBridge {
         } catch (Throwable ignored) {
             // best-effort per file
         }
+    }
+
+    /**
+     * Build a minimal debug GLSL fragment that links against the mesh stage's {@code out} interface
+     * (same {@code in} declarations, same qualifier + type + name) and writes a solid diagnostic
+     * color to draw-buffer 0 of the bound gbuffer FBO.  Used by the {@code -Dnvidium.iris.debug}
+     * system property.
+     *
+     * <p>Supported modes and what they reveal:
+     * <ul>
+     *   <li>{@code flat}   – {@code vec4(1.0)} solid white.  If terrain is clean white with no
+     *       geometry shredding, geometry + depth are fine and the bug is in pack shading.  If still
+     *       shredded, the problem is upstream of shading (depth/FBO/geometry).</li>
+     *   <li>{@code normal} – {@code vec4(normal * 0.5 + 0.5, 1.0)}.  Visualises the view-space
+     *       normal varying (mapped by {@link IrisVaryingMapper}).</li>
+     *   <li>{@code pos}    – {@code vec4(fract(vertexPos), 1.0)}.  Position varying,
+     *       fractional part for colour variation.  Falls back to {@code worldPos} /
+     *       {@code playerPos} / {@code position} if the primary name is absent.</li>
+     *   <li>{@code uv}     – {@code vec4(texCoord, 0.0, 1.0)}.</li>
+     *   <li>{@code lm}     – {@code vec4(lmCoord, 0.0, 1.0)}.  Lightmap UV.</li>
+     *   <li>Unknown        – {@code vec4(1.0, 0.0, 1.0, 1.0)} magenta.</li>
+     * </ul>
+     *
+     * <p><b>Deferred-pipeline caveat:</b> Complementary Unbound is a DEFERRED shaderpack.  The
+     * debug color is written to a gbuffer attachment (likely colortex0 / albedo) and WILL be
+     * re-processed by composite passes (tonemapping, bloom, etc.).  Gross geometry / depth shredding
+     * remains visible through compositing; varying visualisation is still indicative for direction.
+     * To see the raw fragment output, use a forward-only pack or disable post-processing.
+     *
+     * <p>Guards: each mode checks via {@link IrisVaryingMapper#hasVarying} whether the required
+     * varying is actually present in the interface before referencing it.  If absent, falls back to
+     * solid white so the program still links and compiles without errors.  The method is fully
+     * defensive and never throws.
+     */
+    private static String buildDebugFragment(List<IrisVaryingMapper.Varying> varyings, String mode) {
+        // Declare 'in' varyings matching the mesh 'out' interface exactly.
+        String inDecls = IrisVaryingMapper.generateDebugFragmentInDecls(varyings);
+
+        // Determine the color expression for the requested mode.
+        String colorExpr;
+        switch (mode) {
+            case "flat": {
+                colorExpr = "vec4(1.0)";
+                break;
+            }
+            case "normal": {
+                IrisVaryingMapper.Varying v = IrisVaryingMapper.findVarying(varyings, "normal");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "vnormal");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "viewnormal");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "worldnormal");
+                if (v != null) {
+                    // Normal is always vec3 or vec4; both support component-wise multiply + add.
+                    // Extract the xyz component if vec4 to avoid a vec4*0.5+0.5,1.0 ambiguity.
+                    String ref = v.type().equals("vec4") ? v.name() + ".xyz" : v.name();
+                    colorExpr = "vec4(" + ref + " * 0.5 + 0.5, 1.0)";
+                } else {
+                    colorExpr = "vec4(1.0)"; // fallback: normal varying absent
+                }
+                break;
+            }
+            case "pos": {
+                // Try several position varying name conventions in priority order.
+                IrisVaryingMapper.Varying v = IrisVaryingMapper.findVarying(varyings, "vertexpos");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "worldpos");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "playerpos");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "position");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "vposition");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "scenepos");
+                if (v != null) {
+                    // Use .xyz so the result is always vec3 regardless of whether declared as vec4.
+                    String ref = v.type().equals("vec4") ? v.name() + ".xyz" : v.name();
+                    colorExpr = "vec4(fract(" + ref + "), 1.0)";
+                } else {
+                    colorExpr = "vec4(1.0)"; // fallback: no position varying found
+                }
+                break;
+            }
+            case "uv": {
+                IrisVaryingMapper.Varying v = IrisVaryingMapper.findVarying(varyings, "texcoord");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "uv");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "vtexcoord");
+                if (v != null) {
+                    String ref = v.type().equals("vec4") ? v.name() + ".xy" : v.name();
+                    colorExpr = "vec4(" + ref + ", 0.0, 1.0)";
+                } else {
+                    colorExpr = "vec4(1.0)";
+                }
+                break;
+            }
+            case "lm": {
+                IrisVaryingMapper.Varying v = IrisVaryingMapper.findVarying(varyings, "lmcoord");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "lightmapcoord");
+                if (v == null) v = IrisVaryingMapper.findVarying(varyings, "light");
+                if (v != null) {
+                    String ref = v.type().equals("vec4") ? v.name() + ".xy" : v.name();
+                    colorExpr = "vec4(" + ref + ", 0.0, 1.0)";
+                } else {
+                    colorExpr = "vec4(1.0)";
+                }
+                break;
+            }
+            default: {
+                colorExpr = "vec4(1.0, 0.0, 1.0, 1.0)"; // magenta — unknown mode
+                break;
+            }
+        }
+
+        // Assemble the complete fragment shader.
+        // No layout qualifier on the out — binds to draw-buffer 0 by default (index 0 = first
+        // color attachment of the bound gbuffer FBO, which is what the pack's terrain fragment
+        // also writes to).
+        return "#version 460\n" +
+                "\n" +
+                "// Nvidium-Iris diagnostic fragment (mode: " + mode + ").\n" +
+                "// Replaces the shaderpack fragment when -Dnvidium.iris.debug is set.\n" +
+                "// DEFERRED-PIPELINE CAVEAT: this color is written to a gbuffer attachment\n" +
+                "// (colortex0/albedo) and WILL be re-processed by Complementary's composite\n" +
+                "// passes (tonemapping, bloom, etc.). Gross geometry/depth shredding remains\n" +
+                "// visible through compositing. For raw output use a forward-only pack.\n" +
+                "\n" +
+                inDecls +
+                "\n" +
+                "out vec4 nvidium_debugColor;\n" +
+                "\n" +
+                "void main() {\n" +
+                "    nvidium_debugColor = " + colorExpr + ";\n" +
+                "}\n";
     }
 
     /** Turn a pass into a filename-safe label (the pass toString may contain odd characters). */

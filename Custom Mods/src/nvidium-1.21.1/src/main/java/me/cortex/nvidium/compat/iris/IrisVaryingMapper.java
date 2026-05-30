@@ -305,6 +305,61 @@ final class IrisVaryingMapper {
         return zeroFor(type);
     }
 
+    /**
+     * Generate the {@code in} varying declarations for a debug fragment that links against the mesh
+     * stage's {@code out} interface. The generated block mirrors the mesh {@code out} declarations
+     * produced by {@link #generateMeshVaryingGlsl} exactly (same qualifier, type, name) but uses
+     * {@code in} instead of {@code out []}, so the debug fragment compiles against the same interface
+     * the pack fragment would see.
+     *
+     * <p>Returns a GLSL string of the form:
+     * <pre>{@code
+     * flat in int mc_Entity;
+     * in vec2 texCoord;
+     * ...
+     * }</pre>
+     */
+    static String generateDebugFragmentInDecls(List<Varying> varyings) {
+        StringBuilder sb = new StringBuilder();
+        for (Varying v : varyings) {
+            String q = v.qualifier().isEmpty() ? "" : v.qualifier() + " ";
+            sb.append(q).append("in ").append(v.type()).append(" ").append(v.name()).append(";\n");
+        }
+        return sb.toString();
+    }
+
+    /** Return true if the given name (case-insensitive) appears in the varying list. */
+    static boolean hasVarying(List<Varying> varyings, String name) {
+        String lower = name.toLowerCase();
+        for (Varying v : varyings) {
+            if (v.name().toLowerCase().equals(lower)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Return the actual case-preserved name of a varying matching the given lowercase name, or null.
+     * Used so the debug fragment references the exact identifier that was declared.
+     */
+    static String findVaryingName(List<Varying> varyings, String lowerName) {
+        for (Varying v : varyings) {
+            if (v.name().toLowerCase().equals(lowerName)) return v.name();
+        }
+        return null;
+    }
+
+    /**
+     * Return the full {@link Varying} record whose name matches the given lowercase name, or null.
+     * Useful when both the name AND the type are needed (e.g. to generate a type-safe color expression
+     * in the debug fragment without extra over-constructor arguments).
+     */
+    static Varying findVarying(List<Varying> varyings, String lowerName) {
+        for (Varying v : varyings) {
+            if (v.name().toLowerCase().equals(lowerName)) return v;
+        }
+        return null;
+    }
+
     /** Type-appropriate zero/identity literal. */
     private static String zeroFor(String type) {
         switch (type) {
