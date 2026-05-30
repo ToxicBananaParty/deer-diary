@@ -46,15 +46,22 @@ dependencies {
     // Required, compile + dev runtime.
     implementation "maven.modrinth:sodium:${project.sodium_version}"
 
-    // Soft-compat deps. compileOnly for build; clientAdditionalRuntimeClasspath puts
-    // them on the runClient classpath only (ModDevGradle equivalent of localRuntime).
-    compileOnly "maven.modrinth:iris:${project.iris_version}"
-    compileOnly "maven.modrinth:distanthorizons:${project.distanthorizons_version}"
-    compileOnly "maven.modrinth:colorwheel:${project.colorwheel_version}"
+    // Soft-compat deps declared as `implementation` so the dev runClient actually
+    // loads them AS MODS: ModDevGradle's FML dev mod-discovery scans implementation
+    // jars that carry a neoforge.mods.toml (proven by Sodium above), whereas
+    // `clientAdditionalRuntimeClasspath` only puts them on the classpath and they
+    // are NOT mod-loaded. Runtime optionality in the published pack is governed by
+    // the `optional` dependency entries in neoforge.mods.toml, not the Gradle scope,
+    // and all references are guarded by ModList.isLoaded(...), so the mod still
+    // loads fine when these are absent.
+    implementation "maven.modrinth:iris:${project.iris_version}"
+    implementation "maven.modrinth:distanthorizons:${project.distanthorizons_version}"
 
-    clientAdditionalRuntimeClasspath "maven.modrinth:iris:${project.iris_version}"
-    clientAdditionalRuntimeClasspath "maven.modrinth:distanthorizons:${project.distanthorizons_version}"
-    clientAdditionalRuntimeClasspath "maven.modrinth:colorwheel:${project.colorwheel_version}"
+    // Colorwheel is only needed for Phase 4 (Colorwheel coexistence). It hard-requires
+    // Flywheel/Create, which aren't on the dev classpath yet, so keep it compileOnly
+    // for now (off the dev runtime so it can't crash on missing deps). Phase 4 promotes
+    // it to a loaded mod alongside Flywheel/Create.
+    compileOnly "maven.modrinth:colorwheel:${project.colorwheel_version}"
 }
 
 // Short git commit baked into mods.toml's [modproperties.nvidium].commit so
