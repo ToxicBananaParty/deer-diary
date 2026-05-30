@@ -1,7 +1,7 @@
 package me.cortex.nvidium.compat.iris;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import me.cortex.nvidium.Nvidium;
+import me.cortex.nvidium.mixin.minecraft.LightTextureAccessor;
 import net.caffeinemc.mods.sodium.client.render.chunk.ChunkRenderMatrices;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.irisshaders.iris.gl.IrisRenderSystem;
@@ -12,6 +12,7 @@ import net.irisshaders.iris.gl.texture.TextureType;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.samplers.IrisSamplers;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Per-pass FBO bind / program setup / restore for the Nvidium &harr; Iris terrain integration.
@@ -59,13 +60,23 @@ public final class IrisGbufferBinder {
 
             program.bind();
 
-            // Bind block atlas (unit 0) and lightmap (unit 2) manually — Sodium does the same; the
-            // patched fragment samples gtexture/tex from unit 0 and lightmap from unit 2.
+            // Bind block atlas and lightmap explicitly, mirroring PrimaryTerrainRasterizer's vanilla
+            // path. At Nvidium's terrain-render point RenderSystem.getShaderTexture(0) is NOT the
+            // block atlas (it holds whatever the last Sodium/vanilla draw left there), so reading it
+            // produces black albedo. We fetch the real IDs the same way the vanilla rasterizer does.
             Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
-            IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), 0,
-                    RenderSystem.getShaderTexture(0));
+
+            // Block atlas → unit 0 (the `gtexture`/`tex` sampler in the Sodium-style fragment).
+            int blockAtlasId = Minecraft.getInstance().getTextureManager()
+                    .getTexture(ResourceLocation.fromNamespaceAndPath("minecraft", "textures/atlas/blocks.png"))
+                    .getId();
+            IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(), 0, blockAtlasId);
+
+            // Lightmap → Iris's designated lightmap unit (IrisSamplers.LIGHTMAP_TEXTURE_UNIT).
+            int lightmapId = ((LightTextureAccessor) Minecraft.getInstance().gameRenderer.lightTexture())
+                    .getLightTexture().getId();
             IrisRenderSystem.bindTextureToUnit(TextureType.TEXTURE_2D.getGlType(),
-                    IrisSamplers.LIGHTMAP_TEXTURE_UNIT, RenderSystem.getShaderTexture(2));
+                    IrisSamplers.LIGHTMAP_TEXTURE_UNIT, lightmapId);
 
             // Matrices first (some custom uniforms may depend on them), then dynamic push.
             program.setMatrices(matrices.modelView(), matrices.projection());
