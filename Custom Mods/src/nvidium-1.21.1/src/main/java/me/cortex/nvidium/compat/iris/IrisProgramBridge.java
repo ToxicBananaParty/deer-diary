@@ -1,0 +1,265 @@
+package me.cortex.nvidium.compat.iris;
+
+import me.cortex.nvidium.Nvidium;
+import me.cortex.nvidium.gl.shader.Shader;
+import me.cortex.nvidium.gl.shader.ShaderType;
+import me.cortex.nvidium.sodiumCompat.ShaderLoader;
+import net.caffeinemc.mods.sodium.client.render.chunk.terrain.DefaultTerrainRenderPasses;
+import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
+import net.irisshaders.iris.gl.blending.AlphaTest;
+import net.irisshaders.iris.gl.blending.AlphaTests;
+import net.irisshaders.iris.gl.program.ProgramImages;
+import net.irisshaders.iris.gl.program.ProgramSamplers;
+import net.irisshaders.iris.gl.program.ProgramUniforms;
+import net.irisshaders.iris.gl.state.FogMode;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
+import net.irisshaders.iris.pipeline.transform.PatchShaderType;
+import net.irisshaders.iris.pipeline.transform.TransformPatcher;
+import net.irisshaders.iris.samplers.IrisSamplers;
+import net.irisshaders.iris.shaderpack.loading.ProgramId;
+import net.irisshaders.iris.shaderpack.programs.ProgramFallbackResolver;
+import net.irisshaders.iris.shaderpack.programs.ProgramSource;
+import net.irisshaders.iris.uniforms.CommonUniforms;
+import net.irisshaders.iris.uniforms.builtin.BuiltinReplacementUniforms;
+import net.irisshaders.iris.uniforms.custom.CustomUniforms;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.function.Supplier;
+
+import static me.cortex.nvidium.gl.shader.ShaderType.FRAGMENT;
+import static me.cortex.nvidium.gl.shader.ShaderType.MESH;
+import static me.cortex.nvidium.gl.shader.ShaderType.TASK;
+
+/**
+ * Builds and caches the mesh-shader terrain programs that pair Nvidium's task + mesh stages with
+ * the active shaderpack's Iris-patched terrain FRAGMENT shader, for the SOLID / CUTOUT /
+ * TRANSLUCENT passes. Structurally mirrors Iris's {@code IrisLodRenderProgram} (the DH LOD
+ * integration) but uses Nvidium's NV_mesh_shader pipeline in place of a conventional vertex stage.
+ *
+ * <h2>Fallback floor</h2>
+ * Any failure to resolve, patch, compile, or link a pass marks the WHOLE pipeline unsupported
+ * (cached as {@link #FAILED}) and returns {@code null}, so {@code NvidiumIrisCompat.supportsActivePack()}
+ * yields and Nvidium falls back to Sodium+Iris. This class never throws to its callers.
+ *
+ * <h2>Lifecycle</h2>
+ * Results are cached per {@link IrisRenderingPipeline} instance in a {@link WeakHashMap}; when Iris
+ * rebuilds its pipeline (shaderpack reload / resolution change) a fresh instance misses the cache
+ * and is rebuilt. The GL programs leak until GC frees the map entry; acceptable for this
+ * research-grade compile-gate (a destroy hook is a later task, see findings note 5).
+ */
+public final class IrisProgramBridge {
+    private IrisProgramBridge() {}
+
+    /** Sentinel cached when a pipeline's program build failed, so we don't retry every frame. */
+    private static final BuiltPrograms FAILED = new BuiltPrograms(Collections.emptyMap());
+
+    private static final Map<IrisRenderingPipeline, BuiltPrograms> CACHE = new WeakHashMap<>();
+
+    /** The three terrain passes this task covers. Shadow is deferred (findings: later task). */
+    private static final TerrainRenderPass[] PASSES = {
+            DefaultTerrainRenderPasses.SOLID,
+            DefaultTerrainRenderPasses.CUTOUT,
+            DefaultTerrainRenderPasses.TRANSLUCENT,
+    };
+
+    /**
+     * Return the built programs for this pipeline, building+caching on first use. Returns
+     * {@code null} if the pack is unsupported (any pass failed to build). Never throws.
+     */
+    public static synchronized BuiltPrograms getOrBuild(IrisRenderingPipeline pipeline) {
+        BuiltPrograms cached = CACHE.get(pipeline);
+        if (cached != null) {
+            return cached == FAILED ? null : cached;
+        }
+        BuiltPrograms built;
+        try {
+            built = build(pipeline);
+        } catch (Throwable t) {
+            Nvidium.LOGGER.warn("Nvidium-Iris: terrain program build failed; pack unsupported, yielding to Sodium+Iris", t);
+            built = null;
+        }
+        CACHE.put(pipeline, built == null ? FAILED : built);
+        return built;
+    }
+
+    private static BuiltPrograms build(IrisRenderingPipeline pipeline) {
+        ProgramFallbackResolver resolver =
+                ((NvidiumIrisRenderingPipelineAccessor) pipeline).nvidium$getResolver();
+        CustomUniforms customUniforms = pipeline.getCustomUniforms();
+
+        Map<TerrainRenderPass, IrisTerrainProgram> programs = new EnumMapPasses();
+
+        for (TerrainRenderPass pass : PASSES) {
+            ProgramId programId = programIdFor(pass);
+            ProgramSource source = resolver.resolveNullable(programId);
+            if (source == null) {
+                // The pack has no terrain program for this pass at all -> can't integrate.
+                Nvidium.LOGGER.warn("Nvidium-Iris: no shaderpack program for {} ({}); pack unsupported",
+                        pass, programId);
+                return null;
+            }
+            IrisTerrainProgram program = buildPass(pipeline, customUniforms, pass, source);
+            if (program == null) {
+                return null; // any pass failing fails the whole pack
+            }
+            programs.put(pass, program);
+        }
+
+        Nvidium.LOGGER.info("Nvidium-Iris: built terrain programs for SOLID/CUTOUT/TRANSLUCENT");
+        return new BuiltPrograms(programs);
+    }
+
+    private static IrisTerrainProgram buildPass(IrisRenderingPipeline pipeline,
+                                                CustomUniforms customUniforms,
+                                                TerrainRenderPass pass,
+                                                ProgramSource source) {
+        boolean translucent = pass == DefaultTerrainRenderPasses.TRANSLUCENT;
+        boolean cutout = pass == DefaultTerrainRenderPasses.CUTOUT;
+
+        // 1. Alpha test: mirror SodiumPrograms.getAlphaTest (cutout defaults to 1/10 alpha).
+        AlphaTest alpha = source.getDirectives().getAlphaTestOverride()
+                .orElse(cutout ? AlphaTests.ONE_TENTH_ALPHA : AlphaTest.ALWAYS);
+
+        // 2. Patch the FRAGMENT through Iris's Sodium transformer (vertex/geometry/tess = null;
+        //    Nvidium supplies the mesh stage). Arg order matches SodiumPrograms.transformShaders.
+        String rawFragment = source.getFragmentSource().orElse(null);
+        if (rawFragment == null) {
+            Nvidium.LOGGER.warn("Nvidium-Iris: {} program has no fragment source; pack unsupported", pass);
+            return null;
+        }
+        Map<PatchShaderType, String> transformed = TransformPatcher.patchSodium(
+                source.getName(),
+                null,   // vertex
+                null,   // geometry
+                null,   // tessControl
+                null,   // tessEval
+                rawFragment,
+                alpha,
+                pipeline.getTextureMap());
+        String patchedFragment = transformed.get(PatchShaderType.FRAGMENT);
+        if (patchedFragment == null) {
+            Nvidium.LOGGER.warn("Nvidium-Iris: fragment patch produced null for {}; pack unsupported", pass);
+            return null;
+        }
+
+        // 3. Varying matching: parse the pack's VERTEX out declarations and generate the matching
+        //    mesh-shader output block + writer function (findings Q4). Vertex source may be absent
+        //    (composite fallbacks) -> empty list -> standard defaults only.
+        List<IrisVaryingMapper.Varying> varyings =
+                IrisVaryingMapper.parseVertexOut(source.getVertexSource().orElse(null));
+        String varyingGlsl = IrisVaryingMapper.generateMeshVaryingGlsl(varyings);
+
+        // 4. Load Nvidium's task + mesh GLSL in IRIS_PASS mode and splice in the generated block.
+        String taskSrc;
+        String meshSrc;
+        if (translucent) {
+            taskSrc = ShaderLoader.parse(rl("terrain/translucent/task.glsl"), b -> b.add("IRIS_PASS"));
+            meshSrc = ShaderLoader.parse(rl("terrain/translucent/mesh.glsl"), b -> b.add("IRIS_PASS"));
+        } else {
+            taskSrc = ShaderLoader.parse(rl("terrain/task.glsl"), b -> b.add("IRIS_PASS"));
+            meshSrc = ShaderLoader.parse(rl("terrain/mesh.glsl"), b -> b.add("IRIS_PASS"));
+        }
+        meshSrc = spliceVaryings(meshSrc, varyingGlsl);
+
+        // 5. Link the mesh-shader program (TASK + MESH + patched FRAGMENT) via Nvidium's builder.
+        Shader shader;
+        try {
+            shader = Shader.make()
+                    .addSource(TASK, taskSrc)
+                    .addSource(MESH, meshSrc)
+                    .addSource(FRAGMENT, patchedFragment)
+                    .compile();
+        } catch (RuntimeException e) {
+            Nvidium.LOGGER.warn("Nvidium-Iris: compile/link failed for {} terrain program; pack unsupported", pass, e);
+            return null;
+        }
+
+        int programId = shaderHandle(shader);
+
+        // 6. Build ProgramUniforms / ProgramSamplers / ProgramImages, mirroring IrisLodRenderProgram.
+        Supplier<com.google.common.collect.ImmutableSet<Integer>> flipState =
+                translucent ? pipeline::getFlippedAfterTranslucent : pipeline::getFlippedAfterPrepare;
+
+        ProgramUniforms.Builder uniformBuilder = ProgramUniforms.builder("nvidium_iris_" + pass, programId);
+        ProgramSamplers.Builder samplerBuilder =
+                ProgramSamplers.builder(programId, IrisSamplers.SODIUM_RESERVED_TEXTURE_UNITS);
+        ProgramImages.Builder imageBuilder = ProgramImages.builder(programId);
+
+        CommonUniforms.addDynamicUniforms(uniformBuilder, FogMode.PER_VERTEX);
+        customUniforms.assignTo(uniformBuilder);
+        BuiltinReplacementUniforms.addBuiltinReplacementUniforms(uniformBuilder);
+
+        // 7-arg addGbufferOrShadowSamplers: (samplerHolder, imageHolder, flipState, isShadowPass,
+        //    hasTexture, hasLightmap, hasOverlay). Terrain: not shadow, has block atlas + lightmap,
+        //    no overlay. Verified against the Iris 1.8.12 bytecode.
+        pipeline.addGbufferOrShadowSamplers(samplerBuilder, imageBuilder, flipState,
+                false, true, true, false);
+
+        // The program object acts as the opaque "pass" key for custom uniforms (the API takes an
+        // Object; no WrappedUniformHolder interface exists in this Iris version).
+        IrisTerrainProgram program = new IrisTerrainProgram(programId, shader, customUniforms);
+        customUniforms.mapholderToPass(uniformBuilder, program);
+
+        program.finishBuild(
+                uniformBuilder.buildUniforms(),
+                samplerBuilder.build(),
+                imageBuilder.build());
+
+        return program;
+    }
+
+    /** Replace the //__NVIDIUM_IRIS_VARYINGS__ marker (added to the mesh asset) with generated GLSL. */
+    private static String spliceVaryings(String meshSrc, String varyingGlsl) {
+        final String marker = "//__NVIDIUM_IRIS_VARYINGS__";
+        if (!meshSrc.contains(marker)) {
+            throw new IllegalStateException("Nvidium-Iris: mesh shader is missing the IRIS varying marker");
+        }
+        return meshSrc.replace(marker, varyingGlsl);
+    }
+
+    private static ProgramId programIdFor(TerrainRenderPass pass) {
+        if (pass == DefaultTerrainRenderPasses.SOLID) return ProgramId.TerrainSolid;
+        if (pass == DefaultTerrainRenderPasses.CUTOUT) return ProgramId.TerrainCutout;
+        if (pass == DefaultTerrainRenderPasses.TRANSLUCENT) return ProgramId.Water;
+        throw new IllegalArgumentException("Unknown terrain pass: " + pass);
+    }
+
+    private static ResourceLocation rl(String path) {
+        return ResourceLocation.fromNamespaceAndPath("nvidium", path);
+    }
+
+    /** Read the raw GL program handle out of a Nvidium {@link Shader}. */
+    private static int shaderHandle(Shader shader) {
+        return shader.getId();
+    }
+
+    /** Immutable bundle of the built per-pass programs for one pipeline. */
+    public static final class BuiltPrograms {
+        private final Map<TerrainRenderPass, IrisTerrainProgram> programs;
+
+        BuiltPrograms(Map<TerrainRenderPass, IrisTerrainProgram> programs) {
+            this.programs = programs;
+        }
+
+        /** May be null for passes not built (none, currently — all three are required). */
+        public IrisTerrainProgram get(TerrainRenderPass pass) {
+            return programs.get(pass);
+        }
+
+        void freeAll() {
+            for (IrisTerrainProgram p : programs.values()) {
+                p.free();
+            }
+        }
+    }
+
+    /**
+     * A plain HashMap-backed pass map (TerrainRenderPass instances aren't enum constants, so we
+     * can't use EnumMap). Named for readability at the call site.
+     */
+    private static final class EnumMapPasses extends java.util.HashMap<TerrainRenderPass, IrisTerrainProgram> {}
+}

@@ -1,6 +1,7 @@
 package me.cortex.nvidium.mixin.iris;
 
 import com.google.common.collect.ImmutableSet;
+import me.cortex.nvidium.compat.iris.NvidiumIrisRenderingPipelineAccessor;
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.shaderpack.programs.ProgramFallbackResolver;
 import net.irisshaders.iris.shadows.ShadowRenderTargets;
@@ -9,14 +10,13 @@ import net.irisshaders.iris.targets.RenderTargets;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 
 /**
  * Exposes private fields of IrisRenderingPipeline that Nvidium's Iris integration layer needs
  * to create custom framebuffers and resolve per-pass program sources.
  */
 @Mixin(value = IrisRenderingPipeline.class, remap = false)
-public abstract class NvidiumIrisRenderingPipelineMixin {
+public abstract class NvidiumIrisRenderingPipelineMixin implements NvidiumIrisRenderingPipelineAccessor {
 
     @Shadow @Final
     private RenderTargets renderTargets;
@@ -33,28 +33,28 @@ public abstract class NvidiumIrisRenderingPipelineMixin {
     @Shadow @Final
     private ProgramFallbackResolver resolver;
 
-    @Unique
+    @Override
     public RenderTargets nvidium$getRenderTargets() {
         return renderTargets;
     }
 
-    @Unique
+    @Override
     public ImmutableSet<Integer> nvidium$getFlippedAfterPrepare() {
         return flippedAfterPrepare;
     }
 
-    @Unique
+    @Override
     public ImmutableSet<Integer> nvidium$getFlippedAfterTranslucent() {
         return flippedAfterTranslucent;
     }
 
-    @Unique
+    @Override
     public ShadowRenderTargets nvidium$getShadowRenderTargets() {
         if (shadowRenderer == null) return null;
-        return ((NvidiumShadowRendererMixin) shadowRenderer).nvidium$getTargets();
+        return ((NvidiumShadowRendererMixin) (Object) shadowRenderer).nvidium$getTargets();
     }
 
-    @Unique
+    @Override
     public ProgramFallbackResolver nvidium$getResolver() {
         return resolver;
     }
