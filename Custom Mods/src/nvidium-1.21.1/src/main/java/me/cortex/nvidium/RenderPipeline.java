@@ -403,6 +403,13 @@ public class RenderPipeline {
             // shader if the bridge can't bind this frame. VANILLA mode skips all of this entirely.
             boolean iris = Nvidium.MODE == RenderMode.SHADERS
                     && IrisRenderBridge.beginPrimary(terrainRasterizer, crm);
+            if (iris) {
+                // Ensure the Iris terrain draw writes depth into the gbuffer depth attachment so the
+                // pack's depth-driven deferred/composite passes treat Nvidium terrain as SOLID, not
+                // sky (Complementary composites sky/fog over any pixel whose depth reads ~1.0).
+                org.lwjgl.opengl.GL11C.glDepthMask(true);
+                org.lwjgl.opengl.GL11C.glDepthFunc(org.lwjgl.opengl.GL11C.GL_LEQUAL);
+            }
             terrainRasterizer.raster(prevRegionCount, terrainCommandBuffer.getDeviceAddress(), primaryFrameTimeProfiler);
             if (iris) {
                 IrisRenderBridge.endPrimary(terrainRasterizer);

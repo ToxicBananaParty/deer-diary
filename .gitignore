@@ -38,6 +38,7 @@ prism-to-modrinth-sync/promote.py
 
 # --- Gradle / Java build cruft inside Custom Mods/src/* ---
 Custom Mods/src/*/build/
+Custom Mods/src/*/claude-reference/
 Custom Mods/src/*/.gradle/
 Custom Mods/src/*/bin/
 Custom Mods/src/*/out/
