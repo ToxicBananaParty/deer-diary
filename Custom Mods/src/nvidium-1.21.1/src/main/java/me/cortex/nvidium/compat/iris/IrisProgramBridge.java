@@ -174,6 +174,10 @@ public final class IrisProgramBridge {
                     .addSource(FRAGMENT, patchedFragment)
                     .compile();
         } catch (RuntimeException e) {
+            // Dump the full generated source of each stage so the next gate can inspect exactly
+            // what we fed the GLSL compiler. Best-effort: IO failures here must not mask the
+            // original compile failure or change control flow.
+            dumpGeneratedSources(pass, taskSrc, meshSrc, patchedFragment);
             Nvidium.LOGGER.warn("Nvidium-Iris: compile/link failed for {} terrain program; pack unsupported", pass, e);
             return null;
         }
@@ -210,6 +214,45 @@ public final class IrisProgramBridge {
                 imageBuilder.build());
 
         return program;
+    }
+
+    /**
+     * On a compile/link failure, write the full generated source of each stage to
+     * {@code run/nvidium-iris-dump/<pass>-<stage>.glsl} so the next gate can inspect exactly what
+     * was generated. Fully defensive: any IO error is swallowed and never changes control flow.
+     */
+    private static void dumpGeneratedSources(TerrainRenderPass pass, String taskSrc,
+                                             String meshSrc, String fragmentSrc) {
+        try {
+            java.nio.file.Path dir = java.nio.file.Paths.get("run", "nvidium-iris-dump");
+            java.nio.file.Files.createDirectories(dir);
+            String label = sanitizePassLabel(pass);
+            writeDumpFile(dir.resolve(label + "-task.glsl"), taskSrc);
+            writeDumpFile(dir.resolve(label + "-mesh.glsl"), meshSrc);
+            writeDumpFile(dir.resolve(label + "-fragment.glsl"), fragmentSrc);
+            Nvidium.LOGGER.warn("Nvidium-Iris: dumped generated shader source for {} to {}",
+                    pass, dir.toAbsolutePath());
+        } catch (Throwable ignored) {
+            // Best-effort only; never let a dump failure mask the real compile error.
+        }
+    }
+
+    private static void writeDumpFile(java.nio.file.Path path, String content) {
+        try {
+            java.nio.file.Files.writeString(path, content == null ? "" : content);
+        } catch (Throwable ignored) {
+            // best-effort per file
+        }
+    }
+
+    /** Turn a pass into a filename-safe label (the pass toString may contain odd characters). */
+    private static String sanitizePassLabel(TerrainRenderPass pass) {
+        String raw;
+        if (pass == DefaultTerrainRenderPasses.SOLID) raw = "solid";
+        else if (pass == DefaultTerrainRenderPasses.CUTOUT) raw = "cutout";
+        else if (pass == DefaultTerrainRenderPasses.TRANSLUCENT) raw = "translucent";
+        else raw = String.valueOf(pass);
+        return raw.replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
     /** Replace the //__NVIDIUM_IRIS_VARYINGS__ marker (added to the mesh asset) with generated GLSL. */
