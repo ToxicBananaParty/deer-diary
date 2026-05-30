@@ -26,7 +26,7 @@ layout(triangles, max_vertices=64, max_primitives=32) out;
 #ifdef IRIS_PASS
 // Iris terrain integration: the mesh shader emits the named varyings the active shaderpack's
 // patched fragment expects, instead of Nvidium's own Interpolants block. The declarations and the
-// nvidium$writeIrisVaryings(...) function are generated per-pack by IrisVaryingMapper and spliced
+// nvidium_writeIrisVaryings(...) function are generated per-pack by IrisVaryingMapper and spliced
 // in at this marker by IrisProgramBridge.
 //__NVIDIUM_IRIS_VARYINGS__
 #else
@@ -104,7 +104,7 @@ void putVertex(uint id, Vertex V) {
     vec3 p0 = decodeVertexPosition(V0) + origin;
     vec3 p2 = decodeVertexPosition(V2) + origin;
     vec3 nvFaceNormal = normalize(cross(p2 - p0, nvWorldPos - p0));
-    nvidium$writeIrisVaryings(id, V, nvWorldPos, nvFaceNormal);
+    nvidium_writeIrisVaryings(id, V, nvWorldPos, nvFaceNormal);
 #else
 #ifndef USE_NV_FRAGMENT_SHADER_BARYCENTRIC
     #ifdef RENDER_FOG

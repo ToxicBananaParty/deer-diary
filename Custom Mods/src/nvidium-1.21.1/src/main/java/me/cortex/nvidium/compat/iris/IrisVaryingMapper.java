@@ -68,9 +68,28 @@ final class IrisVaryingMapper {
             String name = m.group("name");
             // gl_* are builtins, never user varyings; ignore.
             if (name.startsWith("gl_")) continue;
+            // Defensive: only emit GLSL-legal identifiers. The regex already restricts to \w+,
+            // but a leading digit would make the spliced declaration illegal GLSL, so drop those
+            // (and anything else non-conforming) rather than poison the whole program.
+            if (!isLegalGlslIdentifier(name)) continue;
             byName.putIfAbsent(name, new Varying(type, name));
         }
         return new ArrayList<>(byName.values());
+    }
+
+    /** A GLSL identifier is {@code [A-Za-z_][A-Za-z0-9_]*} (ASCII only; no {@code $}). */
+    private static boolean isLegalGlslIdentifier(String s) {
+        if (s == null || s.isEmpty()) return false;
+        if (!isAsciiAlphaOrUnderscore(s.charAt(0))) return false;
+        for (int i = 1; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (!isAsciiAlphaOrUnderscore(c) && !(c >= '0' && c <= '9')) return false;
+        }
+        return true;
+    }
+
+    private static boolean isAsciiAlphaOrUnderscore(char c) {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
     }
 
     /** Strip // and block comments so they don't trip the declaration regex. */
@@ -81,17 +100,28 @@ final class IrisVaryingMapper {
     }
 
     /**
+     * Name of the generated writer function the mesh shaders call per emitted vertex. MUST stay in
+     * sync with the call sites in the {@code mesh.glsl} / {@code translucent/mesh.glsl} assets.
+     *
+     * <p>GLSL identifiers may only contain {@code [A-Za-z0-9_]} and must not contain {@code $}
+     * (the Java/mixin convention). Using {@code $} here is what made the NVIDIA GLSL compiler
+     * choke with {@code "void type not allowed"} / {@code unexpected $undefined}, so the generated
+     * name uses {@code _} instead.
+     */
+    static final String WRITER_FN = "nvidium_writeIrisVaryings";
+
+    /**
      * Build the GLSL fragment to splice into Nvidium's mesh shader: the {@code out} varying
-     * declarations plus a {@code nvidium$writeIrisVaryings} function that the mesh main loop calls
-     * per emitted vertex. {@code outIndexExpr} is the GLSL expression for the mesh output vertex
-     * index (e.g. {@code id} or {@code outId}). {@code vertexExpr} is the {@code Vertex} variable
-     * expression, {@code worldPosExpr} the per-vertex world-space position {@code vec3}.
+     * declarations plus a {@link #WRITER_FN} function that the mesh main loop calls per emitted
+     * vertex. The function takes the output vertex id, the {@code Vertex}, the per-vertex
+     * world-space position {@code vec3}, and a best-effort face-normal {@code vec3}.
      */
     static String generateMeshVaryingGlsl(List<Varying> varyings) {
         StringBuilder decls = new StringBuilder();
         StringBuilder body = new StringBuilder();
 
-        body.append("void nvidium$writeIrisVaryings(uint nvOutId, Vertex nvV, vec3 nvWorldPos, vec3 nvFaceNormal) {\n");
+        body.append("void ").append(WRITER_FN)
+                .append("(uint nvOutId, Vertex nvV, vec3 nvWorldPos, vec3 nvFaceNormal) {\n");
 
         int mapped = 0;
         List<String> defaulted = new ArrayList<>();

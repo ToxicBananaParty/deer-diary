@@ -75,7 +75,7 @@ void emitVertex(uint vertexBaseId, uint innerId) {
     vec3 q1 = decodeVertexPosition(terrainData[vertexBaseId + 1]) + originAndBaseData.xyz;
     vec3 q2 = decodeVertexPosition(terrainData[vertexBaseId + 2]) + originAndBaseData.xyz;
     vec3 nvFaceNormal = normalize(cross(q1 - q0, q2 - q0));
-    nvidium$writeIrisVaryings(outId, V, pos, nvFaceNormal);
+    nvidium_writeIrisVaryings(outId, V, pos, nvFaceNormal);
 #else
 #ifndef USE_NV_FRAGMENT_SHADER_BARYCENTRIC
     #ifdef RENDER_FOG
