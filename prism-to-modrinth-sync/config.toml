@@ -105,11 +105,6 @@ name = "deer-diary-patches"
 source_dir = "../Custom Mods/dist/deer-diary-patches"
 side = "both"
 
-[[custom_mods]]
-name = "nvidium"
-source_dir = "../Custom Mods/dist/nvidium"
-side = "client"
-
 # Datapack ships through the Packwiz pipeline as a self-hosted direct file.
 # Versionless filename → the custom-mod sync falls back to byte compare.
 [[custom_mods]]
@@ -175,11 +170,13 @@ preserve_globs = [
 # (e.g. kept as .jar.disabled by the pack maintainer) get force-emitted by
 # reading directly from mods/.index/<slug>.pw.toml.
 [packwiz.optional_mods]
-iris = { default = true, description = "Iris shader support. PAIR THIS CHECKBOX WITH COLORWHEEL: if you uncheck Iris, also uncheck Colorwheel - Colorwheel has Iris as a hard dependency, so NeoForge will refuse to launch with one but not the other. Disable both for vanilla rendering / FPS gains on weaker GPUs (then consider enabling Sodium Dynamic Lights below for torchlight)." }
+# Key is "iris-neoforge" (NOT "iris") on purpose: for self-hosted jars the
+# pipeline derives the option slug from the JAR filename, and our build is
+# iris-neoforge-1.8.13-snapshot+mc1.21.1-local.jar -> slug "iris-neoforge".
+# Must stay in lockstep with the "mods/iris-neoforge-*.jar" self_host glob above.
+iris-neoforge = { default = true, description = "Iris shader support (custom 1.8.13 build paired with the Sodium 0.8 backport). PAIR THIS CHECKBOX WITH COLORWHEEL: if you uncheck Iris, also uncheck Colorwheel - Colorwheel has Iris as a hard dependency, so NeoForge will refuse to launch with one but not the other. Disable both for vanilla rendering / FPS gains on weaker GPUs." }
 colorwheel = { default = true, description = "Flywheel/Iris compatibility - makes Create contraptions render correctly under Iris shaders. REQUIRES IRIS (above). Keep this checkbox in sync with Iris: both on or both off. Useless without Iris, mandatory with it." }
 distanthorizons = { default = true, description = "Distant Horizons - extreme render distance via LODs. Disable if you have <8GB RAM allocated." }
-sodium-dynamic-lights = { default = false, description = "Dynamic torchlight from held / dropped torches. Recommended for players NOT using Iris+Colorwheel (the shaders already do this)." }
-nvidium = { default = false, side = "client", description = "Nvidium - NVIDIA mesh-shader terrain renderer for Sodium. Large FPS gains at high render distances, but ONLY works on NVIDIA Turing+ GPUs (GTX 1600-series / RTX 2000-series or newer). Safe to leave off: it self-disables on unsupported hardware and under Iris shaders. Leave unchecked unless you have a supported NVIDIA card." }
 
 [packwiz.self_host]
 # Allowlist for mod jars we'll copy into the published tree as direct files
@@ -195,8 +192,19 @@ allowed_globs = [
     "mods/trmt-*.jar",
     "mods/deer-diary-commands-*.jar",
     "mods/deer-diary-patches-*.jar",
-    "mods/nvidium-*.jar",
     "moonlight-global-datapacks/key-to-necklace.zip",
+    # Locally-built Sodium 0.8.12 backport stack: Sodium / Iris / Sable rebuilt
+    # from source for MC 1.21.1 (not on any CDN), so we self-host the jars.
+    # Sodium + Sable ship as mandatory direct files; Iris is the toggleable
+    # [option] below (key iris-neoforge — see note there).
+    "mods/sodium-neoforge-*.jar",
+    "mods/iris-neoforge-*.jar",
+    "mods/sable-neoforge-*.jar",
+    # Supplementaries: jar edited in place (removed the Sodium-0.6-era
+    # CompatSodiumFluidRendererMixin that crashes under Sodium 0.8). The edit
+    # changed the jar's SHA-512 so it no longer matches its Modrinth metafile;
+    # we ship our modified binary directly instead of CDN-referencing upstream.
+    "mods/supplementaries-neoforge-*.jar",
     # CurseForge-only mods, redistribution permitted by upstream authors:
     "mods/alltheleaks-*.jar",
     "mods/configured-neoforge-*.jar",
