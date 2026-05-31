@@ -1073,8 +1073,8 @@ file = "mods/deer-diary-commands-0.3.0-1.21+1.21.1.jar"
 hash = "d1094615cc69aeb0854ec3bf146062d469778b29363e911970f708c666dafb5d"
 
 [[files]]
-file = "mods/deer-diary-patches-0.3.0-1.21+1.21.1.jar"
-hash = "b85d817ee94ca8481df1d4aa2c035ba1d9186a969aed7ecdd0d3cb843eb7cf86"
+file = "mods/deer-diary-patches-0.4.0-1.21+1.21.1.jar"
+hash = "6f6dc23e54c8465e27c6a9c6122a1a40957cdb0dfd042ef08d830f2afe7cdd2c"
 
 [[files]]
 file = "mods/diagonal-fences.pw.toml"
@@ -1378,6 +1378,11 @@ file = "mods/sodium-neoforge-0.8.12-SNAPSHOT+mc1.21.1-local.jar"
 hash = "7142a9fe2733cce08ebc829dd1061f22f6955052d6fffaa60559a941ca653ce9"
 
 [[files]]
+file = "mods/sodiumdynamiclights-neoforge.pw.toml"
+hash = "71fcebc3348f19b411ab6a5056e8f3e4e809198298cb6aa64f698f71d95c6f05"
+metafile = true
+
+[[files]]
 file = "mods/sodiumfpscapfix.pw.toml"
 hash = "7c52ec44b847e3677276e214517d977fb489c79880484c28c566bf549491159d"
 metafile = true
@@ -1472,7 +1477,7 @@ metafile = true
 
 [[files]]
 file = "moonlight-global-datapacks/curio-slot-tweaks.zip"
-hash = "8b08d83b82df98a4c56c6bbfcc2da57bc4210aa492d2eeb5a16ea4b4f3739a6e"
+hash = "516ddf22862cef90bddaa84e41ac1e2879d50b5f6644a38073892c0cbe078f10"
 
 [[files]]
 file = "resourcepacks/SPBR-16_2.zip"

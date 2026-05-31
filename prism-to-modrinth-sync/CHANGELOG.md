@@ -2,6 +2,23 @@
 
 ## 2026.05.31 (packwiz) — 2026-05-31
 
+Changes since `2026.05.31`:
+
+### Added
+**Mods**
+- `mods/deer-diary-patches-0.4.0-1.21+1.21.1.jar`
+- `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar`
+
+### Updated
+**Datapacks**
+- `moonlight-global-datapacks/curio-slot-tweaks.zip`
+
+### Removed
+**Mods**
+- `mods/deer-diary-patches-0.3.0-1.21+1.21.1.jar`
+
+## 2026.05.31 (packwiz) — 2026-05-31
+
 Changes since `2026.05.30`:
 
 ### Added

@@ -1,0 +1,14 @@
+name = "sodiumdynamiclights-neoforge"
+filename = "sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar"
+side = "client"
+
+[download]
+hash-format = "sha512"
+hash = "2de152fa91a59c11cb30bbfa388384282a20a1040374f1519c0d56a2c21de658d02aae2933ead663fed98fa7d0687fc4c257120764ab58ca1523b83898e088c7"
+mode = "url"
+url = "https://toxicbananaparty.github.io/deer-diary/packwiz/mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar"
+
+[option]
+optional = true
+default = false
+description = "Sodium Dynamic Lights - held/dropped light-emitting items (torches, lava, glowstone) and some mobs cast real dynamic light. Default off (small chunk-rebuild cost). In-game options page removed for Sodium 0.8 compat; tune via config/sodiumdynamiclights.toml."
