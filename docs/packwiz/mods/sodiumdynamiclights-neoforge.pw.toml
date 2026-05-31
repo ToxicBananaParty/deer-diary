@@ -1,12 +1,12 @@
 name = "sodiumdynamiclights-neoforge"
-filename = "sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar"
+filename = "sodiumdynamiclights-neoforge-1.0.11-1.21.1.jar"
 side = "client"
 
 [download]
 hash-format = "sha512"
-hash = "2de152fa91a59c11cb30bbfa388384282a20a1040374f1519c0d56a2c21de658d02aae2933ead663fed98fa7d0687fc4c257120764ab58ca1523b83898e088c7"
+hash = "0f517837a38effe15a80e7074309a561d7e3ee881549263d3a4dea45e812b71329351aa93b94ea7d8ec1bc27fa5144b7e61ffb5cae50648787f39360c9ce60fb"
 mode = "url"
-url = "https://toxicbananaparty.github.io/deer-diary/packwiz/mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar"
+url = "https://toxicbananaparty.github.io/deer-diary/packwiz/mods/sodiumdynamiclights-neoforge-1.0.11-1.21.1.jar"
 
 [option]
 optional = true

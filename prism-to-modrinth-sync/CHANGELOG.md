@@ -6,6 +6,20 @@ Changes since `2026.05.31`:
 
 ### Added
 **Mods**
+- `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.DISABLED`
+- `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.duplicate`
+- `mods/sodiumdynamiclights-neoforge-1.0.11-1.21.1.jar`
+
+### Removed
+**Mods**
+- `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar`
+
+## 2026.05.31 (packwiz) — 2026-05-31
+
+Changes since `2026.05.31`:
+
+### Added
+**Mods**
 - `mods/deer-diary-patches-0.4.0-1.21+1.21.1.jar`
 - `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar`
 

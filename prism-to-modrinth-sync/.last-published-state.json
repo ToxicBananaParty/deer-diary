@@ -281,7 +281,9 @@
     "mods/skinlayers3d-neoforge-1.11.1-mc1.21.1.jar": "cdd870541a7c1dcea5252bbb29858cba1b4a0f379357fa49ea4eb416fe1a068c654864f8ff5b4aca5079fc65f6f4f272e70b0e3cd50981dcc332a7d2cd80cee4",
     "mods/sliceanddice-forge-4.2.4.jar": "3834893ba6614befba87e6be13481bedfa7bce1ba196e75a6e8335b4718be772481f7ef6bea10b22fbcf154b0147ea97536102ddcf70912e5843f547ee3f711d",
     "mods/sodium-neoforge-0.8.12-SNAPSHOT+mc1.21.1-local.jar": "b24cdae69f603a5d4ba342ec8801014de4fb3c155bffc6015f89d0d65d34f8e2d756553773a36e321bce82fe650fca0e6f0ff8e5ee2d41d90d3ea84a7e50fb5f",
-    "mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar": "2de152fa91a59c11cb30bbfa388384282a20a1040374f1519c0d56a2c21de658d02aae2933ead663fed98fa7d0687fc4c257120764ab58ca1523b83898e088c7",
+    "mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.DISABLED": "2de152fa91a59c11cb30bbfa388384282a20a1040374f1519c0d56a2c21de658d02aae2933ead663fed98fa7d0687fc4c257120764ab58ca1523b83898e088c7",
+    "mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.duplicate": "ec19a81cf2dfde255990a457d8f6d7375df53cb94190dce71c4bfe5d5263f4862027ce4aa0af20cb11d56c7c031d5e149b3bdf95bec6343e5bd4552450b14c0a",
+    "mods/sodiumdynamiclights-neoforge-1.0.11-1.21.1.jar": "0f517837a38effe15a80e7074309a561d7e3ee881549263d3a4dea45e812b71329351aa93b94ea7d8ec1bc27fa5144b7e61ffb5cae50648787f39360c9ce60fb",
     "mods/sodiumfpscapfix-neoforge-1.21.1-1.0.10.jar": "84ffee8fe8ef9bafc43009067b0f06fcf3a006b7a9ac3c87432df2514410690c9f8d9bf9888d025889544a08423c8219f6791e87fef51418f06edd2a8bc90ab3",
     "mods/sound-physics-remastered-neoforge-1.21.1-1.5.1.jar": "ff7e9f0b968eeb2ba0e833328a122813cad0434cfe2d5c3d527c1c0d564504f13a737fc05f22d3fea562a2f86568d31b95212bf5347dd10da36cd49ad56143a6",
     "mods/stackrefill-1.21.1-4.9.jar": "42f5bf809f533d472ff64d2b7b55f557b2ce921674469291dc34db4717cd88fc1114703ad420e1d758edf077907f4ff60a404610e24524f2cd2bce49fe2a7b74",
@@ -311,7 +313,7 @@
     "shaderpacks/ComplementaryUnbound_r5.7.1-tuned.zip": "d3b662a311dbb9c5861486404d4abe123d4ff27933c0eb2c84b6ffa99a0e907ce1289130c9481ae3fc96973a1ddaca2a9ebe46c67ddab8821e8719fc35ca5525",
     "shaderpacks/VanillaPlus_v3.3.zip": "b9ef99f06781fd0c0b867e4415bee2020dbc6ad4538c87f176c76e4b8528a1df56aaf22c0c30624f3c68a230970c83c70e1e04fdc733289f7acf1238abca66d9"
   },
-  "published_at": "2026-05-31T14:56:53Z",
+  "published_at": "2026-05-31T15:39:50Z",
   "notes": {
     "published_via": "packwiz"
   }

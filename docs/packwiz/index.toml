@@ -1378,8 +1378,16 @@ file = "mods/sodium-neoforge-0.8.12-SNAPSHOT+mc1.21.1-local.jar"
 hash = "7142a9fe2733cce08ebc829dd1061f22f6955052d6fffaa60559a941ca653ce9"
 
 [[files]]
+file = "mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.DISABLED"
+hash = "a3f6f3e6ebfd8b8ebc8a611158c7b4e07bee5ea16055310f69be57b76710e451"
+
+[[files]]
+file = "mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.duplicate"
+hash = "d78002d50865db928fbf2c17c716ffcbbd6d33bff88aa1f0f3a04152a2665e25"
+
+[[files]]
 file = "mods/sodiumdynamiclights-neoforge.pw.toml"
-hash = "71fcebc3348f19b411ab6a5056e8f3e4e809198298cb6aa64f698f71d95c6f05"
+hash = "668beb448aa9a631d55ab04ba3ef9892001fb46ff34a605b7de292aa9047e41b"
 metafile = true
 
 [[files]]
