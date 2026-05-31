@@ -1,11 +1,43 @@
 # Deer Diary Patches
 
-A container mod for small Mixin patches against third-party mods in the Deer
-Diary modpack. Each patch lives in its own per-target subpackage
-(`toxicbananaparty.ddp.<targetmod>.mixin`) with its own Mixin config
-(`deer_diary_patches.<targetmod>.mixins.json`).
+A container mod for small patches against third-party mods in the Deer Diary
+modpack. Two flavors:
+
+- **Mixin patches** live in a per-target subpackage
+  (`toxicbananaparty.ddp.<targetmod>.mixin`) with their own Mixin config
+  (`deer_diary_patches.<targetmod>.mixins.json`).
+- **Integration patches** that only use public APIs / events live in a
+  per-target subpackage without a Mixin config (e.g.
+  `toxicbananaparty.ddp.aeronautics`), wired from the main mod class behind a
+  `ModList` presence guard.
 
 ## Patches
+
+### Create Aeronautics — Aviator's Goggles in the Curios head slot
+
+Lets Aeronautics' Aviator's Goggles be worn in the Curios "head" slot *and*
+keep working there. Two parts, both via public API (no mixin):
+
+- **Placement.** Curios' tag-based slot assignment skips `ArmorItem`s, so the
+  goggles never gained the `ICurio` capability. `AviatorsGogglesCurios`
+  attaches `CuriosCapability.ITEM` explicitly via `RegisterCapabilitiesEvent`.
+  The `ICurio` is deliberately bare (no attribute modifiers) — the curios slot
+  grants **no armor**, so there's no double-dipping with a real helmet.
+- **Function.** The goggles' only behavior is to switch on Create's goggle HUD
+  overlay, which Aeronautics enables via
+  `GogglesItem.addIsWearingPredicate(p -> goggles in vanilla HEAD slot)`. We
+  register a *second* predicate (Create OR-combines them) that also fires when
+  the goggles sit in a curios slot, so the overlay lights up either way.
+
+Ships its own datapack data so the feature is self-contained:
+`data/curios/tags/item/head.json` (satisfies the head slot's tag validator)
+and `data/deer_diary_patches/curios/entities/player.json` (grants players the
+head curios slot). The whole bridge is guarded by a `ModList` check for
+curios + create + aeronautics.
+
+> Not handled: rendering the goggles model on the player's head while in the
+> curios slot (functional + armor-free placement only). Curios slot grants no
+> armor by design.
 
 ### Sable — suppress UDP "invalid packet ID" log spam
 

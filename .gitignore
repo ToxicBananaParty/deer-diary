@@ -20,6 +20,9 @@ prism-to-modrinth-sync/build/
 prism-to-modrinth-sync/.cache/
 prism-to-modrinth-sync/*.mrpack
 
+# --- Custom Sodium Development ---
+Custom Mods/src/special-sodium-modernport/
+
 # --- Secrets — never commit ---
 prism-to-modrinth-sync/config.local.toml
 .env
@@ -38,8 +41,6 @@ prism-to-modrinth-sync/promote.py
 
 # --- Gradle / Java build cruft inside Custom Mods/src/* ---
 Custom Mods/src/*/build/
-Custom Mods/src/*/claude-reference/
-Custom Mods/src/special-sodium-modernport/
 Custom Mods/src/*/.gradle/
 Custom Mods/src/*/bin/
 Custom Mods/src/*/out/

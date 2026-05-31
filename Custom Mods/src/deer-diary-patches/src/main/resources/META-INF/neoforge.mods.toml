@@ -6,7 +6,7 @@ license = "MIT"
     modId = "${mod_id}"
     version = "${version}"
     displayName = "Deer Diary Patches"
-    description = '''A container for small Mixin patches against third-party mods in the Deer Diary modpack. Currently patches Tom's Simple Storage so that placing a Polymorphic Item Filter on an Inventory Cable Connector no longer hides the target inventory's existing items from the terminal or blocks their extraction (gates insertion only, as designed).'''
+    description = '''A container for small patches (Mixin and mod-integration) against third-party mods in the Deer Diary modpack. Fixes Tom's Simple Storage Polymorphic Filter behavior, quiets harmless netty/UDP log spam from Minecraft and Sable, and lets Create Aeronautics' Aviator's Goggles be worn (and function) in the Curios head slot.'''
     authors = "Ryan"
 
 [[mixins]]
@@ -39,5 +39,29 @@ license = "MIT"
     modId = "toms_storage"
     type = "optional"
     versionRange = "[1.21-2.3.0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+
+# Curios / Create / Aeronautics — optional deps for the Aviator's Goggles
+# curios-slot bridge. AFTER so we load once their items/classes exist; the
+# bridge code is guarded by ModList checks so absence is harmless.
+[[dependencies.${mod_id}]]
+    modId = "curios"
+    type = "optional"
+    versionRange = "[9.0.0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+
+[[dependencies.${mod_id}]]
+    modId = "create"
+    type = "optional"
+    versionRange = "[6.0.0,)"
+    ordering = "AFTER"
+    side = "BOTH"
+
+[[dependencies.${mod_id}]]
+    modId = "aeronautics"
+    type = "optional"
+    versionRange = "[1.2.0,)"
     ordering = "AFTER"
     side = "BOTH"

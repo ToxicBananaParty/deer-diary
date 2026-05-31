@@ -37,7 +37,7 @@ include_files = [
 
 # Glob patterns (relative to <instance>/minecraft/) to always ignore.
 # The instance's own .packignore is also applied automatically.
-# (mods/.index/ and mods/.connector/ are always skipped — no need to list them.)
+# (mods/.index/ and mods/.connector/ are always skipped â€” no need to list them.)
 extra_ignore = [
     "mods (2).zip",
     ".mixin.out/**",
@@ -55,12 +55,12 @@ extra_ignore = [
     "shaderpacks/*/**",
     # FTB Essentials + FTB Library are on Modrinth's content-rules deny list
     # regardless of permission; we ship deer-diary-commands instead. Locally
-    # they're deleted — these jar patterns are kept defensively in case the
+    # they're deleted â€” these jar patterns are kept defensively in case the
     # jars come back later (e.g. accidentally reinstalled).
     "mods/ftb-essentials-*.jar",
     "mods/ftb-library-*.jar",
     # Broad config sweep: any FTB-prefixed config (ftbessentials, ftblibrary,
-    # etc.) — these are leftover from the deleted mods and ship as dead weight
+    # etc.) â€” these are leftover from the deleted mods and ship as dead weight
     # without their parent jar.
     "config/ftb*",
     "defaultconfigs/ftb*",
@@ -69,17 +69,17 @@ extra_ignore = [
     "config/fabric/indigo-renderer.properties",
     "config/packetfixer.properties",
     # Everything under config/jei/world/ is per-world/per-server state
-    # (lookup history, bookmarks, etc.) keyed by world hash — never ship.
+    # (lookup history, bookmarks, etc.) keyed by world hash â€” never ship.
     "config/jei/world/**",
 ]
 
 # Allowlist: paths to include even if they match an ignore pattern. Use for
-# default-off alternatives — e.g. a `.disabled` mod jar you want consumers to be
+# default-off alternatives â€” e.g. a `.disabled` mod jar you want consumers to be
 # able to toggle on. These ship verbatim as overrides; the consumer enables them
 # by removing the `.disabled` suffix.
 #
 # (Sodium Dynamic Lights moved out of here and into [packwiz.optional_mods]
-# below — it's now a proper Packwiz [option] so players can opt in via the
+# below â€” it's now a proper Packwiz [option] so players can opt in via the
 # installer GUI instead of the awkward `.disabled` rename dance.)
 optional_files = []
 
@@ -106,11 +106,11 @@ source_dir = "../Custom Mods/dist/deer-diary-patches"
 side = "both"
 
 # Datapack ships through the Packwiz pipeline as a self-hosted direct file.
-# Versionless filename → the custom-mod sync falls back to byte compare.
+# Versionless filename â†’ the custom-mod sync falls back to byte compare.
 [[custom_mods]]
-name = "key-to-necklace"
-source_dir = "../Custom Mods/dist/key-to-necklace"
-source_pattern = "key-to-necklace.zip"
+name = "curio-slot-tweaks"
+source_dir = "../Custom Mods/dist/curio-slot-tweaks"
+source_pattern = "curio-slot-tweaks.zip"
 target_dir = "moonlight-global-datapacks"
 side = "both"
 
@@ -122,7 +122,7 @@ side = "both"
 # self-hosted direct files) under `output_dir`. Players install a small
 # bootstrap Prism instance that runs packwiz-installer-bootstrap.jar before
 # Minecraft launches; that resolves changes against `base_url` and updates
-# the local pack in place. Independent of the Modrinth pipeline above —
+# the local pack in place. Independent of the Modrinth pipeline above â€”
 # both can run, sharing `.last-published-state.json` and `CHANGELOG.md`.
 
 [packwiz]
@@ -177,6 +177,7 @@ preserve_globs = [
 iris-neoforge = { default = true, description = "Iris shader support (custom 1.8.13 build paired with the Sodium 0.8 backport). PAIR THIS CHECKBOX WITH COLORWHEEL: if you uncheck Iris, also uncheck Colorwheel - Colorwheel has Iris as a hard dependency, so NeoForge will refuse to launch with one but not the other. Disable both for vanilla rendering / FPS gains on weaker GPUs." }
 colorwheel = { default = true, description = "Flywheel/Iris compatibility - makes Create contraptions render correctly under Iris shaders. REQUIRES IRIS (above). Keep this checkbox in sync with Iris: both on or both off. Useless without Iris, mandatory with it." }
 distanthorizons = { default = true, description = "Distant Horizons - extreme render distance via LODs. Disable if you have <8GB RAM allocated." }
+sodiumdynamiclights-neoforge = { default = false, description = "Sodium Dynamic Lights - held/dropped light-emitting items (torches, lava, glowstone) and some mobs cast real dynamic light. Default off (small chunk-rebuild cost). In-game options page removed for Sodium 0.8 compat; tune via config/sodiumdynamiclights.toml." }
 
 [packwiz.self_host]
 # Allowlist for mod jars we'll copy into the published tree as direct files
@@ -185,18 +186,18 @@ distanthorizons = { default = true, description = "Distant Horizons - extreme re
 #   - CurseForge-only mods whose author granted us redistribution permission:
 #     we'd rather ship the jar than make every player configure a CF API
 #     key in packwiz-installer. These entries override their .pw.toml.
-# Modrinth-backed mods don't need to appear here — they pass through as
+# Modrinth-backed mods don't need to appear here â€” they pass through as
 # native metafiles and players fetch them from Modrinth's CDN.
 allowed_globs = [
     # Own builds:
     "mods/trmt-*.jar",
     "mods/deer-diary-commands-*.jar",
     "mods/deer-diary-patches-*.jar",
-    "moonlight-global-datapacks/key-to-necklace.zip",
+    "moonlight-global-datapacks/curio-slot-tweaks.zip",
     # Locally-built Sodium 0.8.12 backport stack: Sodium / Iris / Sable rebuilt
     # from source for MC 1.21.1 (not on any CDN), so we self-host the jars.
     # Sodium + Sable ship as mandatory direct files; Iris is the toggleable
-    # [option] below (key iris-neoforge — see note there).
+    # [option] below (key iris-neoforge â€” see note there).
     "mods/sodium-neoforge-*.jar",
     "mods/iris-neoforge-*.jar",
     "mods/sable-neoforge-*.jar",
@@ -205,6 +206,10 @@ allowed_globs = [
     # changed the jar's SHA-512 so it no longer matches its Modrinth metafile;
     # we ship our modified binary directly instead of CDN-referencing upstream.
     "mods/supplementaries-neoforge-*.jar",
+    # SodiumDynamicLights: v1.0.10 neoforge jar, Sodium options-GUI page stripped
+    # in-jar for Sodium 0.8 compat (old options API gone). Light mixins are @Pseudo
+    # and bind to 0.8.12 net.caffeinemc. Modified binary -> self-hosted; config via TOML.
+    "mods/sodiumdynamiclights-neoforge-*.jar",
     # CurseForge-only mods, redistribution permitted by upstream authors:
     "mods/alltheleaks-*.jar",
     "mods/configured-neoforge-*.jar",
@@ -221,13 +226,13 @@ allowed_globs = [
 #
 # Per-mod delivery is decided by matching server-folder jars to client mods
 # by mod ID (read from META-INF/neoforge.mods.toml):
-#   - mod ID matches a client mod → reuse the client's metafile (Modrinth
-#     CDN auto-update) or self-host (CF or own builds) — whichever the
+#   - mod ID matches a client mod â†’ reuse the client's metafile (Modrinth
+#     CDN auto-update) or self-host (CF or own builds) â€” whichever the
 #     client pipeline picks for that mod.
-#   - mod ID doesn't match (server-only) → ship as direct file (self-host
+#   - mod ID doesn't match (server-only) â†’ ship as direct file (self-host
 #     via GH Pages), OR as a Modrinth-CDN metafile if you've attached one
 #     via `prism_sync server-attach-metafiles` (Modrinth hash-lookup).
-#   - .pw.toml alongside a server jar → overrides auto-resolution; ship
+#   - .pw.toml alongside a server jar â†’ overrides auto-resolution; ship
 #     that metafile verbatim. Use for explicit per-mod version pins.
 
 [packwiz_server]
@@ -241,12 +246,12 @@ bootstrap_installer_url = "https://github.com/packwiz/packwiz-installer-bootstra
 
 # Authoritative roster of what the server runs. Populated by
 # `prism_sync server-bootstrap-from-sftp` and maintained by you afterwards.
-#   mods/         — every jar (server+client + server-only); jars are
+#   mods/         â€” every jar (server+client + server-only); jars are
 #                   markers for client-matched mods (mod ID drives
 #                   resolution, build uses client's metafile)
-#   config/       — server-only configs (override client configs by path)
-#   defaultconfigs/ — likewise
-#   moonlight-global-datapacks/ — server-side datapacks if any
+#   config/       â€” server-only configs (override client configs by path)
+#   defaultconfigs/ â€” likewise
+#   moonlight-global-datapacks/ â€” server-side datapacks if any
 server_dir = "../Custom Mods/server"
 
 # Subdirs of server_dir to walk. Resourcepacks/shaderpacks omitted
@@ -286,7 +291,7 @@ additional_globs = []
 # that's safe to track (remote_dir, bootstrap_pull, wrapper_push).
 port = 2022                              # BloomHost / Pterodactyl default
 # BloomHost's Pterodactyl SFTP chroots you so the connection root IS
-# /home/container/ — use "/" here, NOT "/home/container". The wrapper
+# /home/container/ â€” use "/" here, NOT "/home/container". The wrapper
 # scripts (start.sh, approve-update.sh) still use absolute
 # /home/container/... paths because they run inside the container, not
 # over SFTP. Different vantage points, different paths.

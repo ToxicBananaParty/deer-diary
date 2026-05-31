@@ -57,6 +57,17 @@ dependencies {
     // Pin to the version the pack actually ships so our Mixin targets the
     // exact bytecode we patched against; bump when the pack bumps Sable.
     compileOnly "maven.modrinth:sable:1.2.1+mc1.21.1"
+
+    // Curios API — for the Aviator's Goggles curios-slot bridge. We attach
+    // an ICurio capability to Aeronautics' goggles and query the player's
+    // curios inventory. compileOnly; Curios is a hard part of the pack.
+    compileOnly "maven.modrinth:curios:9.5.1+1.21.1"
+
+    // Create — for GogglesItem.addIsWearingPredicate, the public extension
+    // point Aeronautics itself uses to light up the goggle HUD overlay.
+    // Modrinth maven serves the jar with no transitive deps, so this won't
+    // drag in Flywheel/Ponder/Registrate. compileOnly.
+    compileOnly "maven.modrinth:create:6.0.10+mc1.21.1"
 }
 
 processResources {
