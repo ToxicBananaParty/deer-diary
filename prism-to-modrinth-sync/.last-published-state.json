@@ -309,11 +309,9 @@
     "servers.dat": "8252a44c3626465cf181f75bbb3fc8be73939286cb68c32d4f2dc4d88d8aa0822b959f2b562ae7f3a714e805f350de85650a243a00da47928fcdeff153c5843b",
     "shaderpacks/BSL_v10.1.3 + Clrwl_1.0.5.zip": "551c0dc0ff85a1910d7195ad0a896ed09923940baea962eb6eb78add7ef047d2cafde0130b402660bdeeaa6f8c6c7ad329a30630f5328b2e354c5553119993e7",
     "shaderpacks/BSL_v10.1.3.zip": "3e68c8038e38b0860cf1258e5fc84bcd98007a70fb7ba49e306186be6e905187527b630b77cb9e8cc8ee80865606c0fb398c419a22f0076b2ed5c7d73748a9ba",
-    "shaderpacks/ComplementaryReimagined_r5.7.1.zip": "840149dd8aff5d5d06d0d5a4ea83d4ea7f72eab3cb2b02de513c1f3eaa6e4627f68d9c0915b86fa37edad73cafd4648f156f373da52810cd34c67d797e0f6aef",
-    "shaderpacks/ComplementaryUnbound_r5.7.1-tuned.zip": "d3b662a311dbb9c5861486404d4abe123d4ff27933c0eb2c84b6ffa99a0e907ce1289130c9481ae3fc96973a1ddaca2a9ebe46c67ddab8821e8719fc35ca5525",
-    "shaderpacks/VanillaPlus_v3.3.zip": "b9ef99f06781fd0c0b867e4415bee2020dbc6ad4538c87f176c76e4b8528a1df56aaf22c0c30624f3c68a230970c83c70e1e04fdc733289f7acf1238abca66d9"
+    "shaderpacks/ComplementaryUnbound_r5.7.1-tuned.zip": "d3b662a311dbb9c5861486404d4abe123d4ff27933c0eb2c84b6ffa99a0e907ce1289130c9481ae3fc96973a1ddaca2a9ebe46c67ddab8821e8719fc35ca5525"
   },
-  "published_at": "2026-05-31T15:39:50Z",
+  "published_at": "2026-05-31T16:15:12Z",
   "notes": {
     "published_via": "packwiz"
   }

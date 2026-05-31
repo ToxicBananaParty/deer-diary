@@ -1525,13 +1525,5 @@ file = "shaderpacks/BSL_v10.1.3.zip"
 hash = "185774628b5259c36255183fc1adeb0f64f89235f7ea2c826fa327d1112687a8"
 
 [[files]]
-file = "shaderpacks/ComplementaryReimagined_r5.7.1.zip"
-hash = "24a20634a7832d422d3cd5023be16829f26840e25c69404dd418306ea79f63f0"
-
-[[files]]
 file = "shaderpacks/ComplementaryUnbound_r5.7.1-tuned.zip"
 hash = "93423de9112d876c534a99df10ccc69270b8daf041b5c9f506581d7e399b9187"
-
-[[files]]
-file = "shaderpacks/VanillaPlus_v3.3.zip"
-hash = "d14c6f0331a33d3dd16e613f3c98fc8e77b8707fc4f2544231b2468a69f51d2b"

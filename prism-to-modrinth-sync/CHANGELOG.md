@@ -4,6 +4,15 @@
 
 Changes since `2026.05.31`:
 
+### Removed
+**Shaders**
+- `shaderpacks/ComplementaryReimagined_r5.7.1.zip`
+- `shaderpacks/VanillaPlus_v3.3.zip`
+
+## 2026.05.31 (packwiz) — 2026-05-31
+
+Changes since `2026.05.31`:
+
 ### Added
 **Mods**
 - `mods/sodiumdynamiclights-neoforge-1.0.10-1.21.1.jar.DISABLED`
