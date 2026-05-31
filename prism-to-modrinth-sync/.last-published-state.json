@@ -1,5 +1,5 @@
 {
-  "version_id": "2026.05.30",
+  "version_id": "2026.05.31",
   "fingerprint": {
     "config/DistantHorizons.toml": "a7797805251d8b7192df815a51fbc0c1a9c1a1941e9618595db52dc8eeec4194c80adc32faba2a2cb864c7089dd274b0ed920edc9615193edab5e914fa2c5c0b",
     "config/MouseTweaks.cfg": "5a86dc45e2999e337cb36f69ca9d388495ea496058b7346d24369c272bec91af055d3fbc37a26a86d0af03a1a29605c4c846612eb58280bafdb648716220927c",
@@ -135,7 +135,7 @@
     "config/skinlayers.json": "0ccb7e655e79f5af02e7c7a33b342906f51caaa63bf33bb3e7aad265cbefa78cd53086b423d1b68ed27fb5dcf3c7abaec90197debf137fea8c36af866eabfb60",
     "config/sliceanddice-client.toml": "ef010edb91035957b59b8b7a7804ad36d92d8d891536e100eb42ac438106a7741fb3e9b076cf28cf9e033a62da513bff127cc8d51b0cbc5a7ef1b525e17c1e41",
     "config/sliceanddice-common.toml": "71ed09f5a3e8f015634afd40f791a2c6c30652afa41ec925f65cd7cc88bb1d9ee503598431f32f5fac29e47afda2ab6dfce8f2e313e8f0a3413a248d2818a946",
-    "config/sodiumfpscapfix.txt": "643c30f73a3017050b287794fc8c5bb9ab06b9ce38a1fc58df402a8b66ff58f69bf0a606ae17585352a0306f0e9752de8c5c064aed7003f52808b43ff992a603",
+    "config/sodiumfpscapfix.txt": "3db72604d3e0e06358c929552a714b196f9ba96de2f970704f5ac1f1c8257c3024764dcd8e3df2c908a16bf6c598df235f0938adb5a03ffdcf52a07f34413063",
     "config/sound_physics_remastered/occlusion.properties": "f36a4406261736f4051d586d0193aec1cf6c854ee67d9562cdeae42e9a0a9f1bf148214efe05d92862a068b08991a06ef2e192d1ffe089d2cbb7ba4e57bf6896",
     "config/sound_physics_remastered/reflectivity.properties": "ebe5d8c85986005f51d6ca09411114b142433ac4040a3d5d65ef5e5cda06c887a8b08f84f53b2ba8e7eb47274b80a2dbb98f9bc879df8b78564418cf94cc2201",
     "config/sound_physics_remastered/sound_rates.properties": "4b07b7e781fac262c29a8f2893efe607df27ef925316824be20783762a26aa871be1fcff30d5d309f6f870090ac3fe33fca03f795a900cc28a111cb119d7e0c4",
@@ -297,7 +297,7 @@
     "mods/xaerominimap-neoforge-1.21.1-25.3.10.jar": "97dbc7ddc8b86edead71f60e3257175abe9e05e94387447aad2467cfcf0a5211ed848ee3df9bb3c308183405f997f8acd508ac01f8ee374f08d9af00729fc1d8",
     "mods/xaeroworldmap-neoforge-1.21.1-1.40.11.jar": "a4bb890dbac27937411f570432ebc5a4cc5df9562c22e7c3d6a6516ff303bfcb7f35fb39d2ce42a51591a4b2a5b5debfc933fda3f5a552560442fe69f8828b0b",
     "mods/yet_another_config_lib_v3-3.8.2+1.21.1-neoforge.jar": "583de19b927ce8050c2b7d5e60b75accc69e325e5aac85c27994c82a9dec2e4e078343fa1d4c3a10d4bd7e0e524e0b3b246a18cf03db01e363a1e6f865adcf48",
-    "moonlight-global-datapacks/key-to-necklace.zip": "a06beceb53ac1ee767a677e5e772d40c2af04b1e2c3c7165c31aa36520bd2fb94f1f0035013868e11747ea7622e69dce8af151f5068e877674ddb519f8a887a6",
+    "moonlight-global-datapacks/curio-slot-tweaks.zip": "425948e0fd5525763c1b5f24a02fff1cb6f7425e86158d043a9a3d3a9cdc6520315cb8594ebab7db1943634a98a2cd5ba6bb3312a7ee57e2cb53175165a17dee",
     "resourcepacks/Create-LabPBR-v12.zip": "ad690590ba7b517ac1ef4467bf93fcd0d766c127e2773ee80eaae4bf91c174f87ca0595b6188800365922aab490b138a8c27a7c37bc4a21b57ed32c3afe2c3ca",
     "resourcepacks/SPBR-16_2.zip": "c96d7026679ac6843b460267bf3e7300d7e0e48bdff438979579fab323fc9cff40f9912cbea6091d713c3bdc756db500665d9d8cfe892215c304933dd89ae44b",
     "resourcepacks/SPBR-BlockEmission.zip": "852f36ca6c2c3b70c068b11a5ff3d549d0d1b12d5f3f452382bc085b49945d575bd27118e82636b69d49a9b6270b31a4defcf3a1f1ad31595cc9cd03e37c0216",
@@ -307,9 +307,10 @@
     "shaderpacks/BSL_v10.1.3 + Clrwl_1.0.5.zip": "551c0dc0ff85a1910d7195ad0a896ed09923940baea962eb6eb78add7ef047d2cafde0130b402660bdeeaa6f8c6c7ad329a30630f5328b2e354c5553119993e7",
     "shaderpacks/BSL_v10.1.3.zip": "3e68c8038e38b0860cf1258e5fc84bcd98007a70fb7ba49e306186be6e905187527b630b77cb9e8cc8ee80865606c0fb398c419a22f0076b2ed5c7d73748a9ba",
     "shaderpacks/ComplementaryReimagined_r5.7.1.zip": "840149dd8aff5d5d06d0d5a4ea83d4ea7f72eab3cb2b02de513c1f3eaa6e4627f68d9c0915b86fa37edad73cafd4648f156f373da52810cd34c67d797e0f6aef",
+    "shaderpacks/ComplementaryUnbound_r5.7.1-tuned.zip": "d3b662a311dbb9c5861486404d4abe123d4ff27933c0eb2c84b6ffa99a0e907ce1289130c9481ae3fc96973a1ddaca2a9ebe46c67ddab8821e8719fc35ca5525",
     "shaderpacks/VanillaPlus_v3.3.zip": "b9ef99f06781fd0c0b867e4415bee2020dbc6ad4538c87f176c76e4b8528a1df56aaf22c0c30624f3c68a230970c83c70e1e04fdc733289f7acf1238abca66d9"
   },
-  "published_at": "2026-05-30T22:16:39Z",
+  "published_at": "2026-05-31T13:43:22Z",
   "notes": {
     "published_via": "packwiz"
   }

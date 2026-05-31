@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026.05.31 (packwiz) — 2026-05-31
+
+Changes since `2026.05.30`:
+
+### Added
+**Shaders**
+- `shaderpacks/ComplementaryUnbound_r5.7.1-tuned.zip`
+
+**Datapacks**
+- `moonlight-global-datapacks/curio-slot-tweaks.zip`
+
+### Updated
+**Config**
+- `config/sodiumfpscapfix.txt`
+
+### Removed
+**Datapacks**
+- `moonlight-global-datapacks/key-to-necklace.zip`
+
 ## 2026.05.30 (packwiz) — 2026-05-30
 
 Changes since `2026.05.17`:

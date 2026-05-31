@@ -672,7 +672,7 @@ preserve = true
 
 [[files]]
 file = "config/sodiumfpscapfix.txt"
-hash = "ad57366865126e55649ecb23ae1d48887544976efea46a48eb5d85a6eeb4d306"
+hash = "2abaca4911e68fa9bfbf3482ee797fd5b9045b841fdff7253557c5fe15de6477"
 preserve = true
 
 [[files]]
@@ -1471,8 +1471,8 @@ hash = "de4da5f310647100c62069c8c9726eab18cb076f581c8205b48c9ccfc3b501c4"
 metafile = true
 
 [[files]]
-file = "moonlight-global-datapacks/key-to-necklace.zip"
-hash = "774289af9d39277de378c2f6bab4c996fa62626a5843a8c31ac8adee22db3df1"
+file = "moonlight-global-datapacks/curio-slot-tweaks.zip"
+hash = "8b08d83b82df98a4c56c6bbfcc2da57bc4210aa492d2eeb5a16ea4b4f3739a6e"
 
 [[files]]
 file = "resourcepacks/SPBR-16_2.zip"
@@ -1514,6 +1514,10 @@ hash = "185774628b5259c36255183fc1adeb0f64f89235f7ea2c826fa327d1112687a8"
 [[files]]
 file = "shaderpacks/ComplementaryReimagined_r5.7.1.zip"
 hash = "24a20634a7832d422d3cd5023be16829f26840e25c69404dd418306ea79f63f0"
+
+[[files]]
+file = "shaderpacks/ComplementaryUnbound_r5.7.1-tuned.zip"
+hash = "93423de9112d876c534a99df10ccc69270b8daf041b5c9f506581d7e399b9187"
 
 [[files]]
 file = "shaderpacks/VanillaPlus_v3.3.zip"
